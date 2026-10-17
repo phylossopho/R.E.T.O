@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="papel">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Memorama - R.E.T.O.</title>
+<link rel="preload" href="../../../styles/fuentes/nunito.css" as="style">
+<link rel="stylesheet" href="../../../styles/fuentes/nunito.css">
+<link rel="stylesheet" href="../../../styles/styles.css?v=c85-flexfix">
+<script src="../../../scripts/reto-panel-prefs.js?v=c01-0f3ddb54"></script>
+<script>
+// El tema y el interruptor de animaciones se aplican aqui, en el head, y no al
+// final del body: si se hiciera despues, el navegador pintaria primero el
+// estado por defecto y luego lo cambiaria, y se veria un destello en cada carga.
+(function () {
+  var t = localStorage.getItem('tema');
+  if (t) { document.documentElement.setAttribute('data-theme', t); }
+  var a = localStorage.getItem('animaciones');
+  if (a === 'off' || a === 'on') { document.documentElement.setAttribute('data-anim', a); }
+  try {
+    var forzar = /[?&]anim=1/.test(location.search);
+    if (sessionStorage.getItem('reto_anim_tarjetas') && !forzar) {
+      document.documentElement.setAttribute('data-anim-tarjetas', 'off');
+    } else {
+      sessionStorage.setItem('reto_anim_tarjetas', '1');
+    }
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="pantalla-juego">
+<!--
+  SIN CABECERA NI PIE, A PROPOSITO
+  En una pantalla de juego, el titulo arriba y el nombre del sitio abajo son dos
+  franjas que empujan el tablero hacia abajo y no dicen nada mientras se juega.
+  En un celular restan altura, y el alto es justo lo que necesita el tablero.
+
+  EL TITULO NO SE BORRA: SE ESCONDE. Sigue estando en la pagina, y un lector de
+  pantalla lo lee al abrir, para saber donde esta. Lo que no esta es a la vista.
+  Borrarlo de verdad dejaria la pagina sin nombre para quien navega con teclado o
+  con lector de pantalla, y eso si es una perdida de verdad.
+-->
+<h1 class="oculto-a-la-vista">Memorama</h1>
+<main>
+<section class="memo">
+
+  <!--
+    LO UNICO QUE SE VE ES EL TABLERO
+    Los ajustes (que tablero y con que dibujitos) y las cuentas (intentos,
+    parejas y mejor marca) viven en un modal que se abre desde el panel, con el
+    boton de "configurar juego".
+
+    No es que esten escondidos por estetica. Es que mientras se juega, un "0"
+    de intentos no sirve de nada: el numero solo cuenta cuando ya acabaste. Y las
+    opciones son de las que se cambian UNA vez y ya. Estar delante del tablero es
+    justo lo que hace falta para concentrarse.
+  -->
+  <div class="memo-tablero" id="tablero" data-tamano="4x4" role="group" aria-label="Tablero de cartas"></div>
+
+  <p class="memo-mensaje" id="mensaje" data-tipo=""></p>
+
+  <!--
+    PARA QUIEN NO VE
+    Este parrafo esta escondido a la vista y solo lo lee el lector de pantalla.
+    Cada vez que pasa algo (una pareja, un fallo, el fin) se escribe aqui, y el
+    navegador lo lee en voz alta. Sin esto, el juego es injugable sin ver: las
+    cartas se voltean y no pasa nada audible.
+
+    NO lleva "hidden" a proposito: con hidden el lector de pantalla tampoco lo
+    leeria, y es justo a el a quien le sirve. Se esconde con el recorte de una
+    linea, que si lo lee.
+  -->
+  <p class="oculto-a-la-vista" id="lector" role="status" aria-live="polite"></p>
+
+  <!--
+    DONDE SE ARMAN LOS AJUSTES
+    Viven fuera de la pagina, en un <dialog> que arma el script del juego. No
+    estan en el HTML porque no existen hasta que hay un tablero: depende de lo
+    que conteste el servidor, y eso se pregunta al cargar.
+  -->
+  <div class="oculto-a-la-vista">
+    <div id="cfg-tamano"></div>
+    <div id="cfg-conjunto"></div>
+    <p id="cfg-ayuda"></p>
+    <div id="cfg-cuentas">
+      Intentos: <span id="cfg-intentos">0</span>,
+      Parejas: <span id="cfg-parejas">0 / 0</span>,
+      Mejor aquí: <span id="cfg-mejor">—</span>
+    </div>
+  </div>
+
+</section>
+</main>
+
+<div class="panel-flotante" data-panel>
+  <a class="panel-boton" data-salir href="../mini-juegos.html"
+     aria-label="Volver a los minijuegos" title="Volver a los minijuegos">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8592;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></span>
+  </a>
+  <button type="button" class="panel-boton" data-configurar
+     aria-label="Configurar el juego" title="Configurar el juego">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#9881;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M2 14h4"/><path d="M10 8h4"/><path d="M18 16h4"/></svg></span>
+  </button>
+  <button type="button" class="panel-boton" data-reiniciar
+     aria-label="Empezar una partida nueva" title="Empezar de nuevo">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#128260;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></span>
+  </button>
+  <button type="button" class="panel-boton panel-boton--ayuda" data-ayuda
+     aria-label="Ayuda: cómo se juega" title="Cómo se juega">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">?</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span>
+  </button>
+</div>
+
+<script src="../../../scripts/reto-datos.js?v=c19-c6fe548d"></script>
+<script src="../../../scripts/reto-dialogo.js?v=c08-ae075893"></script>
+<script src="../../../scripts/reto-panel.js?v=c04-f73a0fa9"></script>
+<script src="../../../scripts/reto-memorama.js?v=c07-c55dd2d8"></script>
+<script src="../../../scripts/reto-debug.js?v=c25-5ac10ea0"></script>
+</body>
+</html>
+
+
+
+
+
+

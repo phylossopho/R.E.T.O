@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="papel">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edición - Biblioteca - R.E.T.O.</title>
+<link rel="preload" href="../../../styles/fuentes/nunito.css" as="style">
+<link rel="stylesheet" href="../../../styles/fuentes/nunito.css">
+<link rel="stylesheet" href="../../../styles/styles.css?v=c85-flexfix">
+<script src="../../../scripts/reto-panel-prefs.js?v=c01-0f3ddb54"></script>
+<script>
+// El tema y el interruptor de animaciones se aplican aqui, en el head, y no al
+// final del body: si se hiciera despues, el navegador pintaria primero el
+// estado por defecto y luego lo cambiaria, y se veria un destello en cada carga.
+(function () {
+  var t = localStorage.getItem('tema');
+  if (t) { document.documentElement.setAttribute('data-theme', t); }
+  // Las animaciones tienen tres estados, y el atributo es el que manda:
+  //   "on"   la persona las prendio, y gana su eleccion sobre el sistema
+  //   "off"  las apago, y se quedan apagadas siempre
+  //   nada   todavia no ha decidido, decide el sistema operativo
+  // Por eso el "on" se escribe explicitamente: sin el, las reglas del sistema
+  // lo volvian a apagar y el interruptor no servia para nada.
+  var a = localStorage.getItem('animaciones');
+  if (a === 'off' || a === 'on') { document.documentElement.setAttribute('data-anim', a); }
+
+  // Las tarjetas se animan solo la primera vez de cada sesion. CSS no tiene
+  // memoria, asi que el aviso se deja aqui, en el head, antes de pintar: si se
+  // hiciera al final del body, las tarjetas alcanzarian a animarse y despues se
+  // congelarian, que se ve como un salto.
+  //
+  // Con try/catch porque en algunos modos de privacidad el almacenamiento
+  // lanza al escribir. Si eso pasa, el atributo no se pone, la animacion se
+  // repite y no pasa nada grave: es el comportamiento anterior.
+  try {
+    // ?anim=1 fuerza la entrada de las tarjetas aunque esta sesion ya las haya
+    // visto. Sin esto no habria forma de comprobar que la animacion funciona:
+    // solo se veria una vez al abrir el navegador, y no se sabria si a la
+    // segunda ya no aparece por decision o porque dejo de funcionar.
+    var forzar = /[?&]anim=1/.test(location.search);
+    if (sessionStorage.getItem('reto_anim_tarjetas') && !forzar) {
+      document.documentElement.setAttribute('data-anim-tarjetas', 'off');
+    } else {
+      sessionStorage.setItem('reto_anim_tarjetas', '1');
+    }
+  } catch (e) {}
+})();
+</script>
+</head>
+<body>
+<header>
+<h1>Edición</h1>
+</header>
+<main>
+
+<section class="editor">
+  <h2>Tu texto</h2>
+
+  <!--
+    AYUDA Y BOTONES ANTIGUOS, OCULTOS
+    Este bloque ya no se muestra, pero no se borra. Lo que hay aqui se va
+    explicando en el boton de interrogacion del panel, que sale en un dialogo
+    solo cuando se pide.
+
+    Motivo de ocultarlo: la ayuda siempre visible compite con el texto que se
+    esta escribiendo, y en una pantalla de celular se come media pagina.
+
+    Los dos botones (abrir un archivo y ver un ejemplo) tambien se quedaron
+    ocultos. El de abrir se sigue usando: el <input type="file"> de abajo sigue
+    conectado, asi que si alguna vez se quiere volver a offering abrir un
+    archivo aqui, solo hay que mostrar el boton.
+
+    NO SE BORRA NADA. El script de abajo sigue siendo el mismo y sigue
+    conectando los botones: si alguien los quita del HTML sin quitar el
+    script, la pagina deja de funcionar. Por eso el codigo los busca y solo los
+    conecta si existen.
+  -->
+  <div id="ed-ayuda" hidden>
+    <p class="ayuda">
+      Escribe aquí tu lectura, o abre un archivo <strong>.txt</strong> que ya tengas.
+      Abajo vas a ver cómo queda armado, y si algo está mal te digo en qué línea.
+    </p>
+    <p class="ayuda">
+      Para darle estructura, pon <code>[N1]</code> hasta <code>[N4]</code> al
+      principio de la línea. Si no pones ningún <code>[N…]</code>, se guarda
+      como texto sencillo.
+    </p>
+    <p class="ayuda">
+      El <code>[N4]</code> es la lectura: el texto corto de dos o tres minutos que
+      después se practica en lectura veloz y se pregunta en el test. Un libro
+      tiene que llegar hasta ahí.
+    </p>
+
+    <div class="fila-botones">
+      <div class="accion">
+        <button type="button" class="boton" id="ed-abrir">Abrir un archivo .txt</button>
+        <p class="accion-ayuda">Busca el archivo en tu computadora.</p>
+      </div>
+      <div class="accion">
+        <button type="button" class="boton" id="ed-ejemplo">Ver un ejemplo</button>
+        <p class="accion-ayuda">Para ver cómo se ve, sin usar tu propio material.</p>
+      </div>
+    </div>
+  </div>
+  <input type="file" id="ed-archivo" accept=".txt,text/plain" hidden>
+
+  <label class="editor-label" for="ed-nombre">¿Cómo se llama?</label>
+  <input type="text" class="editor-campo" id="ed-nombre" autocomplete="off"
+    placeholder="Por ejemplo: Los números que usamos">
+  <p class="ayuda" id="ed-ayuda-nombre">
+    Es el nombre que verás en la biblioteca. Si abres un archivo, se pone el
+    nombre del archivo.
+  </p>
+
+  <label class="editor-label" for="ed-texto">Aquí escribe o pega el texto</label>
+  <textarea id="ed-texto" spellcheck="true" autocomplete="off"
+    aria-describedby="ed-ayuda-texto"></textarea>
+  <p class="ayuda" id="ed-ayuda-texto">
+    Un renglón en blanco separa un párrafo del siguiente. Si pegas un renglón
+    largo, se junta solo con el de arriba.
+  </p>
+
+  <p class="datos-estado" id="ed-estado" role="status" aria-live="polite"></p>
+  <p class="datos-estado" id="ed-guardado" aria-live="polite"></p>
+
+  <!--
+    SOLO LOS PROBLEMAS, NO LA VISTA PREVIA
+    Antes aqui iba la maqueta del arbol (el indice dibujado). Se quito porque
+    ocupa media pantalla y compite con lo que se esta escribiendo, y la lectura
+    de verdad ya existe: la pagina de Revision, que es donde se lee.
+
+    Lo que NO se quito son los problemas. Eso no es una vista previa, es el
+    aviso de que el archivo esta mal armado, y es lo unico que avisa de que el
+    documento NO se va a guardar. Sin esto se escribiria un libro con un nivel
+    saltado y nadie se enteraria hasta que el test saliera mal.
+  -->
+  <div id="ed-problemas-zona" hidden>
+    <h3 class="problema-titulo" id="ed-problemas-titulo">Problemas que hay que arreglar</h3>
+    <ul class="problemas" id="ed-problemas"></ul>
+  </div>
+</section>
+
+<section class="vista" id="ed-niveles" hidden>
+  <h2>Cómo se llaman los niveles</h2>
+  <p class="ayuda">
+    Los cuatro niveles son <code>[N1]</code>, <code>[N2]</code>, <code>[N3]</code> y
+    <code>[N4]</code>, y cada uno puede tener el nombre que tenga sentido en tu
+    texto. Un libro de capítulos puede dejar "Bloque, Capítulo, Sección, Texto",
+    y uno de anime puede poner "Saga, Arco, Escena, Lectura". Cuando se lee,
+    sale el nombre que escribiste aquí.
+  </p>
+  <p class="ayuda">
+    Si dejas uno vacío, ese nivel se llama <span data-nivel-nombre="1">Bloque</span>.
+    El nombre sale también en el botón de colocar un nivel y en el índice, así que
+    ponle a cada uno el que de verdad te sirva: si tu texto habla de anime, puede
+    que [N1] sea Saga y [N2] sea Arco.
+  </p>
+  <div class="editor-barra" data-niveles-campos></div>
+</section>
+
+</main>
+
+<!--
+  EL PANEL DE CONTROL DEL EDITOR
+  Seis botones, al estilo del dock: volver, deshacer, rehacer, colocar un nivel,
+  ver el índice, y la ayuda.
+
+  Los de copiar, cortar y pegar NO ESTAN, y es a propósito. Los tres necesitan
+  leer o escribir el portapapeles, que es dato privado: puede guardar una
+  contraseña, y si cualquier página pudiera leerlo en silencio, con solo que
+  copiaras se lo llevarían. El navegador avisa y, en el caso de pegar, la vía
+  vieja ni siquiera funciona. Pero las tres cosas ya se hacen sin permiso y sin
+  botón, con Ctrl+V o con el "Pegar" del dedo, porque ahí el navegador sabe que
+  lo pidió la persona. Lo que sí quedó es que **un texto pegado con Ctrl+V
+  ahora se puede deshacer** con el botón de deshacer.
+
+  POR QUE NO HAY FAB DE VOLVER
+  Antes habia un boton flotante en la esquina ("Volver a Biblioteca") y ahora
+  esta en el panel. Son la misma accion y el mismo sitio; tener los dos es
+   ofrecer la misma salida dos veces, y la segunda queda sola y nadie la nota.
+  El panel es el que va creciendo con cada herramienta, asi que es donde viven
+  los botones de verdad.
+
+  LA AYUDA VIVE AQUI, NO EN LA PAGINA
+  El bloque oculto de arriba (ayuda y dos botones viejos) se dejo en su sitio,
+  pero ya no es la ayuda: esta es, en el boton de interrogacion. La ayuda
+  siempre visible compite con el texto que se esta escribiendo, y en una
+  pantalla de celular se come media pagina.
+
+  SIN TEXTO DENTRO
+  Los diez botones son solo el dibujo, como en Revisión. Cada uno lleva su
+  aria-label y su title: sin eso, un boton con solo icono no existe para quien
+  navega con lector de pantalla, y seria un boton que no se puede usar.
+
+  Y todos con href o con su accion: el de volver es un <a> con href, asi que
+  sin JavaScript sigue llevando a la biblioteca.
+-->
+<div class="panel-flotante" data-panel>
+  <!--
+    EL ORDEN DE LOS BOTONES NO ES AL AZAR, Y SE LEE DE IZQUIERDA A DERECHA:
+      1. Salir. Primero, porque es la accion de la que uno se quiere acordar
+         despues de todo lo demas, y si esta en el medio hay que recorrerlo con
+         la vista para encontrarlo.
+      2. Lo de escribir a diario: deshacer y rehacer.
+      3. Lo de armar el texto: colocar un nivel, ver el indice.
+      4. La ayuda, al final, porque es la unica que no es una accion.
+    Ese orden va al reves de como se pondrian los botones en un menu, que
+    pondria la accion principal primero. Aqui todas valen lo mismo, y por eso
+    mandan primero las que se usan mas.
+
+    LOS CINCO DE ESCRITURA
+    Copiar, cortar, pegar, deshacer y rehacer. Son para el area de texto, asi
+    que solo tienen sentido aqui.
+
+    NO ESTAN EN UN MENU POR UNA RAZON CONCRETA: el navegador ya los hace con el
+    teclado (Ctrl+C, Ctrl+X, Ctrl+V, Ctrl+Z y Ctrl+Y), y eso no se puede
+    quitar. Estos botones son para quien NO tiene teclado a la mano, que en un
+    celular es la mayoria.
+
+    Y ESTOS BOTONES SON LOS QUE DE VERDAD HACEN FALTA
+    El area de texto es un <textarea>, y cada vez que el programa le cambia el
+    valor con zona.value = ... (que pasa al colocar un nivel y al abrir un
+    archivo) se ROMPE el historial de deshacer del navegador. O sea que en
+    cuanto se aprieta "colocar nivel", el Ctrl+Z ya no deshace eso: se queda en
+    el ultimo texto mecanico. Un boton de deshacer que miente es peor
+    que no tenerlo, asi que deshacer y rehacer NO usan el historial del
+    navegador: usan una lista de pasos propia. Ver el script de abajo.
+  -->
+  <a class="panel-boton" data-salir href="../biblioteca.html"
+     aria-label="Volver a la biblioteca" title="Volver a la biblioteca">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8592;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></span>
+  </a>
+  <button type="button" class="panel-boton panel-boton--texto" data-editar="deshacer"
+     aria-label="Deshacer" title="Deshacer">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8630;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3.51 13a9 9 0 1 0 2.13-9.36L3 7"/></svg></span>
+  </button>
+  <button type="button" class="panel-boton panel-boton--texto" data-editar="rehacer"
+     aria-label="Rehacer" title="Rehacer">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8631;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M20.49 13a9 9 0 1 1-2.12-9.36L21 7"/></svg></span>
+  </button>
+  <button type="button" class="panel-boton" data-nivel
+     aria-label="Colocar un nivel" title="Colocar un nivel">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8801;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"/><path d="M4 12h10"/><path d="M4 18h6"/></svg></span>
+  </button>
+  <button type="button" class="panel-boton" data-indice
+     aria-label="Ver el indice y saltar a un nivel" title="Índice">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#9776;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg></span>
+  </button>
+  <button type="button" class="panel-boton panel-boton--ayuda" data-ayuda
+     aria-label="Ayuda: que hace cada botón" title="Ayuda">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">?</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span>
+  </button>
+</div>
+
+<footer hidden>
+<p>R.E.T.O.</p>
+</footer>
+<script src="../../../scripts/reto-marcado.js?v=c02-badbdf81"></script>
+<script src="../../../scripts/reto-datos.js?v=c19-c6fe548d"></script>
+<!--
+  reto-dialogo.js va ANTES que el codigo de esta pagina porque los botones del
+  panel lo usan al hacer clic, no al cargarse. Si fuera al reves, en el primer
+  clic todavia no existiria el dialogo.
+-->
+<script src="../../../scripts/reto-dialogo.js?v=c08-ae075893"></script>
+<script>
+/* =========================================================================
+   Vista previa del texto mientras se escribe.
+   -------------------------------------------------------------------------
+   Aqui solo se MUESTRA lo que el analizador devuelve. No se guarda nada todavia:
+   este paso es para ver si el formato funciona antes de construir la biblioteca
+   encima de el.
+
+   UNA REGLA QUE NO SE PUEDE OLVIDAR
+   El texto viene de un archivo que eligio la persona, asi que es contenido
+   desconocido. Por eso la vista previa se construye con createElement y
+   textContent, y NUNCA con innerHTML: un texto que traiga "<script>" o una
+   imagen rota con codigo dentro se ejecutaria al pintarlo. El texto se ve tal
+   cual, como texto.
+
+   El arbol se arma con encabezados de verdad (h2 a h5). Asi el lector de
+   pantalla ofrece un menu con los capitulos, que es justo lo que hace util un
+   libro largo.
+   ========================================================================= */
+(function () {
+  'use strict';
+
+  var NOMBRES = { 1: 'Bloque', 2: 'Capítulo', 3: 'Sección', 4: 'Texto' };
+  var ETIQUETAS = ['h2', 'h3', 'h4', 'h5'];   // el nivel N1 se ve como h2, y asi hasta N4
+
+  /* Se anuncia la seccion de los nombres de los niveles cuando hay texto que
+     interpretar, porque sin [N] no hay nada que nombrar. */
+  function mostrarNiveles() {
+    document.getElementById('ed-niveles').hidden = !zona.value.trim();
+  }
+
+  var zona    = document.getElementById('ed-texto');
+  var nombre  = document.getElementById('ed-nombre');
+  var estado  = document.getElementById('ed-estado');
+  var guardado = document.getElementById('ed-guardado');
+  var probsEl = document.getElementById('ed-problemas');
+  var probsT  = document.getElementById('ed-problemas-titulo');
+  var archivo = document.getElementById('ed-archivo');
+  var btnAbrir = document.getElementById('ed-abrir');
+  var btnEjemplo = document.getElementById('ed-ejemplo');
+
+  /* El ejemplo tiene los CUATRO niveles a proposito, porque asi se ve de quien
+     es cada uno. Y sobre todo llega hasta [N4], que es la lectura: el texto
+     corto de dos o tres minutos que despues se practica en lectura veloz y se
+     pregunta en el test. Un libro que se queda en [N3] no tiene lecturas, y el
+     analizador avisa de eso, porque no sirve de nada guardado asi. */
+  var EJEMPLO = [
+    '[N1] Los numeros que usamos',
+    '',
+    'Los numeros aparecen todos los dias: en el precio de las cosas, en la hora,',
+    'en la cantidad de gente que hay en un salon. Saber contarlos bien es la',
+    'base de casi todo lo demas.',
+    '',
+    '[N2] La suma',
+    '',
+    '[N3] Sumar cantidades',
+    '',
+    '[N4] Sumar sin llevar',
+    '',
+    'Tengo 3 canicas y me dan 2 mas. Al final tengo 5. Eso es sumar: juntar',
+    'dos cantidades para saber quantas hay en total.',
+    'Cuando los digitos no se pasan de nueve, basta con sumarlos por separado:',
+    'las decenas con las decenas, y las unidades con las unidades.',
+    'El 4 de arriba y el 3 de abajo van a dar 7. El 2 y el 5, dan 7 tambien.',
+    'Aqui no hay que llevar nada, y por eso se llama "sin llevar".',
+    '',
+    '[N4] Sumar llevando',
+    '',
+    'Ahora los digitos SI se pasan: 8 + 5 da 13, y 13 no cabe en un solo digito.',
+    'Lo que se hace es escribir 3 y "llevarse" el 1 de la decena.',
+    'Por eso el resultado es 13 y no un numero de un solo digito: porque una',
+    'parte del grupo de diez se sumo a la fila de arriba.',
+    '',
+    '[N2] La resta',
+    '',
+    '[N3] Restar cantidades',
+    '',
+    '[N4] Restar sin pedir',
+    '',
+    'La resta es al revés: quita. Si tengo 7 canicas y doy 2, me quedan 5.',
+    'Solo se restan las unidades con las unidades, y las decenas con las',
+    'decenas, igual que al sumar.',
+    '',
+    '[N1] Las medidas',
+    '',
+    'Cada magnitud tiene su unidad: los metros miden largo, los litros miden',
+    'cuanto cabe. Medir sin decir la unidad no dice nada.'
+  ].join('\n');
+
+  /* ------------------------------------------------------------- ayudantes */
+
+  function crear(etiqueta, clase, texto) {
+    var e = document.createElement(etiqueta);
+    if (clase) e.className = clase;
+    if (texto !== undefined) e.textContent = texto;
+    return e;
+  }
+
+  function limpiar(e) {
+    while (e.firstChild) e.removeChild(e.firstChild);
+  }
+
+  /* "contarNiveles" y "pintarArbol" se fueron con la vista previa: las usaba
+     solo para dibujar la maqueta. El resumen de "N palabras"
+     que se ve arriba del area de texto se calcula aparte y sigue igual, asi que
+     no se pierde ninguna de las dos cosas. */
+
+  /* ---------------------------------------------------------------- pintado
+
+     QUE PINTA Y QUE NO
+     Antes esta funcion dibujaba la maqueta del libro: el tipo, la cuenta de
+     niveles y el arbol con encabezados. Todo eso se quito, porque la lectura de
+     verdad ya tiene su pagina (Revision) y aqui solo se esta escribiendo.
+
+     Lo que se queda son los PROBLEMAS y el resumen, y no por sobra: sin los
+     problemas nadie se entera de que un nivel esta saltado, y un archivo con un
+     nivel saltado NO se guarda. Si se quitara este aviso, el fallo se
+     descubriria mucho despues, cuando el test saliera raro, y en un sitio
+     donde ya no se puede saber de donde vino. */
+
+  function refrescar() {
+    var crudo = zona.value;
+
+    if (!crudo.trim()) {
+      estado.textContent = '';
+      estado.className = 'datos-estado';
+      limpiar(probsEl);
+      document.getElementById('ed-problemas-zona').hidden = true;
+      mostrarNiveles();
+      return;
+    }
+
+    var doc = window.RetoMarcado.analizar(crudo);
+    var revision = window.RetoMarcado.revisar(doc);
+
+    limpiar(probsEl);
+    mostrarNiveles();
+
+    /* --- los problemas --- */
+    var todos = revision.problemas;
+    var hayErrores = todos.some(function (p) { return p.tipo === 'error'; });
+    var nErrores = todos.filter(function (p) { return p.tipo === 'error'; }).length;
+    var nAvisos = todos.length - nErrores;
+
+    todos.forEach(function (p) {
+      var li = crear('li', 'problema' + (p.tipo === 'error' ? ' es-error' : ''));
+      li.appendChild(crear('span', 'problema-marca', p.tipo === 'error' ? 'Error' : 'Aviso'));
+      if (p.linea) li.appendChild(crear('span', 'problema-linea', 'línea ' + p.linea));
+      li.appendChild(crear('p', 'problema-texto', p.mensaje));
+      probsEl.appendChild(li);
+    });
+    probsT.hidden = todos.length === 0;
+
+  /* --- el mensaje corto, que es el que se anuncia --- */
+    var resumen = doc.tipo === 'libro' ? 'Se detectó un libro.' : 'Se detectó un texto.';
+    if (nErrores) resumen += ' Hay ' + nErrores + (nErrores === 1 ? ' error' : ' errores') + ' que arreglar.';
+    else if (nAvisos) resumen += ' Está bien, con ' + nAvisos + (nAvisos === 1 ? ' aviso' : ' avisos') + '.';
+    else resumen += ' Está bien.';
+    estado.textContent = resumen;
+    estado.className = 'datos-estado' + (hayErrores ? ' es-error' : nAvisos ? ' es-ok' : '');
+
+    /* El arbol YA NO SE DIBUJA. Antes se armaba la maqueta del libro con
+       encabezados de verdad, que se veia muy bien pero ocupaba media pantalla y
+       compitia con el texto que se estaba escribiendo. La lectura de verdad ya
+       tiene su pagina (Revision), y aqui lo unico que hace falta es saber si el
+       archivo esta bien armado. */
+  }
+
+  /* Se espera un momento antes de volver a dibujar. Escribir es continuo y un
+     libro entero son miles de lineas: analizar en cada tecla haria que la caja
+     se sintiera pesada. 250 ms es suficiente para que se sienta inmediato y
+     suficiente para que no se note el retraso. */
+  var esperando = null;
+  function alEscribir() {
+    marcarSucio();
+    if (esperando) clearTimeout(esperando);
+    esperando = setTimeout(function () { esperando = null; refrescar(); }, 250);
+  }
+
+  zona.addEventListener('input', alEscribir);
+  nombre.addEventListener('input', function () { marcarSucio(); alEscribir(); });
+
+  /* ---------------------------------------------------------------- guardado
+
+     YA NO SE GUARDA SOLO. Se cambio a proposito.
+
+     Antes el nombre se guardaba 800 ms despues de escribirlo, y lo que se
+     escribia en el area de texto NO se guardaba nunca: solo vivia en memoria.
+     O sea que recargar o darle a "volver" tiraba el trabajo sin preguntar nada,
+     y sin avisar. Ahora se avisa.
+
+     EL PORQUE DE QUE EL VALOR SE PIERDA
+     Guardar solo es comodo mientras no haya botones de salida. En cuanto los hay
+     (este editor tiene cuatro), alguien va a apretar "volver" con el dedo sin
+     querer, o va a cerrar la pestana, y con guardado automatico eso no se nota
+     hasta que ya es tarde. Preguntar es mas lento, pero es la unica forma de que
+     la persona decida.
+
+     QUE SE GUARDA Y QUE NO
+     Exportar el archivo SI sigue siendo a decision de la persona, y vive en la
+     pagina de configuracion. Guardar en el navegador y llevar el archivo a otra
+     computadora son cosas distintas; aqui solo se hace la primera. */
+
+  var CLAVE_ACTUAL = 'reto_edicion_actual';
+  var id = null;
+
+  /* Hay cambios sin guardar? Es lo unico que decide si al salir hay que
+     preguntar. Se pone en true al escribir y en false recien despues de
+     guardar de verdad, no antes: si el guardado falla, los cambios siguen
+     sin guardar y tiene que seguir preguntando. */
+  var sucio = false;
+  var yaAvisoAlSalir = false;
+
+  function nuevoId() {
+    return 'lib_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
+  }
+
+  function reloj() {
+    var d = new Date();
+    function dos(n) { return (n < 10 ? '0' : '') + n; }
+    return dos(d.getHours()) + ':' + dos(d.getMinutes()) + ':' + dos(d.getSeconds());
+  }
+
+  function decirGuardado(texto, error) {
+    guardado.textContent = texto;
+    guardado.className = 'datos-estado' + (error ? ' es-error' : ' es-ok');
+  }
+
+  function guardarAhora() {
+    var cuerpo = zona.value;
+    if (!cuerpo.trim()) { decirGuardado(''); return Promise.resolve(false); }
+
+    var doc = window.RetoMarcado.analizar(cuerpo);
+    var revision = window.RetoMarcado.revisar(doc);
+
+    // Con errores de estructura NO se guarda. Un libro con un nivel saltado
+    // envenena el test y el mapa mas adelante, y entonces el problema aparece
+    // lejos de donde se cometio. Los avisos SI dejan pasar.
+    var errores = doc.problemas.filter(function (p) { return p.tipo === 'error'; });
+    if (errores.length) {
+      decirGuardado('No se guardó: hay ' + errores.length +
+        (errores.length === 1 ? ' error' : ' errores') + ' que arreglar.', true);
+      // Se devuelve false para que quien pidio el guardado sepa que no se hizo.
+      return Promise.resolve(false);
+    }
+
+    if (!id) id = nuevoId();
+
+    var registro = {
+      id: id,
+      nombre: (nombre.value || '').trim(),
+      tipo: doc.tipo,
+      cuerpo: cuerpo,
+      arbol: doc.raiz,
+      palabras: doc.palabras,
+      problemas: revision.problemas,
+      // Los cuatro nombres de los niveles, tal cual los escribio la persona, y
+      // vacios donde no los escribio. Viajan con el documento para que el texto
+      // se lea igual en cualquier computadora y no dependa de quien lo abrio.
+      niveles: nivelesActuales(),
+      creado: new Date().toISOString(),
+      modificado: new Date().toISOString()
+    };
+
+    // La fecha de creacion no se reinicia en cada guardado: se recupera la que
+    // ya habia, para que al ordenar por fecha el documento no salte al
+    // principio cada vez que se le escribe una coma.
+    return window.RetoDatos.libros.obtener(id).then(function (previo) {
+      if (previo && previo.creado) registro.creado = previo.creado;
+      return window.RetoDatos.libros.guardar(registro);
+    }).then(function () {
+      try { localStorage.setItem(CLAVE_ACTUAL, id); } catch (e) {}
+      // Solo aqui se limpia la bandera: si el guardado fallo, los cambios
+      // siguen sin guardar y hay que seguir preguntando al salir.
+      sucio = false;
+      decirGuardado('Guardado a las ' + reloj() + '.');
+      return true;
+    }).catch(function (e) {
+      decirGuardado('No se pudo guardar: ' + e.message, true);
+      return false;
+    });
+  }
+
+  /* Se marca que hay cambios. NO guarda: solo se acuerda de que hay algo que
+     todavia no se ha escrito en la biblioteca. */
+  function marcarSucio() {
+    sucio = true;
+  }
+
+  /* ------------------------------------------------------ el panel de control
+
+     Los cuatro botones del panel. Se declaran en el HTML y se buscan aqui, en
+     vez de escribirlos desde JavaScript, por una razon que ya se ha visto
+     funcionar mal: si el HTML y el codigo no coinciden, el boton no hace nada
+     y no hay error que lo delate. Buscandolos por su atributo, cada uno esta
+     donde se ve que esta.
+
+     El script del panel (reto-panel.js) se encarga de volverse transparente a
+     los 2100 ms. ESTOS botones no son suyos: "volver" necesita preguntar por
+     los cambios sin guardar antes de irse, y eso solo lo sabe esta pagina. Por
+     eso el de volver usa data-salir y no data-accion, y el script del panel lo
+     deja pasar. */
+
+  var btnSalir  = document.querySelector('[data-salir]');
+  var btnNivel  = document.querySelector('[data-nivel]');
+  var btnIndice = document.querySelector('[data-indice]');
+  var btnAyuda  = document.querySelector('[data-ayuda]');
+
+  /* --- los nombres de los niveles
+
+     Un libro de capitulos usa Bloque, Capitulo, Seccion, Texto. Uno de anime
+     puede usar Saga, Arco, Escena, Lectura. Los marcadores [N1] a [N4] son
+     siempre los mismos; lo que cambia es COMO se llaman, y eso lo decide quien
+     escribe, porque el sitio no tiene por que saber de que trata el libro.
+
+     Se guardan EN EL DOCUMENTO, no en el navegador, y por una razon que
+     importa: si se guardaran aparte, al abrir el texto en otra computadora (con
+     el archivo de respaldo) cada nivel tendria el nombre de otra persona, y un
+     "Texto" con el nombre de "Saga" por un lado y "Lectura" por otro es
+     ilegible. */
+
+  var NOMBRES_POR_DEFECTO = ['Bloque', 'Capítulo', 'Sección', 'Texto'];
+  var camposNivel = [];
+
+  (function armarCamposNivel() {
+    var caja = document.querySelector('[data-niveles-campos]');
+    if (!caja) return;
+    for (var n = 1; n <= 4; n++) {
+      (function (nivel) {
+        var div = crear('accion');
+        var lab = document.createElement('label');
+        lab.className = 'editor-label';
+        lab.setAttribute('for', 'ed-nivel-' + nivel);
+        lab.textContent = '[N' + nivel + ']';
+        var inp = document.createElement('input');
+        inp.type = 'text';
+        inp.className = 'editor-campo';
+        inp.id = 'ed-nivel-' + nivel;
+        inp.autocomplete = 'off';
+        inp.maxLength = 24;
+        inp.placeholder = NOMBRES_POR_DEFECTO[nivel - 1];
+        inp.addEventListener('input', function () { marcarSucio(); });
+        div.appendChild(lab);
+        div.appendChild(inp);
+        caja.appendChild(div);
+        camposNivel[nivel - 1] = inp;
+      })(n);
+    }
+  })();
+
+  function nivelesActuales() {
+    return camposNivel.map(function (c) { return (c.value || '').trim(); });
+  }
+
+  /* Un nombre vacio se guarda como cadena vacia, no como el nombre por defecto.
+     Asi el sitio no le pone un nombre a un nivel que la persona todavia no ha
+     decidido, y si lo decide despues, el nombre por defecto se mueve con ella
+     en lugar de quedarse pegado al primero que se guardo. */
+  function ponerNiveles(nombres) {
+    if (!camposNivel.length) return;
+    for (var n = 0; n < 4; n++) {
+      camposNivel[n].value = (nombres && nombres[n]) || '';
+    }
+  }
+
+  /* --- salir, preguntando primero
+
+     DOS botones y no tres. Se probaron tres ("guardar y salir", "salir sin
+     guardar", "seguir editando") y sobra uno: los tres se parecian demasiado y
+     con dos dedos cerca se aprieta el equivocado. "Salir sin guardar" se
+     quito porque es el unico que tira trabajo, y para eso ya esta el boton de
+     atras del navegador, que por lo menos no lo aprieta uno sin querer.
+
+     Quedan: "sí, guardar y salir" y "seguir editando". El foco arranca en
+     "seguir editando", que es lo seguro: un doble toque descuidado no puede ser
+     la opcion que destruye trabajo. */
+  if (btnSalir) {
+    btnSalir.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (!sucio) { location.href = btnSalir.getAttribute('href'); return; }
+
+      window.RetoDialogo.preguntar({
+        titulo: '¿Guardar los cambios?',
+        texto: 'Escribiste algo que todavía no está en la biblioteca.',
+        ok: 'Sí, guardar y salir',
+        cancelar: 'Seguir editando'
+      }).then(function (dijoQueSi) {
+        if (!dijoQueSi) return;            // "seguir editando": no pasa nada
+        // Primero se guarda, y solo si se guardo bien se sale. Si el guardado
+        // falla, no se sale: se avisa del error aqui adentro.
+        guardarAhora().then(function (salio) {
+          if (salio) {
+            yaAvisoAlSalir = true;
+            location.href = btnSalir.getAttribute('href');
+          }
+        });
+      });
+    });
+  }
+
+  /* --- la red que cubre las otras salidas
+     El boton de volver pregunta, pero hay otras formas de irse: el boton de
+     atras del navegador, cerrar la pestana, o seguir un enlace. Esas no pasan
+     por el panel, asi que sin esto se perderia el trabajo en silencio igual que
+     antes. "beforeunload" es la unica red del navegador que cubre las tres. */
+  window.addEventListener('beforeunload', function (e) {
+    if (!sucio || yaAvisoAlSalir) return;
+    e.preventDefault();
+    e.returnValue = '';
+  });
+
+  /* --- deshacer y rehacer
+
+     QUEDAN SOLO ESTOS DOS. Los de copiar, cortar y pegar se quitaron del panel,
+     y la razon es que los tres necesitan leer o escribir el portapapeles, que
+     es DATO PRIVADO: puede guardar una contrasena, y si cualquier pagina
+     pudiera leerlo en silencio, con solo que copiaras se lo llevarian. Por eso
+     el navegador abre un aviso de permiso, y por eso la version vieja de esto
+     ("document.execCommand('paste')") nunca funciono: el navegador la quito
+     justamente por lo mismo.
+
+     Y NO SE PIERDE NADA, porque esas tres cosas ya se hacen sin permiso y sin
+     boton: con Ctrl+V, o con el "Pegar" del menu del dedo. Esas van por el
+     camino de "lo pidio la persona", que el navegador no cuestiona. Y ahora,
+     ademas, el pegado entra a la lista de pasos de aqui abajo, con lo que SI se
+     puede deshacer con el boton, cosa que antes no pasaba.
+
+     POR QUE ESTOS DOS NO USAN EL HISTORIAL DEL NAVEGADOR
+     El area de texto es un <textarea>, y cada vez que el programa le cambia el
+     valor con zona.value = ... (al colocar un nivel, al abrir un archivo) se
+     ROMPE el historial de deshacer del navegador. O sea que en cuanto se
+     aprieta "colocar nivel", el Ctrl+Z ya no deshace eso: se queda
+     en el ultimo cambio mecanico de posicion del cursor. Un boton de deshacer que
+     miente es peor que no tenerlo, asi que estos dos usan una lista de pasos
+     propia. Guarda el texto completo antes de cada cambio, con un tope de 60
+     pasos para que no crezca sin limite.
+
+     Se apagan solos cuando no pueden hacer nada, con el mismo criterio que los
+     botones de la biblioteca: no se apagan para que la barra no cambie de
+     ancho. */
+  var PASOS = [];
+  var PASO_ACTUAL = -1;
+  var TOPE_PASOS = 60;
+
+  function guardarPaso() {
+    // Si se habia deshecho algo y se escribe de nuevo, lo deshecho se borra:
+    // en cualquier editor, deshacer y despues escribir descarta el futuro.
+    PASOS = PASOS.slice(0, PASO_ACTUAL + 1);
+    PASOS.push(zona.value);
+    if (PASOS.length > TOPE_PASOS) PASOS.shift();
+    PASO_ACTUAL = PASOS.length - 1;
+    refrescarBotones();
+  }
+
+  function aplicarPaso(indice) {
+    if (indice < 0 || indice >= PASOS.length) return;
+    PASO_ACTUAL = indice;
+    zona.value = PASOS[indice];
+    // El cursor al final, que es donde quedo al deshacer de verdad.
+    zona.setSelectionRange(zona.value.length, zona.value.length);
+    refrescar();
+    alEscribir();
+    refrescarBotones();
+  }
+
+  function refrescarBotones() {
+    var bDeshacer = document.querySelector('[data-editar="deshacer"]');
+    var bRehacer = document.querySelector('[data-editar="rehacer"]');
+    if (bDeshacer) bDeshacer.disabled = PASO_ACTUAL <= 0;
+    if (bRehacer) bRehacer.disabled = PASO_ACTUAL >= PASOS.length - 1;
+  }
+
+  /* Los botones no se quedan con el foco al apretarlos, para que el cursor siga
+     en el texto y se pueda seguir escribiendo de inmediato. */
+  var botonesEditar = document.querySelectorAll('[data-editar]');
+  for (var be = 0; be < botonesEditar.length; be++) {
+    botonesEditar[be].addEventListener('mousedown', function (e) { e.preventDefault(); });
+    botonesEditar[be].addEventListener('click', function () {
+      var accion = this.getAttribute('data-editar');
+      if (accion === 'deshacer') { aplicarPaso(PASO_ACTUAL - 1); return; }
+      if (accion === 'rehacer') { aplicarPaso(PASO_ACTUAL + 1); return; }
+    });
+  }
+
+  /* Cada pegado se guarda como un paso, para que el boton de deshacer lo
+     deshaga. Se guarda en el evento "paste", que ocurre ANTES de que el texto
+     entre, asi que lo que se guarda es el texto de antes.
+
+     Y este mismo evento es lo que hace que pegar NO pida permiso: el navegador
+     lo dispara porque la persona aprieto Ctrl+V (o el Pegar del dedo), y el
+     texto viene dentro del evento. Por eso se escucha aqui y no se va a leer
+     el portapapeles con "navigator.clipboard", que si lo pediria. */
+  zona.addEventListener('paste', function () {
+    guardarPaso();
+  });
+
+  /* --- colocar un nivel
+
+     Pone "[N1]", "[N2]"… al principio del RENGLÓN donde esta el cursor, que es
+     donde se pondria a mano. Al principio del renglon y no en medio de la frase,
+     porque un nivel que no esta en su sitio el analizador lo reporta como
+     error y el documento no se guarda.
+
+     Ahora el boton NO decide: pregunta. Antes tomaba el nivel mas alto que
+     habia y ponia el siguiente, y con mas de cuatro marcadores se rompia: un
+     libro con varios [N4] (varias lecturas) hacia que el programa pidiera un
+     [N5] que no existe, y un nivel puesto en el lugar equivocado es un error
+     que el analizador reporta y el documento no se guarda. Quien escribe sabe
+     en que parte esta; el programa no.
+
+     Y la pregunta ya trae el nombre que le puso la persona a cada nivel, si es
+     que lo puso. Si escribio que [N1] es una unidad y [N2] un tema, el dialogo
+     dice "[N1]  Unidad" en vez de "[N1]  Bloque". Un nombre propio es mucho mas
+     util para decidir que va aqui.
+
+     Los nombres se leen EN EL MOMENTO de apretar, no al abrir la pagina, para
+     que cambiarlos abajo se vea aqui de inmediato sin tener que recargar. */
+  function nombreDeNivel(n) {
+    var propio = nivelesActuales()[n - 1];
+    return (propio && propio.trim()) || NOMBRES_POR_DEFECTO[n - 1];
+  }
+
+  if (btnNivel) {
+    btnNivel.addEventListener('click', function () {
+      var items = [];
+      for (var n = 1; n <= 4; n++) {
+        items.push({ texto: '[N' + n + ']  ' + nombreDeNivel(n), valor: n });
+      }
+
+      window.RetoDialogo.lista({
+        titulo: '¿Qué nivel va aquí?',
+        nota: 'Estos cuatro marcadores se ven abajo, en "Cómo se llaman los ' +
+              'niveles": ahí les pones el nombre que quieras y el título los usa.',
+        items: items
+      }).then(function (nivel) {
+        if (nivel === false || nivel === undefined || nivel === null) return;
+        colocarNivel(nivel);
+      });
+    });
+  }
+
+  function colocarNivel(nivel) {
+      var marca = '[N' + nivel + '] ';
+      // El renglon donde esta el cursor: se busca el ultimo salto de linea antes
+      // de el, y si no hay ninguno, se empieza desde arriba.
+      var hasta = zona.value.slice(0, zona.selectionStart);
+      var corte = hasta.lastIndexOf('\n') + 1;
+
+      var antes = zona.value.slice(0, corte);
+      var despues = zona.value.slice(corte);
+      // Si el renglon ya tiene texto, la marca va en su propia linea antes, para
+      // que el titulo no se quede pegado al parrafo anterior.
+      if (despues && despues.charAt(0) !== '\n' && despues.trim()) {
+        marca = marca + '\n';
+      }
+
+      zona.value = antes + marca + despues;
+      // El cursor se queda despues de la marca, lista para escribir el titulo.
+      zona.setSelectionRange(corte + marca.length, corte + marca.length);
+      zona.focus();
+      refrescar();
+      alEscribir();
+
+      estado.textContent = 'Se colocó [N' + nivel + '] ' + nombreDeNivel(nivel) + '.';
+      estado.className = 'datos-estado es-ok';
+  }
+
+  /* --- el indice: un boton, no dos
+
+     Se pidio entre "dos botones para saltar" y "un boton que abra el indice". Gana
+     el indice por una razon concreta: con dos botones solo se puede ir al nivel
+     siguiente y al anterior, y en un libro de treinta capitulos eso son
+     veintinueve clics. El indice da acceso directo a cualquiera, y con el grows
+     el boton nuevo no hay que ponerlo. */
+
+  if (btnIndice) {
+    btnIndice.addEventListener('click', function () {
+      var d = window.RetoMarcado.analizar(zona.value);
+      var nombres = nivelesActuales();
+
+      // Se recorren los encabezados del arbol (no el texto plano) porque ya
+      // vienen con su numero de nivel y su linea, que es justo lo que se
+      // necesita para armar la lista y para saltar.
+      var items = [];
+      (function recorrer(nodos) {
+        (nodos || []).forEach(function (nodo) {
+          if (nodo.t === 'n') {
+            items.push({
+                texto: '[N' + nodo.n + ']  ' + nombreDeNivel(nodo.n) + ' · ' + (nodo.titulo || '(sin titulo)'),
+              valor: nodo.linea
+            });
+            recorrer(nodo.hijos);
+          }
+        });
+      })(d.raiz);
+
+      if (!items.length) {
+        window.RetoDialogo.informar({
+          titulo: 'Todavia no hay nada que listar',
+          texto: 'Este texto no tiene ningun [N…]. Coloca al menos un nivel con el\n' +
+                 'boton de las rayitas y despues vuelve a abrir el indice.'
+        });
+        return;
+      }
+
+      window.RetoDialogo.lista({
+        titulo: 'Índice — ' + items.length + (items.length === 1 ? ' nivel' : ' niveles'),
+        items: items
+      }).then(function (linea) {
+        if (linea === false || linea === undefined || linea === null) return;
+        // Saltar a la linea: se recorre el texto contando los saltos, en vez de
+        // usar selectionRange con una cuenta, porque el area de texto cuenta por
+        // lineas fisicas y un renglon larguisimo lo descoloca.
+        var restantes = linea - 1;
+        var destino = 0;
+        while (restantes > 0 && destino < zona.value.length) {
+          if (zona.value.charAt(destino) === '\n') restantes--;
+          destino++;
+        }
+        zona.focus();
+        zona.setSelectionRange(destino, destino);
+        alEscribir();
+      });
+    });
+  }
+
+  /* --- la ayuda, en un dialogo
+     Se pide lo mismo que se pidio antes: explicar la pagina. Aqui cabe entero,
+     porque se abre en un modal y se cierra cuando se termina de leer.
+
+     CADA SECCION EMPIEZA CON EL ICONO DEL BOTON. Sin eso el texto habla de
+     "colocar nivel" y "deshacer" sin que quede claro de que botones esta
+     hablando, que es justo cuando la ayuda deja de servir: hay que recordar de
+     memoria que boton era. Los glifos son los mismos que usan los botones por
+     si el SVG no se dibuja, asi que aunque cambien los dibujos el texto sigue
+     apuntando al boton correcto. */
+  /* La ayuda va en el MISMO ORDEN que los botones, de izquierda a derecha, y
+     no agrupada por tema. Cuando el texto esta ordenado distinto que los
+     botones hay que saltar de un lado al otro para emparejar "este parrafo" con
+     "este dibujo", y ahi es donde la ayuda deja de servir.
+
+     Cada seccion empieza con el glifo del boton, el mismo que usan por si el
+     dibujo no se dibuja. Sin eso el texto habla de "deshacer" sin que quede
+     claro de que boton es, y hay que acordarse de memoria. */
+  var AYUDA = [
+    '←  VOLVER',
+    'Regresa a la biblioteca. Si escribiste algo, primero te pregunta si lo quieres guardar. Si no escribiste nada, se va sin preguntar.',
+    '',
+    '↶  DESHACER',
+    'Vuelve atrás un cambio. Guarda hasta 60 cambios.',
+    'Ojo: no es el mismo "deshacer" del teclado (Ctrl+Z). Ese se rompe en cuanto el programa toca el texto —al colocar un nivel—, así que este botón lleva su propia lista y sí funciona siempre.',
+    '',
+    '↷  REHACER',
+    'Vuelve a adelante lo que acabas de deshacer. Si escribes algo nuevo después de deshacer, lo que habías deshecho se pierde, como en cualquier editor.',
+    '',
+    '≡  COLOCAR UN NIVEL',
+    'Abre la lista de los cuatro niveles para que elijas cuál va aquí, y pone [N1], [N2]… al principio del renglón donde está el cursor. Muestra el nombre que le hayas puesto a cada nivel; si no le has puesto ninguno, salen como Bloque, Capítulo, Sección y Texto.',
+    'Antes elegía el nivel por su cuenta, y con más de cuatro marcadores se equivocaba: un libro con varias lecturas pedía un [N5] que no existe, y el archivo ya no se guardaba. Ahora lo eliges tú, que sí sabes dónde estás.',
+    '',
+    '☰  ÍNDICE',
+    'Abre la lista de todos los niveles del texto. Al tocar uno, el cursor salta ahí, para no tener que bajar a buscarlos con la barra de desplazamiento.',
+    '',
+    '?  AYUDA',
+    'Este texto. El botón con el signo de interrogación.',
+    '',
+    'Los niveles pueden llamarse como quieras.',
+    'Abajo, en "Cómo se llaman los niveles", se les pone el nombre que tenga sentido en tu texto: un libro de capítulos puede dejar Bloque, Capítulo, Sección y Texto, y uno de anime puede poner Saga, Arco, Escena y Lectura. Cuando se lee el texto, sale el nombre que escribiste ahí, y también salen en el botón de colocar un nivel y en el índice.',
+  ].join('\n');
+
+  if (btnAyuda) {
+    btnAyuda.addEventListener('click', function () {
+      window.RetoDialogo.informar({
+        titulo: 'Qué hace cada botón',
+        texto: AYUDA
+      });
+    });
+  }
+
+  function cargar(idBuscado) {
+    if (!idBuscado) return;
+    window.RetoDatos.libros.obtener(idBuscado).then(function (doc) {
+      if (!doc) return;
+      id = doc.id;
+      nombre.value = doc.nombre || '';
+      zona.value = doc.cuerpo || '';
+      ponerNiveles(doc.niveles);
+      refrescar();
+      decirGuardado('Abierto. Los cambios se preguntan al salir.');
+    });
+  }
+
+  window.RetoEditor = { cargar: cargar };
+
+  document.addEventListener('DOMContentLoaded', function () {
+    // El id puede venir en la direccion (edicion.html?id=...), que es como la
+    // biblioteca abre un documento para editarlo. Si no viene, se sigue con el
+    // que se estaba editando, para no perder el trabajo al recargar.
+    var deUrl = null;
+    try {
+      deUrl = new URLSearchParams(location.search).get('id');
+    } catch (e) {
+      var m = /[?&]id=([^&]*)/.exec(location.search);
+      deUrl = m ? decodeURIComponent(m[1]) : null;
+    }
+    if (deUrl) { cargar(deUrl); return; }
+    var previo = null;
+    try { previo = localStorage.getItem(CLAVE_ACTUAL); } catch (e) {}
+    if (previo) cargar(previo);
+  });
+
+  /* --------------------------------------------------------- el archivo
+
+     Los dos botones de arriba (abrir un archivo y ver un ejemplo) y la ayuda
+     que los acompana están dentro de un bloque oculto, a la espera del boton
+     de interrogacion. Se conservan porque volveran.
+
+     Por eso los dos se buscan con un "si existe" antes de conectarse. Si estan
+     ocultos pero presentes, conectarlos no cuesta nada y siguen funcionando
+     cuando el bloque se vuelva a mostrar. Si en algun momento se quitan del
+     HTML, la pagina sigue viva en vez de romperse con un error. */
+  if (btnAbrir) btnAbrir.addEventListener('click', function () { archivo.click(); });
+
+  archivo.addEventListener('change', function () {
+    var f = archivo.files && archivo.files[0];
+    if (!f) return;
+    var lector = new FileReader();
+    lector.onload = function () {
+      var texto = String(lector.result || '');
+      zona.value = texto;
+      archivo.value = '';
+      // El nombre del archivo, sin la extension, es el mejor nombre que se
+      // puede inventar. Y es un documento NUEVO, no una edicion: por eso se
+      // olvida el id, para no pisar lo que se estaba escribiendo.
+      nombre.value = f.name.replace(/\.[^.]+$/, '');
+      id = null;
+      refrescar();
+      guardarAhora();
+      // Si aparecen estos caracteres, el archivo no estaba en UTF-8 y los
+      // acentos se leen raro. Se avisa porque si no el usuario ve simbolos
+      // raros y cree que el programa fallo.
+      if (/\uFFFD/.test(texto)) {
+        estado.textContent = 'El archivo se leyó, pero hay caracteres raros. ' +
+          'Puede estar guardado en un formato antiguo: ábrelo y guárdalo otra vez ' +
+          'como "Texto codificado en UTF-8".';
+        estado.className = 'datos-estado es-error';
+      }
+    };
+    lector.onerror = function () {
+      estado.textContent = 'No se pudo leer el archivo.';
+      estado.className = 'datos-estado es-error';
+    };
+    lector.readAsText(f, 'utf-8');
+  });
+
+  if (btnEjemplo) btnEjemplo.addEventListener('click', function () {
+    zona.value = EJEMPLO;
+    if (!nombre.value) nombre.value = 'Los números que usamos';
+    refrescar();
+    guardarAhora();
+  });
+})();
+</script>
+<script src="../../../scripts/reto-panel.js?v=c04-f73a0fa9"></script>
+<script src="../../../scripts/reto-debug.js?v=c25-5ac10ea0"></script>
+</body>
+</html>
+
+
+
+
+
+

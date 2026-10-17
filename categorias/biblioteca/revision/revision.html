@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="papel">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revisión - R.E.T.O.</title>
+<link rel="preload" href="../../../styles/fuentes/nunito.css" as="style">
+<link rel="stylesheet" href="../../../styles/fuentes/nunito.css">
+<link rel="stylesheet" href="../../../styles/styles.css?v=c85-flexfix">
+<script src="../../../scripts/reto-panel-prefs.js?v=c01-0f3ddb54"></script>
+<script>
+// El tema y el interruptor de animaciones se aplican aqui, en el head, y no al
+// final del body: si se hiciera despues, el navegador pintaria primero el
+// estado por defecto y luego lo cambiaria, y se veria un destello en cada carga.
+(function () {
+  var t = localStorage.getItem('tema');
+  if (t) { document.documentElement.setAttribute('data-theme', t); }
+  // Las animaciones tienen tres estados, y el atributo es el que manda:
+  //   "on"   la persona las prendio, y gana su eleccion sobre el sistema
+  //   "off"  las apago, y se quedan apagadas siempre
+  //   nada   todavia no ha decidido, y decide el sistema operativo
+  // Por eso el "on" se escribe explicitamente: sin el, las reglas del sistema
+  // lo volvian a apagar y el interruptor no servia para nada.
+  var a = localStorage.getItem('animaciones');
+  if (a === 'off' || a === 'on') { document.documentElement.setAttribute('data-anim', a); }
+
+  // Las tarjetas se animan solo la primera vez de cada sesion. CSS no tiene
+  // memoria, asi que el aviso se deja aqui, en el head, antes de pintar: si se
+  // hiciera al final del body, las tarjetas alcanzarian a animarse y despues se
+  // congelarian, que se ve como un salto.
+  //
+  // Con try/catch porque en algunos modos de privacidad el almacenamiento
+  // lanza al escribir. Si eso pasa, el atributo no se pone, la animacion se
+  // repite y no se rompe nada: es como estaba antes.
+  try {
+    // ?anim=1 fuerza la entrada de las tarjetas aunque esta sesion ya las haya
+    // visto. Sin esto no habria forma de comprobar que la animacion funciona:
+    // solo se veria una vez al abrir el navegador, y no se sabria si a la
+    // segunda ya no aparece por decision o porque dejo de funcionar.
+    var forzar = /[?&]anim=1/.test(location.search);
+    if (sessionStorage.getItem('reto_anim_tarjetas') && !forzar) {
+      document.documentElement.setAttribute('data-anim-tarjetas', 'off');
+    } else {
+      sessionStorage.setItem('reto_anim_tarjetas', '1');
+    }
+  } catch (e) {}
+})();
+</script>
+</head>
+<body>
+<header>
+<h1>Revisión</h1>
+</header>
+<main>
+<p class="ayuda" id="rev-datos" hidden></p>
+<div class="leer-cuerpo" id="rev-cuerpo" hidden></div>
+</main>
+<footer hidden>
+<p>R.E.T.O.</p>
+</footer>
+<script src="../../../scripts/reto-datos.js?v=c19-c6fe548d"></script>
+
+<!--
+  EL PANEL FLOTANTE
+  La barra de botones de abajo. Es un componente aparte (scripts/reto-panel.js)
+  porque va a aparecer en muchas pantallas, cada una con sus propios botones: lo
+  que cambia es lo que tiene DENTRO, no como se comporta.
+
+  Los tres botones que hay por ahora:
+    - Volver (flecha): regresa a la pagina de donde se venia. El href apunta a
+      la biblioteca por si acaso, y el script lo cambia por "atras" de verdad
+      cuando hay historial. Sin JavaScript, el href es la salida.
+    - Editar (lapiz): lleva al editor con el id del texto que se esta leyendo.
+      El href base se declara aqui (data-ruta-editar) y el script le engancha el
+      id, que solo se conoce en ese momento.
+    - Borrar (papelera): elimina el texto o el libro. Pide confirmacion en un
+      dialogo antes, porque es lo unico de aqui que no se puede deshacer.
+
+  EL BOTON DE BORRAR NO SE DIFERENCIA DE LOS OTROS
+  A proposito. Se probo con un circulo rojo y el resultado fue el contrario del
+  buscado: un boton rojo al lado de dos grises no dice "cuidado", dice "presiona
+  aqui", porque el color llama el ojo y el toque llega solo. El aviso va en el
+  dialogo, que es donde la persona ya decidio que va a hacer algo.
+
+  SIN TEXTO, PERO CON NOMBRE
+  Los botones solo muestran el dibujo. Cada uno lleva su aria-label, que es lo
+  que lee el lector de pantalla y lo que aparece como ayuda al pasar el raton.
+  Sin eso, un boton con solo icono no existe para quien no ve, y seria un boton
+  que no se puede usar. Por eso el aria-label va en el <a> y el SVG y el glifo
+  de reserva van marcados con aria-hidden: el nombre se dice una sola vez.
+
+  Los botones se agregan o se quitan segun la pantalla, pero SIEMPRE con un href
+  real: un boton que solo existe con JavaScript es un boton que desaparece si el
+  JavaScript no carga.
+-->
+<div class="panel-flotante" data-panel data-ruta-editar="../edicion/edicion.html">
+  <a class="panel-boton" href="../biblioteca.html"
+     aria-label="Volver a la lista" title="Volver a la lista">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8592;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></span>
+  </a>
+  <a class="panel-boton" data-accion="editar" href="../edicion/edicion.html"
+     aria-label="Editar este texto" title="Editar este texto">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#9998;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+  </a>
+  <button type="button" class="panel-boton panel-boton--aviso" data-accion="borrar"
+     aria-label="Eliminar este texto" title="Eliminar este texto">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#128465;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></span>
+  </button>
+</div>
+
+<script src="../../../scripts/reto-dialogo.js?v=c08-ae075893"></script>
+<script src="../../../scripts/reto-panel.js?v=c04-f73a0fa9"></script>
+<script>
+/* =========================================================================
+   Revisión: leer un texto de principio a fin.
+   -------------------------------------------------------------------------
+   POR QUE ESTA PAGINA ES SOLO LECTURA
+   Aqui se abre lo que elegiste de la biblioteca y no hay nada mas en el cuerpo:
+   ni barra de herramientas, ni notas, ni nada que distraiga. El texto esta solo
+   en medio de la pantalla.
+
+   Lo que hay abajo es EL PANEL FLOTANTE, y son tres botones: volver, editar y
+   borrar. Antes este archivo decia que aqui no habia ningun boton, y eso ya no
+   es cierto; lo que sigue describiendo el panel de mas abajo.
+
+   El panel se pone casi transparente a los 2100 ms de no tocarlo, y vuelve a
+   verse en cuanto se le pasa el raton encima o se lo toca. Nunca desaparece:
+   siempre esta ahi. Y eso NO depende del interruptor de animaciones, porque no
+   es adorno, es el mecanismo que aparta el panel de en medio del texto.
+
+   Volver y Editar son enlaces, con su href: sin JavaScript funcionan igual. Borrar
+   es un boton (no un enlace, porque no lleva a ninguna parte: ejecuta), y pide
+   confirmacion antes de hacer nada, porque es lo unico de aqui que no se puede
+   deshacer.
+
+   LO QUE SÍ HAY
+   El titulo grande pasa a ser el nombre del documento (no dice "Revisión",
+   porque lo que interesa es saber QUE se esta leyendo), la pestana del
+   navegador lo dice tambien, y abajo va una linea con de que tipo es, cuanto
+   pesa y cuantas ideas tiene marcadas.
+
+   EL TEXTO NUNCA SE EJECUTA
+   Viene de un archivo que eligio la persona, asi que es contenido desconocido.
+   Todo se pinta con createElement y textContent, nunca con innerHTML: un texto
+   con "<script>" dentro se veria escrito, no se ejecutaria.
+   ========================================================================= */
+(function () {
+  'use strict';
+
+  // El nivel N1 se ve como h2, y asi hasta el N4 como h5, para que el lector de
+  // pantalla ofrezca un menu con los capitulos.
+  //
+  // EL NOMBRE DE CADA NIVEL LO PONE QUIEN ESCRIBIO EL TEXTO. Un libro de
+  // capitulos deja "Bloque, Capitulo, Seccion, Texto", y uno de anime puede
+  // dejar "Saga, Arco, Escena, Lectura". Si el documento no trae nombres (por
+  // ejemplo, si se importo un respaldo viejo), se usan los del sitio, que son
+  // los mismos que estan en el editor.
+  var NOMBRES = { 1: 'Bloque', 2: 'Capítulo', 3: 'Sección', 4: 'Texto' };
+  var ETIQUETAS = ['h2', 'h3', 'h4', 'h5'];
+  var nombresDoc = null;
+
+  function nombreDelNivel(n) {
+    var propio = nombresDoc && nombresDoc[n - 1];
+    return (propio && propio.trim()) || NOMBRES[n] || ('N' + n);
+  }
+
+  var datosEl = document.getElementById('rev-datos');
+  var cuerpoEl = document.getElementById('rev-cuerpo');
+  var tituloEl = document.querySelector('header h1');
+
+  function crear(etiqueta, clase, texto) {
+    var e = document.createElement(etiqueta);
+    if (clase) e.className = clase;
+    if (texto !== undefined) e.textContent = texto;
+    return e;
+  }
+
+  function limpiar(e) {
+    while (e.firstChild) e.removeChild(e.firstChild);
+  }
+
+  function idDeLaDireccion() {
+    try {
+      return new URLSearchParams(location.search).get('id');
+    } catch (e) {
+      var m = /[?&]id=([^&]*)/.exec(location.search);
+      return m ? decodeURIComponent(m[1]) : null;
+    }
+  }
+
+  function pintarArbol(nodos, en) {
+    (nodos || []).forEach(function (nodo) {
+      if (nodo.t === 'n') {
+        var h = crear(ETIQUETAS[Math.min(nodo.n, 4) - 1],
+          'leer-nivel leer-nivel-' + nodo.n);
+        // El id del encabezado lleva el numero de nivel, para que el menu de
+        // titulos del lector de pantalla diga "Bloque" y no solo el texto.
+        h.id = 'nivel-' + nodo.n + '-' + nodo.linea;
+        h.appendChild(crear('span', 'leer-nivel-nombre', nombreDelNivel(nodo.n)));
+        h.appendChild(document.createTextNode(nodo.titulo));
+        en.appendChild(h);
+        pintarArbol(nodo.hijos, en);
+      } else {
+        en.appendChild(crear('p', null, nodo.txt));
+      }
+    });
+  }
+
+  function mostrar(doc) {
+    limpiar(cuerpoEl);
+    tituloEl.textContent = doc.nombre || 'Sin nombre';
+    document.title = (doc.nombre || 'Revisión') + ' - Revisión - R.E.T.O.';
+    nombresDoc = doc.niveles || null;
+
+    /* Se apunta cual fue el ultimo documento abierto, para el boton "seguir
+       leyendo" de la biblioteca. Va en localStorage y NO en el documento, a
+       proposito: leer no es modificar, y si al abrir un texto se le cambiara la
+       fecha, el documento subiria al principio de la lista y la ordenacion
+       "lo que modificaste ultimamente, primero" dejaria de ser cierta. */
+    try { localStorage.setItem('reto_biblioteca_ultimo', doc.id); } catch (e) {}
+
+    var partes = [];
+    partes.push(doc.palabras + (doc.palabras === 1 ? ' palabra' : ' palabras'));
+    if (doc.tipo === 'libro') partes.push('libro');
+    datosEl.textContent = partes.join(' · ');
+    datosEl.hidden = false;
+    cuerpoEl.hidden = false;
+
+    if (doc.arbol && doc.arbol.length) {
+      pintarArbol(doc.arbol, cuerpoEl);
+    } else {
+      // Un documento guardado sin arbol (por ejemplo, si se importo un
+      // respaldo viejo): se vuelve a armar desde el cuerpo, que siempre esta.
+      cuerpoEl.appendChild(crear('p', 'datos-estado es-error',
+        'Este texto no tiene estructura guardada. Vuelve a importarlo para reconstruirla.'));
+    }
+  }
+
+  function noEncontrado(mensaje) {
+    tituloEl.textContent = 'No se encontró';
+    limpiar(cuerpoEl);
+    cuerpoEl.appendChild(crear('p', null,
+      mensaje || 'Ese texto no está en este navegador. Puede que se haya borrado, o que ' +
+      'estés viendo la biblioteca desde otra computadora.'));
+    cuerpoEl.hidden = false;
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var id = idDeLaDireccion();
+    if (!id) { noEncontrado(); return; }
+
+    window.RetoDatos.libros.obtener(id).then(function (doc) {
+      if (doc) mostrar(doc); else noEncontrado();
+    }).catch(function (e) {
+      noEncontrado('No se pudo abrir: ' + e.message);
+    });
+  });
+})();
+</script>
+<script src="../../../scripts/reto-debug.js?v=c25-5ac10ea0"></script>
+</body>
+</html>
+
+
+
+
+
+

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="papel">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lectura - Biblioteca - R.E.T.O.</title>
+<link rel="preload" href="../../../styles/fuentes/nunito.css" as="style">
+<link rel="stylesheet" href="../../../styles/fuentes/nunito.css">
+<link rel="stylesheet" href="../../../styles/styles.css?v=c85-flexfix">
+<script>
+// El tema y el interruptor de animaciones se aplican aqui, en el head, y no al
+// final del body: si se hiciera despues, el navegador pintaria primero el
+// estado por defecto y luego lo cambiaria, y se veria un destello en cada carga.
+(function () {
+  var t = localStorage.getItem('tema');
+  if (t) { document.documentElement.setAttribute('data-theme', t); }
+  // Las animaciones tienen tres estados, y el atributo es el que manda:
+  //   "on"   la persona las prendio, y gana su eleccion sobre el sistema
+  //   "off"  las apago, y se quedan apagadas siempre
+  //   nada   todavia no ha decidido, decide el sistema operativo
+  // Por eso el "on" se escribe explicitamente: sin el, las reglas del sistema
+  // lo volvian a apagar y el interruptor no servia para nada.
+  var a = localStorage.getItem('animaciones');
+  if (a === 'off' || a === 'on') { document.documentElement.setAttribute('data-anim', a); }
+
+  // Las tarjetas se animan solo la primera vez de cada sesion. CSS no tiene
+  // memoria, asi que el aviso se deja aqui, en el head, antes de pintar: si se
+  // hiciera al final del body, las tarjetas alcanzarian a animarse y despues se
+  // congelarian, que se ve como un salto.
+  //
+  // Con try/catch porque en algunos modos de privacidad el almacenamiento
+  // lanza al escribir. Si eso pasa, el atributo no se pone, la animacion se
+  // repite y no pasa nada grave: es el comportamiento anterior.
+  try {
+    // ?anim=1 fuerza la entrada de las tarjetas aunque esta sesion ya las haya
+    // visto. Sin esto no habria forma de comprobar que la animacion funciona:
+    // solo se veria una vez al abrir el navegador, y no se sabria si a la
+    // segunda ya no aparece por decision o porque dejo de funcionar.
+    var forzar = /[?&]anim=1/.test(location.search);
+    if (sessionStorage.getItem('reto_anim_tarjetas') && !forzar) {
+      document.documentElement.setAttribute('data-anim-tarjetas', 'off');
+    } else {
+      sessionStorage.setItem('reto_anim_tarjetas', '1');
+    }
+  } catch (e) {}
+})();
+</script>
+<script src="../../../scripts/reto-panel-prefs.js?v=c01-0f3ddb54"></script>
+</head>
+<body>
+<header>
+<h1 id="leer-titulo">Lectura</h1>
+</header>
+<main>
+<p class="ayuda" id="leer-datos"></p>
+<div class="leer-cuerpo" id="leer-cuerpo">
+<p class="datos-estado">Abriendo…</p>
+</div>
+
+<section class="leer-pie" id="leer-acciones" hidden>
+  <p class="problema-titulo">¿Qué quieres hacer con este texto?</p>
+  <div class="fila-botones">
+    <div class="accion">
+      <a class="boton" id="leer-editar" href="../edicion/edicion.html">Editar este texto</a>
+      <p class="accion-ayuda">Ábrelo en el editor para cambiarlo.</p>
+    </div>
+    <div class="accion">
+      <button type="button" class="boton" id="leer-borrar">Borrar este texto</button>
+      <p class="accion-ayuda">Se elimina para siempre. No se puede deshacer.</p>
+    </div>
+  </div>
+</section>
+</main>
+<div class="panel-flotante" data-panel>
+  <a class="panel-boton" href="../biblioteca.html"
+     aria-label="Volver a Biblioteca" title="Volver a Biblioteca">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8592;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></span>
+  </a>
+  <a class="panel-boton" href="../../../index.html"
+     aria-label="Ir a la portada" title="Ir a la portada">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8962;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 3l9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/><path d="M10 21v-6h4v6"/></svg></span>
+  </a>
+</div>
+<footer hidden>
+<p>R.E.T.O.</p>
+</footer>
+<script src="../../../scripts/reto-panel.js?v=c04-f73a0fa9"></script>
+<script src="../../../scripts/reto-datos.js?v=c19-c6fe548d"></script>
+<script>
+/* =========================================================================
+   Pagina de lectura.
+   -------------------------------------------------------------------------
+   Muestra un texto o un libro tal como esta guardado, sin las marcas [A] ni
+   los marcadores: aqui se lee, no se trabaja.
+
+   LOS BOTONES DE EDITAR Y BORRAR ESTAN AQUI, NO EN LA TARJETA
+   Con decenas de textos, un boton por tarjeta convierte la lista en un tablero
+   de botones donde el titulo deja de verse. Y borrar por accidente es mas
+   grave que un boton de mas: desde la pagina de lectura se hace a proposito.
+
+   El texto se pinta con textContent y NUNCA con innerHTML: viene de un archivo
+   que eligio la persona, o de lo que ella escribio, y en los dos casos es
+   contenido que no se debe ejecutar.
+   ========================================================================= */
+(function () {
+  'use strict';
+
+  var ETIQUETAS = ['h2', 'h3', 'h4', 'h5'];   // N1..N4
+  var NOMBRES = { 1: 'Bloque', 2: 'Capítulo', 3: 'Sección', 4: 'Texto' };
+
+  var titulo = document.getElementById('leer-titulo');
+  var datos = document.getElementById('leer-datos');
+  var cuerpo = document.getElementById('leer-cuerpo');
+  var acciones = document.getElementById('leer-acciones');
+  var btnEditar = document.getElementById('leer-editar');
+  var btnBorrar = document.getElementById('leer-borrar');
+
+  function crear(etiqueta, clase, texto) {
+    var e = document.createElement(etiqueta);
+    if (clase) e.className = clase;
+    if (texto !== undefined) e.textContent = texto;
+    return e;
+  }
+
+  function limpiar(e) {
+    while (e.firstChild) e.removeChild(e.firstChild);
+  }
+
+  function idDeLaDireccion() {
+    try {
+      return new URLSearchParams(location.search).get('id');
+    } catch (e) {
+      var m = /[?&]id=([^&]*)/.exec(location.search);
+      return m ? decodeURIComponent(m[1]) : null;
+    }
+  }
+
+  function fecha(iso) {
+    var d = new Date(iso);
+    if (!iso || isNaN(d.getTime())) return '';
+    try {
+      return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' });
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function pintarArbol(nodos) {
+    (nodos || []).forEach(function (nodo) {
+      if (nodo.t === 'n') {
+        // El h2 lleva un id con el nombre del nivel, para que el menu de
+        // titulos del lector de pantalla diga "Bloque" y no solo el texto.
+        var h = crear(ETIQUETAS[Math.min(nodo.n, 4) - 1], 'leer-nivel leer-nivel-' + nodo.n);
+        h.appendChild(crear('span', 'leer-nivel-nombre', NOMBRES[nodo.n] || ('N' + nodo.n)));
+        h.appendChild(document.createTextNode(nodo.titulo));
+        cuerpo.appendChild(h);
+        pintarArbol(nodo.hijos);
+      } else {
+        cuerpo.appendChild(crear('p', null, nodo.txt));
+      }
+    });
+  }
+
+  function mostrar(doc) {
+    limpiar(cuerpo);
+    titulo.textContent = doc.nombre || 'Sin nombre';
+    document.title = (doc.nombre || 'Lectura') + ' - Biblioteca - R.E.T.O.';
+
+    var partes = [];
+    partes.push(doc.palabras + (doc.palabras === 1 ? ' palabra' : ' palabras'));
+    var cuando = fecha(doc.modificado);
+    if (cuando) partes.push('guardado el ' + cuando);
+    datos.textContent = partes.join(' · ');
+
+    if (doc.arbol && doc.arbol.length) {
+      pintarArbol(doc.arbol);
+    } else {
+      // Un documento guardado sin arbol (por ejemplo, si se importo un
+      // respaldo viejo): se vuelve a armar desde el cuerpo, que siempre esta.
+      cuerpo.appendChild(crear('p', 'datos-estado es-error',
+        'Este texto no tiene estructura guardada. Vuelve a abrirlo en el editor para reconstruirla.'));
+    }
+
+    acciones.hidden = false;
+    btnEditar.href = '../edicion/edicion.html?id=' + encodeURIComponent(doc.id);
+
+    btnBorrar.addEventListener('click', function () {
+      if (!window.confirm('¿Borrar "' + (doc.nombre || 'sin nombre') + '"?\n\n' +
+          'Esto no se puede deshacer. Si solo querías dejar de verlo, puedes no volver a entrar a esta página.')) {
+        return;
+      }
+      window.RetoDatos.libros.borrar(doc.id).then(function () {
+        location.href = doc.tipo === 'libro' ? '../libros/libros.html' : '../textos/textos.html';
+      });
+    });
+  }
+
+  function noEncontrado() {
+    titulo.textContent = 'No se encontró';
+    limpiar(cuerpo);
+    cuerpo.appendChild(crear('p', null,
+      'Ese texto no está en este navegador. Puede que se haya borrado, o que ' +
+      'estes viendo la biblioteca desde otra computadora.'));
+    var a = crear('a', 'boton boton--principal', 'Volver a la biblioteca');
+    a.href = '../biblioteca.html';
+    cuerpo.appendChild(a);
+    acciones.hidden = true;
+  }
+
+  var id = idDeLaDireccion();
+  if (!id) { noEncontrado(); return; }
+
+  window.RetoDatos.libros.obtener(id).then(function (doc) {
+    if (doc) mostrar(doc); else noEncontrado();
+  }).catch(function (e) {
+    limpiar(cuerpo);
+    cuerpo.appendChild(crear('p', 'datos-estado es-error', 'No se pudo abrir: ' + e.message));
+  });
+})();
+</script>
+<script src="../../../scripts/reto-debug.js?v=c25-5ac10ea0"></script>
+</body>
+</html>
+
+
+
+
+
+

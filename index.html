@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="papel">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>R.E.T.O.</title>
+<link rel="preload" href="styles/fuentes/nunito.css" as="style">
+<link rel="stylesheet" href="styles/fuentes/nunito.css">
+<link rel="stylesheet" href="styles/styles.css?v=c85-flexfix">
+<script>
+// El tema y el interruptor de animaciones se aplican aqui, en el head, y no al
+// final del body: si se hiciera despues, el navegador pintaria primero el
+// estado por defecto y luego lo cambiaria, y se veria un destello en cada carga.
+(function () {
+  var t = localStorage.getItem('tema');
+  if (t) { document.documentElement.setAttribute('data-theme', t); }
+  // Las animaciones tienen tres estados, y el atributo es el que manda:
+  //   "on"   la persona las prendio, y gana su eleccion sobre el sistema
+  //   "off"  las apago, y se quedan apagadas siempre
+  //   nada   todavia no ha decidido, y decide el sistema operativo
+  // Por eso el "on" se escribe explicitamente: sin el, las reglas del sistema
+  // lo volvian a apagar y el interruptor no servia para nada.
+  var a = localStorage.getItem('animaciones');
+  if (a === 'off' || a === 'on') { document.documentElement.setAttribute('data-anim', a); }
+
+  // Las tarjetas se animan solo la primera vez de cada sesion. CSS no tiene
+  // memoria, asi que el aviso se deja aqui, en el head, antes de pintar: si se
+  // hiciera al final del body, las tarjetas alcanzarian a animarse y despues se
+  // congelarian, que se ve como un salto.
+  //
+  // Con try/catch porque en algunos modos de privacidad el almacenamiento
+  // lanza al escribir. Si eso pasa, el atributo no se pone, la animacion se
+  // repite y no se rompe nada: es como estaba antes.
+  try {
+    // ?anim=1 fuerza la entrada de las tarjetas aunque esta sesion ya las haya
+    // visto. Sin esto no habria forma de comprobar que la animacion funciona:
+    // solo se veria una vez al abrir el navegador, y no se sabria si a la
+    // segunda ya no aparece por decision o porque dejo de funcionar.
+    var forzar = /[?&]anim=1/.test(location.search);
+    if (sessionStorage.getItem('reto_anim_tarjetas') && !forzar) {
+      document.documentElement.setAttribute('data-anim-tarjetas', 'off');
+    } else {
+      sessionStorage.setItem('reto_anim_tarjetas', '1');
+    }
+  } catch (e) {}
+})();
+</script>
+<script src="scripts/reto-panel-prefs.js?v=c01-0f3ddb54"></script>
+</head>
+<body>
+<header>
+<h1>R.E.T.O.</h1>
+<p class="significado"><b>R</b>efuerzo · <b>E</b>studio · <b>T</b>est · <b>O</b>rganización</p></header>
+<main>
+<ul class="rejilla">
+<li>
+<a class="tarjeta tarjeta-nav" href="categorias/lectura-veloz/lectura-veloz.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">&#128218;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v16" /><path d="M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z" /></svg></span>
+<h2 class="tarjeta-titulo">Lectura Veloz</h2>
+<p class="tarjeta-texto">Practica y aumenta tu velocidad de lectura</p>
+</a>
+</li>
+<li>
+<a class="tarjeta tarjeta-nav" href="categorias/test-conocimientos/test-conocimientos.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">&#9989;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" rx="1" ry="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="m9 14 2 2 4-4" /></svg></span>
+<h2 class="tarjeta-titulo">Test de conocimientos</h2>
+<p class="tarjeta-texto">Evalúa lo que sabes y detecta qué repasar</p>
+</a>
+</li>
+<li>
+<a class="tarjeta tarjeta-nav" href="categorias/mini-juegos/mini-juegos.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">&#9633;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="currentColor" shape-rendering="crispEdges"><rect x="5" y="4" width="2" height="2"/><rect x="17" y="4" width="2" height="2"/><rect x="7" y="6" width="2" height="2"/><rect x="15" y="6" width="2" height="2"/><rect x="5" y="8" width="14" height="2"/><rect x="3" y="10" width="4" height="2"/><rect x="9" y="10" width="6" height="2"/><rect x="17" y="10" width="4" height="2"/><rect x="1" y="12" width="22" height="2"/><rect x="1" y="14" width="2" height="2"/><rect x="5" y="14" width="14" height="2"/><rect x="21" y="14" width="4" height="2"/><rect x="1" y="16" width="2" height="2"/><rect x="5" y="16" width="2" height="2"/><rect x="17" y="16" width="4" height="2"/><rect x="21" y="16" width="4" height="2"/><rect x="7" y="18" width="4" height="2"/><rect x="13" y="18" width="4" height="2"/></svg></span>
+<h2 class="tarjeta-titulo">Mini juegos</h2>
+<p class="tarjeta-texto">Un rato de juego para descansar la cabeza</p>
+</a>
+</li>
+<li>
+<a class="tarjeta tarjeta-nav" href="categorias/biblioteca/biblioteca.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">&#128218;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 6 4 14" /><path d="M12 6v14" /><path d="M8 8v12" /><path d="M4 4v16" /></svg></span>
+<h2 class="tarjeta-titulo">Biblioteca</h2>
+<p class="tarjeta-texto">Textos y libros para leer y estudiar</p>
+</a>
+</li>
+<li>
+<a class="tarjeta tarjeta-nav" href="categorias/organizando-ideas/organizando-ideas.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">&#128161;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="16" y="16" rx="1" /><rect x="2" y="16" rx="1" /><rect x="9" y="2" rx="1" /><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3" /><path d="M12 12V8" /></svg></span>
+<h2 class="tarjeta-titulo">Organizando ideas</h2>
+<p class="tarjeta-texto">Anota tus ideas y conéctalas para entenderlas mejor</p>
+</a>
+</li>
+<li>
+<a class="tarjeta tarjeta-nav" href="configuracion_general.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">&#9881;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg></span>
+<h2 class="tarjeta-titulo">Configuración</h2>
+<p class="tarjeta-texto">Tema, animaciones, paneles, sonido y tus datos</p>
+</a>
+</li>
+</ul>
+</main>
+<footer hidden>
+<p>R.E.T.O.</p>
+</footer>
+<script src="scripts/reto-panel.js?v=c04-f73a0fa9"></script>
+<script src="scripts/reto-debug.js?v=c25-5ac10ea0"></script>
+</body>
+</html>
+
+
+
+
+

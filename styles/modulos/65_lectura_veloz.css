@@ -1,0 +1,1728 @@
+/* =========================================================================
+   R.E.T.O. — Lectura veloz
+   -------------------------------------------------------------------------
+   Este modulo es de las pantallas donde se lee, y SOLO de esas. Es el
+   equivalente del 60_juegos.css para el otro tipo de pantalla que no es una
+   pagina normal: aqui no hay cabecera, ni pie, ni lista de nada. Solo hay
+   texto que avanza y los botones que lo controlan.
+
+   Va de ULTIMO, por la misma razon que 60_juegos: una pantalla de lectura trae
+   tipografia grande y un marco fijo, y las dos cosas chocan con lo que ya esta
+   escrito para el resto del sitio. Que este modulo aparezca despues significa
+   que la lectura puede ajustar lo suyo sin pelearse con un "!important" en el
+   camino.
+
+   -------------------------------------------------------------------------
+   EL MARCO, Y POR QUE NO SE CENTRA CON "align-items"
+   -------------------------------------------------------------------------
+   Los motores de lectura se parecen en una cosa: el texto tiene que aparecer
+   SIEMPRE en el mismo punto de la pantalla. En el modo palabra por palabra es
+   la tecnica entera: si cada palabra saliera en un sitio distinto, el ojo
+   tendria que buscarla y se perderia justo la ventaja que el modo promete.
+
+   Por eso el texto vive dentro de un rectangulo fijo, el marco, y no se
+   reparte por la pagina. El marco es un flex en FILA, y ahi "align-items" manda
+   en el VERTICAL, que es justo lo que queremos: centra la linea de texto sin
+   encoger la caja. (El "align-items: center" que encoge es el de un flex en
+   COLUMNA, que es un caso distinto y esta escrito en 60_juegos.css.)
+
+   EL ANCHO SOLO SE ESCRIBE UNA VEZ
+   El tope de ancho lo pone el <main> de esta pantalla, en la regla de mas
+   abajo, y el marco no lleva max-width: con un tope en la madre y otro en la
+   hija, gana el primero que encuentre la cadena y no se sabe cual. Esa
+   confusion ya costo cinco vueltas en el tablero del memorama.
+
+   NINGUN COLOR NUEVO
+   Todo sale de las variables de los cinco temas: --surface, --text, --border.
+   Un color nuevo hay que medirlo en los cinco temas, contra la superficie Y
+   contra la mezcla con la marca de agua, y son quince numeros. Aqui no hace
+   falta ninguno.
+   ========================================================================== */
+
+/* La pantalla de lectura, sin cabecera ni pie.
+   Reusa "pantalla-juego" de 60_juegos.css para el centrado en vertical: esa
+   clase ya sabe centrar lo que esta dentro del main sin encogerlo, y repetir
+   aqui el mismo flex seria tener la misma regla en dos archivos, que es como
+   un dia se desincronizan. El body trae las dos clases. */
+body.pantalla-lectura main {
+  /* SIN TOPE DE ANCHO, y sin relleno. El marco tiene que tomar el ancho Y el
+     ALTO de la pantalla, y las dos cosas se estorban en el mismo sitio: un
+     tope de ancho en el <main> lo centaba en 70 rem con aire a los lados, y un
+     relleno arriba y abajo le impedia llegar al borde. Con cualquiera de los dos
+     el marco se quedaba corto, y se veía el fondo del <main> en una franja.
+
+     Antes el tope estaba aqui por el modo frases, que con una frase larga se
+     partia antes de tiempo; **ese tope se mudo a la escena de frases**, que es
+     donde tiene que estar: el limite de ancho es cosa del que lee, no del marco.
+
+     Y LA RESERVA DE ABAJO PARA EL PANEL SE QUITO. Antes el <main> guardaba 8 rem
+     abajo para que el marco (que era una caja con borde) no quedara debajo de la
+     barra de botones. **Esa reserva existia porque el marco se veia**; ahora que
+     no se ve, no hay nada que apartar: el marco puede pasar por debajo del panel
+     sin que se note, porque no pinta nada. Y el texto va en el CENTRO de la
+     pantalla, lejos de un panel que esta en el borde de abajo.
+
+     El unico caso que queda cerca es un celular en horizontal con la letra en su
+     tope, que es raro y se resuelve solo con bajar la letra. No se compensa con
+     un relleno, porque cualquier relleno volveria a acortar el marco, que es
+     justo lo que se pidio. */
+  max-width: none;
+  padding: 0;
+}
+
+/* =========================================================================
+   EL MARCO: NO SE VE. ES LA PANTALLA ENTERA
+   -------------------------------------------------------------------------
+   Antes el marco era una caja: fondo --surface, borde --border y esquinas
+   --radius, y el texto vivia dentro de ella. Eso hacia que se vieran dos
+   cosas: el texto, y un rectangulo alrededor. En una pantalla que solo tiene
+   el texto y el panel de control, el rectangulo sobra.
+
+   Asi que el marco **ya no se ve**: sin fondo, sin borde, sin esquinas. Lo que
+   se ve es el fondo de la pagina y, encima, el texto. El marco sigue estando
+   en el HTML, y sigue haciendo falta: es lo que centra el texto en vertical,
+   lo que le pone la letra y la fuente, y lo que el motor usa para saber donde
+   medir. Que un elemento sea invisible **no quiere decir que sea inutile**.
+
+   Y ocupa TODA la pantalla, en las DOS dimensiones: ancho y alto. El <main>
+   no tiene tope de ancho ni relleno (ver la nota de arriba), y el marco lleva
+   "min-height: 100dvh" para que el alto no dependa de que los tres eslabones
+   del flex salen bien. El unico que se queda con un tope de ancho es el modo
+   frases, y no en el marco sino en su escena, porque una oracion de veinte
+   palabras partida en un monitor de 4K es una linea tan larga que no se lee. Ver
+   la seccion de frases.
+
+   EL FONDO LO PINTA EL <body>, NUNCA EL MARCO. Esto es lo que hace que el marco
+   sea invisible en los CUATRO modos y no solo en tres: si un modo se pintara a
+   si mismo, seria un modo con un marco visible. Los cuatro tienen su regla en el
+   <body> (`data-galactico`, `data-palabra`, `data-grupo`, `data-frases`), que es
+   adonde va el color que la persona elige en el modal, y el marco solo se ocupa
+   del color del TEXTO y de la letra.
+
+   ESTO SE APLICA A TODOS LOS MODOS, sin excepcion. Antes cada motor tenia su
+   regla para quitarse la caja (el galactico con "border: 0", el palabra por
+   palabra igual), lo cual hacia que un motor nuevo saliera con la caja puesta
+   por olvido. Ahora la caja no existe: no hay nada que quitarle a cada uno.
+   ========================================================================== */
+.lectura-marco {
+  /* OCUPA TODA LA PANTALLA, PASE LO QUE PASE CON SUS MADRES.
+     Con "flex: 1" y "min-height: 100dvh" el marco dependia del <body> y del
+     <main> para llegar a los bordes, y bastaba un relleno o un tope de ancho en
+     cualquiera de los dos para dejarlo corto. Fijo y pegado a los cuatro bordes
+     (inset: 0) ya no depende de nadie: mide exactamente el ancho y el alto
+     visibles. El panel flotante (z-index 100) queda encima, como antes.
+     "overflow: hidden" para que nada del texto (una palabra muy larga, el
+     galactico) saque barras de desplazamiento fuera de la pantalla. */
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  width: 100dvw;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  /* "flex: 1" y no una cuenta con 100dvh. El main ya crece con "flex: 1", asi
+     que con esto el marco se queda con la altura que sobra, sin tener que
+     restar nada a mano. Y sin "100dvh" no hay que volver a medir cuando el
+     navegador enseña o esconde sus barras. */
+  flex: 1;
+  /* MIN-HEIGHT: LA GARANTIA EXPLICITA DE QUE OCUPA TODA LA PANTALLA.
+     Con "flex: 1" ya deberia bastar (el body es una columna de flex de alto
+     minimo 100dvh, el main crece, y el marco crece dentro del main). Pero esa
+     cuenta depende de los tres eslabones, y si uno falla el marco se queda con
+     el alto de su contenido y NO se ve ningun error: solo se ve un texto que no
+     esta en el centro de la pantalla. Ponerlo aqui deja el requisito escrito en
+     el sitio donde se cumple, y no repartido en tres archivos.
+
+     Es con "dvh" y no con "vh" a proposito: en un celular, "vh" mide la pantalla
+     con las barras del navegador escondidas y el texto se sale por abajo cuando
+     aparecen. "dvh" es el alto que se ve de verdad. */
+  min-height: 100dvh;
+  /* Sin "max-width": no hay tope de ancho en esta pantalla, el marco toma el
+     que tenga. El unico modo con tope es frases, y lo lleva su escena. */
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  /* Es un flex en FILA, asi que "align-items" manda en el vertical: "center"
+     levanta la linea de texto al centro sin encoger el marco. Para centrar en
+     horizontal, "justify-content". Nunca al reves. */
+  font-size: var(--lectura-texto, 3rem);
+  /* La fuente que la persona eligio en el modal de ajustes (la pone
+     reto-lectura.js). Sin eleccion, la del sitio. Va en el marco y no en el
+     texto de cada motor, para que todos los modos la hereden. */
+  font-family: var(--lectura-fuente, var(--font));
+  line-height: 1.4;
+  color: var(--text);
+  /* SIN CAJA, Y NINGUN MODO SE PINTA A SI MISMO.
+     El fondo que elige la persona en el modal lo pinta el <body> (hay una
+     regla por modo: data-galactico, data-palabra, data-grupo, data-frases), no
+     el marco. Por eso esta linea es "transparent" en los cuatro modos y no
+     solo en tres: un marco que se pinta a si mismo es un marco que se ve, y lo
+     que se quiere es que no se vea en ninguno.
+
+     Y por eso el marco no necesita `border: 0` ni `border-radius: 0`: nunca los
+     tuvo en la regla base, asi que no hay que acordarse de quitarlos en cada
+     modo. Un modo nuevo nace transparente. */
+  background: transparent;
+  /* El relleno NO se quita: es el aire que separa el texto del borde de la
+     pantalla en un celular. En un monitor grande no se nota, porque el texto va
+     centrado; en uno de 280 px es la diferencia entre leer y rozar el borde. */
+  padding: var(--space-lg);
+}
+
+/* El panel, aqui, NO SE TRANSPARENTA.
+   En el resto del sitio el panel se apaga para no tapar lo que se esta leyendo.
+   En la pantalla de lectura no hay nada mas en la pagina: el texto ES la
+   pagina, y un panel al 9% sobre un marco blanco es un panel que no existe.
+   Tampoco hay un raton que lo despierte, y en un celular no hay nada que lo
+   despierte nunca.
+
+   Por eso se anula la opacidad del reposo. La regla va aqui, y no en
+   30_componentes.css, porque es lo unico que hace distinto: la posicion, el
+   tamano y los colores del panel son los mismos que en las demas pantallas. */
+body.pantalla-lectura .panel-flotante[data-al-descanso="1"] {
+  opacity: 1;
+}
+
+/* -------------------------------------------------------------------------
+   LO QUE SE VE DENTRO DEL MARCO
+   -------------------------------------------------------------------------
+   Dentro del marco hay dos cosas, y solo esta hecha la primera:
+
+     1. el aviso (p.lectura-aviso), que esta VACIO casi siempre;
+     2. el texto de la lectura, que lo pondra el motor.
+
+   El aviso es para los momentos en que hay que decir algo ("no hay ningun
+   texto", "cambiaste la letra a grande"). Cuando no tiene nada escrito no se ve
+   NADA: la pantalla queda en blanco, que es lo que se quiere mientras se lee.
+   Es el mismo truco que el mensaje del memorama (":empty { display:none }"), y
+   se hace con la MISMA clase de todo el sitio, .ayuda, para no inventar otro
+   estilo de letra chica. */
+.lectura-aviso {
+  margin: 0;
+}
+
+/* -------------------------------------------------------------------------
+   LA VELOCIDAD: BARRA, MAS Y MENOS
+   -------------------------------------------------------------------------
+   Son tres controles que hacen LO MISMO, y estan juntos a proposito:
+
+     [ - ]  [=====O=====]  300  [ + ]
+
+   La barrita y los dos botones mueven la misma velocidad. Se pueden usar los
+   tres, y se sirven para cosas distintas:
+
+     - la barrita, para buscar rapido: se arrastra y se ve el numero al mismo
+       tiempo, sin quitar la mano;
+     - los botones, para afinar de diez en diez, que es como se elige de verdad
+       una velocidad de lectura. Con el dedo es lo mas comodo, y con las flechas
+       del teclado tambien.
+
+   POR QUE UN GRUPO Y NO TRES BOTONES SUELTOS
+   Porque solos, entre los demas botones del panel, no se sabria de que son.
+   Juntos, con la barrita en medio y el numero al lado, se leen como UNA sola
+   cosa: la velocidad. Y por eso van al final de la barra: es el control que mas
+   se cambia, y el que menos estorba al final, donde el dedo descansa.
+
+   EL NUMERO AL LADO, Y NO DENTRO DE UN BOTON
+   Un boton del panel es un circulo de 2.75 rem: cabe un dibujito, no un numero
+   de tres cifras. Y meter el numero en un circulo chico lo hacia ilegible. Con
+   el numero al lado de la barrita se ve del mismo ancho que la pista, y ademas
+   lo lee el lector de pantalla porque es un <output> de verdad.
+
+   LA BARRA REUSA ".rango" DE CONFIGURACION
+   El mismo componente que ya se usa para la transparencia del panel y para su
+   espera. No se inventa uno nuevo: el sitio ya sabe pintar esa pista con el
+   color del tema, y en la mayoria de los navegadores la pinta el mismo con
+   "accent-color", que es justo lo que no se rompe. */
+.panel-velocidad {
+  display: flex;
+  align-items: center;
+  /* El mismo hueco que hay entre botones, para que el grupo se lea como parte
+     de la barra y no como un invento pegado encima. */
+  gap: 3px;
+  flex: 0 0 auto;
+}
+
+.panel-velocidad .rango {
+  /* Chica a proposito. La de Configuracion mide 22 rem de ancho y 3.5 de alto,
+     que es lo correcto alli porque esta sola en la pagina; aqui vive dentro de
+     una barra de 2.75 rem de alto, asi que tiene que caber sin agrandarla. */
+  width: 7.5rem;
+  max-width: 7.5rem;
+  height: var(--panel-boton, 2.75rem);
+}
+
+/* El numero. Sin recuadro ni fondo: aqui no hace falta una caja, porque la
+   pista del slider ya dice visualmente "este numero es el mio". "tabular-nums"
+   (el 1 ocupa lo mismo que el 8) es lo que hace que el numero no baile de
+   lado mientras se arrastra, y eso se nota mucho al moverlo. */
+.panel-velocidad .rango-valor {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.95rem;
+  min-inline-size: 2.6rem;
+}
+
+/* El toque en la barra da un golpecito al numero, para que se note que se
+   movio. Uno solo y suave: cambiar la velocidad no es una alarma, y un
+   parpadeo cada vez que se arrastra seria molesto. Solo con las animaciones
+   prendidas (el sitio ya tiene el atributo data-anim para eso). */
+html[data-anim="on"] .panel-velocidad .rango-valor[data-cambio="1"] {
+  animation: lectura-numero-pulso 320ms ease;
+}
+
+@keyframes lectura-numero-pulso {
+  from { transform: scale(1.25); }
+  to   { transform: scale(1); }
+}
+
+/* -------------------------------------------------------------------------
+   LA BARRA DEL PANEL, CUANDO VA DE PERFIL
+   -------------------------------------------------------------------------
+   En Configuracion se puede poner el panel a la izquierda o a la derecha, y en
+   esa posicion los botones van uno bajo el otro. Ahi la barrita de la velocidad,
+   que es ancha y horizontal, no cabe: se aplana hasta quedar mas alta que
+   ancha, que es lo contrario de lo que se quiere.
+
+   Lo que se hace es girarla con la misma barra: la velocidad sigue siendo la
+   misma, la perilla se mueve de arriba abajo, y el numero queda al lado. Con
+   "writing-mode: vertical-lr" la pista se pone vertical sin cambiar ni una
+   linea de JavaScript. Y como el valor del <input> no depende de en que
+   direccion se vea, el numero que se lee es el mismo.
+
+   Solo para las dos posiciones verticales.
+
+   Y VA DENTRO DE UN @supports, porque esto no se comporta igual en todos los
+   navegadores: poner un campo de rango en vertical es una de esas cosas que
+   Chrome y Edge hacen y otros no. El camino alterno esta escrito: sin esta
+   regla, la barrita se queda horizontal y la barra del panel, que es vertical,
+   simplemente queda mas ancha. Ancho y torpe, pero completa y usable. Nunca
+   roto. Y un proyecto que tiene que verse igual en el piso de navegadores no
+   puede dejar que esto dependa de quien lo abra. */
+@supports (writing-mode: vertical-lr) {
+  html[data-panel-pos="izquierda"] .panel-velocidad .rango,
+  html[data-panel-pos="derecha"] .panel-velocidad .rango {
+    writing-mode: vertical-lr;
+    width: var(--panel-boton, 2.75rem);
+    height: 7.5rem;
+  }
+}
+
+/* -------------------------------------------------------------------------
+   PANEL VELOCIDAD EN ORIENTACIÓN VERTICAL (izquierda/derecha)
+   -------------------------------------------------------------------------
+   Cuando el panel está a la izquierda o derecha, los botones van en columna.
+   El grupo de velocidad debe apilarse verticalmente para parecer una sola
+   barra continua:
+   - El contenedor panel-velocidad pasa a flex-direction: column
+   - Los botones de +/- se vuelven botones de ancho completo (como los demas)
+   - El slider es vertical y ocupa el ancho del panel
+   - El valor se centra encima del slider */
+@supports (writing-mode: vertical-lr) {
+  html[data-panel-pos="izquierda"] .panel-velocidad,
+  html[data-panel-pos="derecha"] .panel-velocidad {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    width: 100%;
+  }
+
+  html[data-panel-pos="izquierda"] .panel-velocidad .panel-boton,
+  html[data-panel-pos="derecha"] .panel-velocidad .panel-boton {
+    width: 100%;
+    height: var(--panel-boton, 2.75rem);
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  /* LAS ESQUINAS REDONDEADAS, POR BOTON Y NO POR POSICION.
+
+     Estas reglas hay que escribirlas con el selector del boton (mas / menos) y
+     NO con ":first-child" / ":last-child". Parece lo mismo y no lo es:
+     ":first-child" es la posicion en el HTML, y el orden que se VE lo pone
+     "order". En una columna el de mas esta arriba y el de menos abajo, al reves
+     que en el archivo.
+
+     Con ":first-child" las esquinas acababan al reves: la de arriba (que es el
+     boton de mas) salia recta y sin su borde de arriba, y la de abajo (el de
+     menos) tambien recta; mientras que las redondeadas caian en las juntas del
+     medio, donde no se ven. En una columna de cuatro piezas se notaba: la barra
+     parecia cortada por arriba y por abajo en vez de terminada en ponta. */
+  html[data-panel-pos="izquierda"] .panel-velocidad [data-wpm="mas"],
+  html[data-panel-pos="derecha"] .panel-velocidad [data-wpm="mas"] {
+    border-top-left-radius: 999px;
+    border-top-right-radius: 999px;
+    border-top: none;
+  }
+
+  html[data-panel-pos="izquierda"] .panel-velocidad [data-wpm="menos"],
+  html[data-panel-pos="derecha"] .panel-velocidad [data-wpm="menos"] {
+    border-bottom-left-radius: 999px;
+    border-bottom-right-radius: 999px;
+    border-bottom: none;
+  }
+
+  html[data-panel-pos="izquierda"] .panel-velocidad .panel-boton:hover,
+  html[data-panel-pos="derecha"] .panel-velocidad .panel-boton:hover {
+    transform: none;
+  }
+
+  /* Orden: + arriba, slider en medio, - abajo */
+  html[data-panel-pos="izquierda"] .panel-velocidad [data-wpm="mas"],
+  html[data-panel-pos="derecha"] .panel-velocidad [data-wpm="mas"] {
+    order: 1;
+  }
+
+  html[data-panel-pos="izquierda"] .panel-velocidad .rango,
+  html[data-panel-pos="derecha"] .panel-velocidad .rango {
+    order: 2;
+    width: 100%;
+    height: 8rem;
+    max-width: none;
+    margin: 2px 0;
+    /* Invertir el slider: valores altos arriba, bajos abajo */
+    transform: scaleY(-1);
+  }
+
+  html[data-panel-pos="izquierda"] .panel-velocidad .rango-valor,
+  html[data-panel-pos="derecha"] .panel-velocidad .rango-valor {
+    order: 3;
+    text-align: center;
+    min-inline-size: auto;
+    width: 100%;
+    margin: 2px 0;
+    font-size: 1rem;
+  }
+
+  html[data-panel-pos="izquierda"] .panel-velocidad [data-wpm="menos"],
+  html[data-panel-pos="derecha"] .panel-velocidad [data-wpm="menos"] {
+    order: 4;
+  }
+
+  /* FUENTE: mismo orden que velocidad (+ arriba, - abajo) */
+  html[data-panel-pos="izquierda"] .panel-fuente,
+  html[data-panel-pos="derecha"] .panel-fuente {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    width: 100%;
+  }
+
+  html[data-panel-pos="izquierda"] .panel-fuente [data-fuente="mas"],
+  html[data-panel-pos="derecha"] .panel-fuente [data-fuente="mas"] {
+    order: 1;
+    width: 100%;
+    height: var(--panel-boton, 2.75rem);
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top-left-radius: 999px;
+    border-top-right-radius: 999px;
+    border-top: none;
+  }
+
+  html[data-panel-pos="izquierda"] .panel-fuente [data-fuente="menos"],
+  html[data-panel-pos="derecha"] .panel-fuente [data-fuente="menos"] {
+    order: 3;
+    width: 100%;
+    height: var(--panel-boton, 2.75rem);
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-bottom-left-radius: 999px;
+    border-bottom-right-radius: 999px;
+    border-bottom: none;
+  }
+
+  html[data-panel-pos="izquierda"] .panel-fuente .panel-boton:hover,
+  html[data-panel-pos="derecha"] .panel-fuente .panel-boton:hover {
+    transform: none;
+  }
+
+  html[data-panel-pos="izquierda"] .panel-fuente .panel-indicador#fuente-valor,
+  html[data-panel-pos="derecha"] .panel-fuente .panel-indicador#fuente-valor {
+    order: 2;
+    text-align: center;
+    margin: 2px 0;
+  }
+}
+
+/* -------------------------------------------------------------------------
+   GALACTICO: EL TEXTO QUE SUBE Y SE PIERDE EN EL HORIZONTE
+   -------------------------------------------------------------------------
+   El marco (.lectura-marco) sigue siendo el mismo. Dentro, en este modo, hay
+   tres capas, de afuera hacia adentro:
+
+     .galactico-escena   el ESCENARIO: pone la perspectiva y recorta lo que se
+                         sale. La perspectiva la escribe el motor (en pixeles,
+                         segun el alto de la pantalla), no esta aqui.
+     .galactico-plano    el SUELO: una hoja inclinada hacia atras, con su borde
+                         de abajo pegado al borde de abajo del escenario. Por
+                         estar inclinada, lo que esta arriba queda mas lejos.
+     .galactico-texto    el TEXTO: se mueve sobre el suelo, de abajo hacia
+                         arriba, con un transform que pone el motor.
+
+   Que el texto sea el que se mueve y el suelo el que esta inclinado es lo que
+   hace el efecto: el texto avanza en linea recta sobre una hoja que se aleja, y
+   el ojo lo ve encogerse y juntarse hacia el punto de fuga, igual que en la
+   apertura de las peliculas.
+
+   EL MOVIMIENTO NO ES UNA ANIMACION DE CSS a proposito: la velocidad cambia en
+   caliente (la barra, los botones), y una animacion de CSS no se puede acelerar
+   sin saltar de lugar. Lo mueve reto-lectura.js, que guarda por donde va y solo
+   cambia cuanto avanza por fotograma.
+
+   EL ESCENARIO TIENE ALTO PROPIO
+   El plano y el texto estan en position:absolute, asi que no le dan alto a
+   nadie. Sin un min-height el escenario mediria cero y no se veria nada, sin
+   ningun error.
+
+   LA INCLINACION ES UN COMPROMISO CON LA VISTA
+   Cuanto mas inclinado, mas lejos el punto de fuga y mas pequena la letra de
+   arriba. Esta pensado para que lo que se lee (la mitad de abajo) siga siendo
+   legible, y para que el final se pierda arriba. El angulo y lo lejos que queda
+   el horizonte son dos constantes en reto-lectura.js (ANGULO y ALCANCE). Si
+   cansa la vista, se baja el angulo ahi, en un solo sitio.
+
+   NINGUN COLOR NUEVO: todo sale de --text y --surface. */
+.lectura-marco[data-motor="galactico"] {
+  /* El galáctico es el unico modo que necesita el marco SIN relleno: su escena
+     es el suelo del trapecio, y con aire alrededor se veria el borde del marco
+     como una franja vacia entre el suelo y la pantalla. En los otros tres modos
+     el relleno no se ve, porque el marco es transparente. */
+  padding: 0;
+  overflow: hidden;
+}
+
+.galactico-escena {
+  position: relative;
+  flex: 1;
+  align-self: stretch;
+  min-height: 20rem;
+  overflow: hidden;
+  /* El punto de fuga queda en el centro, a la altura del borde de abajo del
+     suelo: asi el horizonte sube desde ahi y su altura sale de una cuenta
+     sencilla (ver medir en reto-lectura.js). */
+  perspective-origin: 50% 100%;
+  /* Desvanecido arriba, donde el texto ya es chico y se esta yendo, y un poco
+     abajo, por donde entra. "-webkit-" primero para los Safari de hace un par
+     de anos; si el navegador no sabe de mascaras, el texto se ve entero y solo
+     se pierde el desvanecido. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14%, #000 96%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 14%, #000 96%, transparent 100%);
+}
+
+.galactico-plano {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  /* Se inclina alrededor de su borde de abajo: ese borde queda a tamano
+     natural, y todo lo de arriba se aleja. */
+  transform-origin: 50% 100%;
+  /* Primero se inclina y DESPUES se escala (el orden importa: se aplican de
+     derecha a izquierda). La escala es la de ENTRADA: con que tamano llega el
+     texto al borde de abajo, y desde ahi se va achicando por la perspectiva.
+     El ancho del texto se compensa en reto-lectura.js (ver medir). */
+  transform: rotateX(var(--galactico-angulo, 24deg));
+}
+
+.galactico-texto {
+  position: absolute;
+  top: 0;
+  /* Centrado con left:50% y un translateX(-50%) que pone el motor en su
+     transform, porque el ancho del texto cambia con la escala de entrada. */
+  left: 50%;
+  width: 100%;
+  margin: 0;
+  padding: 0 var(--space-lg);
+  box-sizing: border-box;
+  text-align: center;
+  /* Empieza debajo del suelo; el motor lo coloca en cada fotograma. */
+  will-change: transform;
+}
+
+.galactico-texto p {
+  margin: 0 0 1.2em;
+}
+
+/* Los titulos del libro (Bloque, Capitulo...) se notan un poco mas, sin
+   cambiar de tamano: solo negrita. */
+.galactico-texto p[data-titulo] {
+  font-weight: 700;
+}
+
+/* AL TERMINAR, EL TEXTO SE DESVANECE. Es lo que hace que "perderse" sea cierto
+   aunque la escala de fin sea grande y el ultimo renglon todavia se vea. Dura
+   240 ms (la banda de "entrada de contenido" de 50_animaciones) y con las
+   animaciones apagadas la regla global de transition: none lo vuelve instantaneo. */
+.galactico-escena[data-fin] .galactico-texto {
+  opacity: 0;
+  transition: opacity 0.24s ease;
+}
+
+/* La cuenta regresiva y el "Fin". Van en el centro del escenario, FUERA del
+   plano inclinado: el numero se ve derecho y de frente, no acostado. */
+.galactico-cuenta {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  font-size: 1em;
+  font-weight: 700;
+  text-align: center;
+  color: var(--text);
+  pointer-events: none;
+}
+
+.galactico-cuenta:empty {
+  display: none;
+}
+
+/* El tamano segun lo que diga: el numero grande, la indicacion chica. */
+.galactico-cuenta[data-fase="cuenta"] { font-size: 2.2em; }
+.galactico-cuenta[data-fase="espera"] { font-size: 0.45em; font-weight: 400; }
+.galactico-cuenta[data-fase="fin"]    { font-size: 1.4em; }
+
+/* -------------------------------------------------------------------------
+   EL MODAL DE AJUSTES DEL MODO GALACTICO
+   -------------------------------------------------------------------------
+   Es un <dialog> como el de reto-dialogo.js y comparte su cara (.dialogo:
+   borde, fondo, sombra y el fondo oscurecido), pero tiene su propio script
+   (reto-lectura-ajustes.js) porque lleva controles y no solo preguntas.
+
+   NUNCA se le pone position al <dialog> (ver el aviso en 30_componentes.css,
+   en .dialogo-fondo): su lugar lo pone el navegador. Lo que necesita estar
+   posicionado (la vista previa) lleva su propio envoltorio.
+
+   Alto limitado y con scroll adentro: en un celular de lado el modal no cabe, y
+   un modal que se sale de la pantalla tiene botones que no se pueden tocar. */
+.dialogo-ajustes {
+  max-width: 34rem;
+  max-height: calc(100dvh - 2 * var(--space-sm));
+  overflow-y: auto;
+}
+
+/* La VISTA PREVIA: un cuadrito con el mismo escenario del modo, para ver lo
+   que se cambia sin tener que cerrar el modal (que tapa la lectura de atras).
+   Reusa las clases .galactico-* a proposito: si el escenario cambia, la vista
+   previa cambia con el, y no se parecen "mas o menos". */
+.ajustes-vista {
+  position: relative;
+  height: 11rem;
+  margin: 0 0 var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 1.05rem;
+  font-family: var(--lectura-fuente, var(--font));
+  line-height: 1.4;
+  overflow: hidden;
+}
+
+.ajustes-vista .galactico-escena {
+  position: absolute;
+  inset: 0;
+  min-height: 0;
+}
+
+/* En la vista previa el texto se apoya en el borde de abajo del suelo y crece
+   hacia arriba (en el modo de verdad sube sobre el suelo, aqui se queda quieto
+   mostrando el momento de una lectura). */
+.ajustes-vista .galactico-texto {
+  top: auto;
+  bottom: 0;
+}
+
+/* La raya de "aqui se pierde": a la altura donde el ultimo renglon se da por
+   terminado. La altura la pone el script, desde la misma cuenta del motor. */
+.ajustes-marca {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 2px dashed var(--accent);
+  pointer-events: none;
+}
+
+.ajustes-marca span {
+  position: absolute;
+  right: var(--space-xs);
+  bottom: 2px;
+  padding: 0 var(--space-xs);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.ajustes-campo {
+  margin: 0 0 var(--space-md);
+}
+
+.ajustes-campo > label,
+.ajustes-fuentes-titulo {
+  display: block;
+  margin: 0 0 var(--space-xs);
+  font-weight: 800;
+  color: var(--text);
+}
+
+.ajustes-grupo {
+  margin: 0 0 var(--space-sm);
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.ajustes-grupo > legend {
+  padding: 0;
+}
+
+.ajustes-fila {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.ajustes-fila .rango {
+  flex: 1;
+  max-width: none;
+}
+
+.ajustes-fila .rango-valor {
+  min-width: 4.5rem;
+  flex: none;
+}
+
+.ajustes-ayuda {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* La lista de fuentes. Cada una es una opcion de las de siempre (.opcion), con
+   el nombre escrito CON SU PROPIA LETRA: elegir una fuente sin verla es elegir
+   a ciegas. */
+.ajustes-fuentes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin: 0 0 var(--space-sm);
+  padding: 0;
+  list-style: none;
+}
+
+.ajustes-fuentes li {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-xs);
+}
+
+.ajustes-fuentes .opcion {
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  font-weight: 400;
+}
+
+.ajustes-fuente-nombre {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.ajustes-fuente-nota {
+  font-family: var(--font);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  opacity: 0.85;
+}
+
+.ajustes-fuentes .boton {
+  flex: none;
+}
+
+.ajustes-instalar {
+  margin: 0 0 var(--space-xs);
+}
+
+/* Donde se dice si la fuente se instalo o por que no. Va dentro del modal, y no
+   en otro modal encima: dos modales apilados es una pregunta dentro de otra. */
+.ajustes-estado {
+  min-height: 1.5em;
+  margin: 0 0 var(--space-md);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.ajustes-estado.es-error {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.ajustes-estado.es-error::before {
+  content: "\26A0\00a0";
+}
+
+
+/* =========================================================================
+   AJUSTES DE LA FORMA DEL TRAPECIO Y EL PANEL DE LECTURA
+   -------------------------------------------------------------------------
+   Este bloque va al final del modulo a proposito: misma especificidad que las
+   reglas de arriba, gana por orden, sin "!important".
+   ========================================================================= */
+
+/* El marco ya no tiene caja para ningun modo (ver la regla base), asi que aqui
+   no hay nada que quitar: antes esta regla le ponia "border: 0" al galactico y
+   al palabra por palabra, y se quedaban esas dos reglas por costumbre, cuando
+   el problema ya no existia. Un motor nuevo ya no nace con caja. */
+
+/* El escenario crece para que el texto salga de mas abajo. */
+.galactico-escena {
+  min-height: 36rem;
+}
+
+/* El panel SI se transparenta en lectura veloz, igual que en el resto del
+   sitio. */
+body.pantalla-lectura .panel-flotante[data-al-descanso="1"] {
+  opacity: var(--panel-op, 0.09);
+}
+
+/* El numero del tamano de la letra, entre el T- y el T+. */
+/* -------------------------------------------------------------------------
+   COMO SE MAQUETA UN GRUPO CON UN BOTON DE MAS Y UNO DE MENOS
+   -------------------------------------------------------------------------
+   Hay dos reglas, y son la misma idea: **el aumento va siempre en el sentido en
+   que avanza el ojo**, y el resto se acomoda ahi.
+
+     PANEL ABAJO O ARRIBA (una fila)   ->  [−] [valor] [+]   izquierda a derecha
+     PANEL IZQUIERDA O DERECHA (columna) ->  [+] [valor] [−]   de arriba abajo
+
+   En una fila se lee de izquierda a derecha, y en una columna de arriba abajo,
+   asi que el boton de MOSTRAR queda siempre del lado hacia el que avanza la
+   lectura. Por eso en una fila esta al final y en una columna esta arriba: no
+   es que el orden cambie por capricho, es que cambia porque el ojo cambia de
+   eje.
+
+   ESTO APLICA A TODOS LOS GRUPOS, no solo a estos dos. Por eso el HTML los
+   escribe SIEMPRE en el orden de la fila ([−] [valor] [+], que es la posicion
+   por defecto del panel), y el CSS usa "order" para dar vuelta las piezas
+   cuando el panel va de perfil. Con esa disciplina, un grupo nuevo no puede
+   salir con el orden al reves: sale como salen los otros dos, y el CSS ya sabe
+   darle la vuelta.
+
+   Y CADA PIEZA ES INDEPENDIENTE: el boton de menos, el valor y el boton de mas
+   son tres hermanos, no uno dentro del otro. Por eso el CSS puede moverlos.
+   Si el valor estuviera metido dentro de la barrita, no habria forma de
+   colocarlo aparte del boton que lo acompana.
+
+   ESTA PAGINA TIENE LOS GRUPOS CON MAS Y MENOS DEL SITIO, y son estos dos: el
+   de la velocidad y el de la letra. Los otros controles deslizantes del sitio
+   (el volumen de sonido, la transparencia y la espera del panel, en sus
+   paginas de configuracion) son barras sueltas, sin boton de mas ni de menos,
+   y por eso esta regla no les aplica.
+   ------------------------------------------------------------------------- */
+
+/* El grupo de la letra, en horizontal. Misma forma que el de la velocidad:
+   un flex en fila, sin crecery sin encogerse. */
+.panel-fuente {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex: 0 0 auto;
+}
+
+.panel-indicador {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.4rem;
+  height: var(--panel-boton, 2.75rem);
+  padding: 0 0.3rem;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+
+/* =========================================================================
+   LA FUENTE, EN UNA FILA DE DOS COLUMNAS
+   -------------------------------------------------------------------------
+   Antes era una lista de radios, uno por fuente, con su boton de quitar al
+   lado. Ahora son dos columnas fijas: a la izquierda la lista desplegable, a
+   la derecha el boton de instalar. El usuario elige la fuente y si quiere
+   instalar otra la mete por el boton de al lado, sin que la lista cambie.
+
+   La lista vieja (.ajustes-fuentes) ya no se usa: si aparece un <ul> con esa
+   clase en algun HTML viejo, se vera sin estilos, que es justo lo que se
+   quiere para que no se confunda con la nueva.
+   ========================================================================= */
+.ajustes-fuente-fila {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.ajustes-fuente-select {
+  min-width: 0;
+  min-height: var(--area-boton);
+  padding: var(--space-xs) var(--space-sm);
+  cursor: pointer;
+}
+
+/* El boton de instalar no se estira: mantiene su tamano natural para que la
+   primera columna, la de la lista, ocupe todo el ancho que sobra. */
+.ajustes-fuente-fila .ajustes-instalar {
+  margin: 0;
+  min-height: var(--area-boton);
+}
+
+
+/* =========================================================================
+   COLORES DEL MODO GALACTICO
+   -------------------------------------------------------------------------
+   El fondo de la pantalla y el color de la letra son ajustes del modo. Se
+   escriben como variables CSS desde reto-lectura.js (funcion aplicarColores),
+   que las pone en <html>, y aqui se leen.
+
+   Se aplica SOLO cuando el body tiene data-galactico="1", que es la marca que
+   pone el motor al montar la escena y la que quita al desmontarla. Asi, el
+   resto del sitio no se entera de que estos colores existen.
+
+   El fondo tiene que pintar TODA la pantalla, no solo el marco: por eso va en
+   el body y no en .galactico-escena. El panel de controles NO cambia, para que
+   siga siendo reconocible.
+   ========================================================================= */
+body.pantalla-lectura[data-galactico="1"] {
+  background: var(--galactico-fondo, #000000);
+}
+
+body.pantalla-lectura[data-galactico="1"] .lectura-marco[data-motor="galactico"] {
+  /* SOLO el color del TEXTO. El fondo NO se pinta aqui, y esa es la diferencia
+     con los modos que tienen un fondo ajustable: ese color lo pinta el <body>
+     (ver la regla de arriba), que es lo que permite que el marco sea
+     invisible en TODOS los modos, y no solo en estos tres. Un marco que se
+     pinta a si mismo es un marco que se ve. */
+  color: var(--galactico-texto, #ffe81f);
+}
+
+body.pantalla-lectura[data-galactico="1"] .galactico-texto,
+body.pantalla-lectura[data-galactico="1"] .galactico-cuenta {
+  color: var(--galactico-texto, #ffe81f);
+}
+
+/* =========================================================================
+   EL ANCHO DE LA BASE, SIN PADDING QUE SE LO COMA
+   -------------------------------------------------------------------------
+   Con padding lateral fijo, cuando el ancho baja a valores chicos el padding
+   se come todo el contenido y el texto no encoge mas: parecia que el slider no
+   hacia nada. Con el padding proporcional al ancho (porcentaje), el texto
+   siempre tiene sitio util para encogerse o crecer.
+   ========================================================================= */
+.galactico-texto {
+  padding-left: 3%;
+  padding-right: 3%;
+}
+
+
+/* =========================================================================
+   LOS DOS COLORES, EN UNA FILA DE DOS COLUMNAS
+   -------------------------------------------------------------------------
+   Fondo a la izquierda, texto a la derecha. Cada columna lleva SU etiqueta
+   arriba y, debajo, la rueda al lado del campo hex: las dos formas escriben el
+   mismo color, y verlas juntas deja claro que son lo mismo.
+   ========================================================================= */
+.ajustes-color-fila--doble {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+  margin: 0 0 var(--space-md);
+}
+
+/* En una pantalla angosta, dos columnas dejan la rueda y el hex tan estrechos
+   que no se pueden tocar. Ahi bajan a una sola columna, que es la forma en la
+   que el modal ya se apila solo. */
+@media (max-width: 30rem) {
+  .ajustes-color-fila--doble {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================================
+   LOS TRES COLORES DEL PALABRA POR PALABRA: UNA FILA, TRES COLUMNAS
+   -------------------------------------------------------------------------
+   Fondo, texto de la palabra y color del foco, en la misma fila y con el
+   mismo ancho cada uno. Se ven juntos porque son las tres cosas que se eligen
+   contra el mismo fondo: verlos al mismo tiempo es la unica forma de saber si
+   la letra que se resalta se va a leer contra el fondo que se eligio.
+
+   Y la razon de que el FOCO sea un ajuste y no un color fijo: es la letra que
+   marca donde fijar la vista, la mas importante de las tres. Con --accent
+   (que es lo que usa por defecto) ya esta medida en los cinco temas, pero
+   quien lee con un tema raro, o quien quiere otro color porque le cuesta mas
+   distinguir ese, necesita poder cambiarlo.
+
+   -------------------------------------------------------------------------
+   POR QUE LA RUEDA Y EL HEX VAN UNO ARRIBA DEL OTRO, Y NO AL LADO
+   -------------------------------------------------------------------------
+   La primera version los ponia en fila, como en el galactico, y el modal se
+   descuadraba: en tres columnas no caben los dos controles de lado, la etiqueta
+   mas larga ("Texto de la palabra") se partia en dos lineas, y esa columna
+   sola se bajaba y empujaba su rueda. El resultado era que los tres colores
+   quedaban en escalera: el primero arriba, el segundo un renglon mas abajo, el
+   tercero mas todavia. Se veía mal y ademas parecía un fallo del programa.
+
+   Apilados, cada columna es la misma figura —etiqueta, rueda, campo— y las
+   tres ya no dependen una de otra. La etiqueta ademas reserva dos renglones
+   (min-height), para que una que se parte en dos no empuje a su control por
+   debajo de las otras dos. Asi las tres quedan alineadas aunque cambien las
+   palabras.
+   ========================================================================= */
+.ajustes-color-fila--triple {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-md);
+  margin: 0 0 var(--space-md);
+}
+
+/* Dos renglones de etiqueta, para las tres columnas por igual. "flex-end"
+   deja la etiqueta pegada abajo, junto a su control: si ocupa una o dos lineas,
+   el hueco que sobra queda arriba y el control nunca se mueve. */
+.ajustes-color-fila--triple .ajustes-campo > label {
+  display: flex;
+  align-items: flex-end;
+  min-height: 2.7em;
+  line-height: 1.35;
+}
+
+/* Apilados: la rueda arriba, el campo de codigo abajo, cada uno del ancho de
+   su columna. */
+.ajustes-color-fila--triple .ajustes-color-fila {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-xs);
+}
+
+/* Con tres columnas, una pantalla angosta las deja inservibles (la rueda
+   queda por debajo de los 44 px que pide el dedo). En dos columnas todavia
+   alcanzan; de ahi para abajo, una sola. */
+@media (max-width: 34rem) {
+  .ajustes-color-fila--triple {
+    grid-template-columns: 1fr 1fr;
+  }
+  .ajustes-color-fila--triple > .ajustes-campo:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 22rem) {
+  .ajustes-color-fila--triple {
+    grid-template-columns: 1fr;
+  }
+  .ajustes-color-fila--triple > .ajustes-campo:last-child {
+    grid-column: auto;
+  }
+}
+
+.ajustes-color-fila {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+/* La rueda: el <input type="color"> nativo. No se le puede cambiar la forma,
+   pero si el tamano: el cuadrado por defecto mide poco mas que el dedo de un
+   nino, y aqui se le da el alto de los otros controles del modal. */
+.ajustes-color-rueda {
+  flex: none;
+  width: 3rem;
+  height: var(--area-boton);
+  padding: 0.15rem;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.ajustes-color-rueda::-webkit-color-swatch-wrapper { padding: 0; }
+.ajustes-color-rueda::-webkit-color-swatch { border: 0; border-radius: 6px; }
+.ajustes-color-rueda::-moz-color-swatch { border: 0; border-radius: 6px; }
+
+/* El campo hex: monoespaciado, para que los seis digitos se lean uno a uno y
+   no baile el ancho al cambiar de letra. Mayusculas y minusculas dan igual:
+   el JS normaliza a minusculas y el input acepta las dos. */
+.ajustes-color-hex {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--area-boton);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
+  letter-spacing: 0.03em;
+}
+
+
+/* =========================================================================
+   LA VISTA PREVIA DEL MODAL, CON LOS COLORES DEL MODO GALACTICO
+   -------------------------------------------------------------------------
+   Antes heredaba los colores del tema del sitio, y por eso el usuario veia el
+   cuadrito en crema mientras el modo real iba por el negro y el amarillo: un
+   ajuste a ciegas, que es justo lo que la vista previa existe para evitar.
+
+   Se leen las MISMAS variables que usa la pantalla (--galactico-fondo y
+   --galactico-texto, que reto-lectura.js escribe en <html>). Asi no hay dos
+   sitios donde vivir el color: mover la rueda cambia la pantalla y la vista
+   previa a la vez, en el mismo instante, sin JavaScript que sincronice nada.
+   ========================================================================= */
+.ajustes-vista,
+.ajustes-vista .galactico-escena {
+  background: var(--galactico-fondo, #000000);
+}
+
+.ajustes-vista .galactico-plano,
+.ajustes-vista .galactico-texto,
+.ajustes-vista .galactico-texto p,
+.ajustes-vista .galactico-cuenta {
+  color: var(--galactico-texto, #ffe81f);
+}
+
+/* =========================================================================
+   LA VISTA PREVIA DEL PALABRA POR PALABRA
+   -------------------------------------------------------------------------
+   El cuadrito del modal para este modo reusa las clases de la pantalla real
+   (.palabra-escena, .palabra-linea, .palabra-antes, .palabra-foco), y eso es
+   justo lo que lo hace util: lo que se ve aqui es la misma cuadricula de tres
+   columnas, con la misma letra de fijacion en el centro y la misma palabra
+   partida alrededor. Si se dibujara distinto, seria una aproximacion, y una
+   aproximacion en un ajuste de color es peor que no tener vista previa.
+
+   LOS COLORES
+   Los escribe el modal (pintarVistaPalabra) como variables EN ESTE elemento, y
+   no en <html>: asi la vista previa no tiene que ir y volver a lo que se esta
+   leyendo de verdad, y los ajustes se ven aqui al instante sin depender de que
+   la pantalla de atras se haya repintado.
+
+   Si un color se deja vacio (el ajuste es "el del tema"), la variable no se
+   escribe y el "var(--palabra-foco, var(--accent))" de abajo se queda sin
+   valor propio: el del tema. El cuadrito queda igual de bien, porque el
+   fallback hace el trabajo.
+   ========================================================================= */
+.ajustes-vista--palabra {
+  display: grid;
+  align-items: center;
+  /* El fondo y la letra del cuadrito, con la misma cascada que la pantalla:
+     lo elegido por la persona, y si no hay nada elegido, el del tema. */
+  background: var(--palabra-fondo, var(--bg));
+  color: var(--palabra-texto, var(--text));
+  /* El ancho del texto: es el mismo tope que el de la pantalla real, para que
+     una palabra larga se parta igual aqui que alla. */
+  padding: 0 var(--space-md);
+  font-size: 1.5rem;
+}
+
+.ajustes-vista--palabra .palabra-linea {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  /* La palabra NO se parte, y aqui hay una razon para ponerlo: en la pantalla
+     real cada palabra es una unidad y nunca se parte en dos renglones (el modo
+     es de una en una). Si el cuadrito la partiera, estaria enseñando algo que
+     la pantalla nunca hace. Y no hace falta: la palabra del ejemplo tiene trece
+     letras y el modal es de 34 rem de ancho, con lo que cabe holgada. */
+  white-space: nowrap;
+  margin: 0;
+  color: var(--palabra-texto, var(--text));
+}
+
+.ajustes-vista--palabra .palabra-antes {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ajustes-vista--palabra .palabra-despues {
+  text-align: left;
+}
+
+.ajustes-vista--palabra .palabra-foco {
+  color: var(--palabra-foco, var(--accent));
+  font-weight: 700;
+}
+
+
+/* =========================================================================
+   EL MODO GALACTICO OCUPA TODA LA PANTALLA
+   -------------------------------------------------------------------------
+   El <main> del sitio tiene "max-width: 70rem" y un padding lateral, pensados
+   para leer parrafos: acotan la linea a unos 68 caracteres, que es lo que
+   pide la lectura comoda. Pero el modo galactico NO es un parrafo: es una
+   escena, y su horizonte y su base tienen que tocar los bordes de la pantalla
+   o el trapecio se queda flotando en medio, con franjas a los lados.
+
+   Por eso, SOLO cuando el motor galactico esta montado (data-galactico="1" en
+   el body), el main pierde su tope y su padding lateral. El padding de abajo
+   se queda: es la reserva del panel de botones.
+
+   El tope se quita con "none" y NO con un numero mas alto: un numero grande
+   sigue siendo un tope, y con la ventana mas ancha volveria a quedarse corto.
+   Aqui no hay "ancho comodo de lectura" que respetar, porque no se lee en
+   columna: se lee en una escena que llena el hueco.
+   ========================================================================= */
+body.pantalla-lectura[data-galactico="1"] main {
+  max-width: none;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* El galvanico ya no necesita quitarle el relleno al marco para que el
+   escenario llegue al borde: el marco es transparente y lo que se ve de ese modo
+   es el escenario, que se estira solo (abajo). El "padding: 0" de antes era una
+   medida contra la caja del marco, y la caja ya no existe. */
+
+/* El escenario: se estira a lo ancho Y a lo alto del marco. "align-self" ya
+   venia de la regla base, pero por si acaso se refuerza aqui, en el contexto
+   del modo galactico. */
+body.pantalla-lectura[data-galactico="1"] .galactico-escena {
+  align-self: stretch;
+  width: 100%;
+}
+
+/* =========================================================================
+   PALABRA POR PALABRA
+   -------------------------------------------------------------------------
+   Lo arma crearPalabra() en scripts/reto-lectura.js. Por dentro del marco:
+
+      .palabra-escena   la caja de una sola celda donde caben, ENCIMADOS, la
+                        linea de la palabra y lo que dice el centro (la cuenta,
+                        la indicacion de empezar, el "Fin")
+      .palabra-linea    la palabra, partida en tres pedazos
+      .palabra-centro   el 3-2-1, "Toca para empezar" y "Fin"
+
+   UNA LETRA CENTRADA, NO LA PALABRA ENTERA
+   La linea es una cuadricula de tres columnas: la del medio mide lo que mide
+   la letra de fijacion y las de los lados se reparten LO DEMAS POR IGUAL
+   (minmax(0, 1fr) las dos). Como los lados son iguales, la letra de en medio
+   cae siempre en el centro exacto del marco, sea cual sea la palabra. Eso es
+   la tecnica entera: el ojo se queda quieto y la palabra se acomoda a el.
+
+      antes (pegado a la derecha)  FOCO  despues (pegado a la izquierda)
+
+   "ANTES" ES UN FLEX Y NO UN text-align: right. Cuando una palabra es mas
+   larga que su columna, un texto con text-align: right se desborda hacia la
+   DERECHA y se encima con la letra de fijacion; un flex con justify-content:
+   flex-end se desborda hacia la izquierda, que es por donde sobra.
+
+   EL "FOCO" NO SE DISTINGUE SOLO POR EL COLOR
+   Lleva color Y negrita. Con el color solo, quien no distingue los colores no
+   veria cual es la letra donde fijarse. El color es --palabra-foco, que se
+   configura en el modal de ajustes.
+
+   LA LINEA SE ESCONDE, NO SE QUITA
+   Fuera de la fase "lee" la linea lleva visibility: hidden y no display: none.
+   Sigue ocupando su alto, asi el marco no cambia de tamano al pasar de la
+   cuenta a la primera palabra ni al "Fin".
+   ========================================================================== */
+.palabra-escena {
+  width: 100%;
+  max-width: 100%;
+  /* UNA SOLA CELDA: la linea de la palabra y lo que dice el centro (cuenta,
+     "Toca para empezar", "Fin") van ENCIMADOS en el mismo sitio, tal como dice
+     la nota de arriba. Con un flex en fila la linea (ahora de ancho completo)
+     empujaba al centro hacia un lado. */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  justify-items: center;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.palabra-linea,
+.palabra-centro {
+  grid-area: 1 / 1;
+  margin: 0;
+}
+
+.palabra-linea {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  white-space: nowrap;
+}
+
+/* LA LINEA OCUPA TODO EL ANCHO DE LA ESCENA, y asi las dos columnas de los lados
+   miden lo mismo (lo que sobra, repartido por igual) y la letra de fijacion
+   cae siempre en el centro exacto de la pantalla. */
+.palabra-linea {
+  width: 100%;
+}
+
+/* "antes" y "despues" son cajas flex que se pegan a la letra de fijacion: la
+   de antes crece hacia la izquierda, la de despues hacia la derecha. Dentro
+   van, ademas de su pedazo de palabra, la palabra vecina (modo de 3 palabras):
+   la vecina izquierda queda a la izquierda del texto de "antes" y la derecha a
+   la derecha del texto de "despues". Como cada una se coloca DESPUES de la
+   palabra central en el mismo flex, no hay forma de que se encimen. */
+.palabra-antes,
+.palabra-despues {
+  display: flex;
+  align-items: baseline;
+}
+
+.palabra-antes {
+  justify-content: flex-end;
+}
+
+.palabra-despues {
+  justify-content: flex-start;
+}
+
+.palabra-antes-texto,
+.palabra-despues-texto {
+  flex: 0 0 auto;
+  white-space: pre;
+}
+
+.palabra-lateral {
+  flex: 0 0 auto;
+  font-size: 0.55em;
+  font-weight: 400;
+  opacity: 0.42;
+  color: var(--palabra-texto, var(--text));
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.palabra-izquierda {
+  margin-right: 1.2em;     /* el hueco, en la letra de la vecina */
+}
+
+.palabra-derecha {
+  margin-left: 1.2em;
+}
+
+.palabra-escena[data-cantidad="1"] .palabra-lateral {
+  display: none;
+}
+
+.palabra-foco {
+  color: var(--palabra-foco, var(--accent));
+  font-weight: 700;
+}
+
+.palabra-escena:not([data-fase="lee"]) .palabra-linea {
+  visibility: hidden;
+}
+
+/* Lo que dice el centro. El numero de la cuenta es grande, la indicacion de
+   "Toca para empezar" es chica (con letra grande la frase se comeria el
+   marco) y el "Fin" va mediano. Mismas proporciones que en el galactico. */
+.palabra-centro {
+  text-align: center;
+}
+
+.palabra-centro:empty {
+  display: none;
+}
+
+.palabra-centro[data-fase="cuenta"] { font-size: 2.2em; }
+.palabra-centro[data-fase="espera"] { font-size: 0.45em; font-weight: 400; }
+.palabra-centro[data-fase="fin"]    { font-size: 1.4em; }
+
+/* =========================================================================
+   COLORES DEL MODO PALABRA POR PALABRA
+   -------------------------------------------------------------------------
+   El fondo de la pantalla, el color de la letra y el color del foco son
+   ajustes del modo. Se escriben como variables CSS desde reto-lectura.js
+   (funcion aplicarColoresPalabra), que las pone en <html>, y aqui se leen.
+
+   Se aplican SOLO cuando el body tiene data-palabra="1", que es la marca que
+   pone el motor al montar la escena y la que quita al desmontarla. Asi, el
+   resto del sitio no se entera de que estos colores existen.
+
+   El fondo tiene que pintar TODA la pantalla, no solo el marco: por eso va en
+   el body y no en .palabra-escena. El panel de controles NO cambia, para que
+   siga siendo reconocible (igual que en el galactico).
+
+   EL INTERLINEADO TAMBIEN ES UN AJUSTE, y va por la misma via: el modal
+   escribe la variable y el CSS la lee. Sin esto habria que volver a medir el
+   texto en JavaScript para saber que tan apretado va, y eso es justo lo que
+   esta pantalla no hace.
+   ========================================================================= */
+body.pantalla-lectura[data-palabra="1"] {
+  background: var(--palabra-fondo, var(--bg));
+}
+
+body.pantalla-lectura[data-palabra="1"] .lectura-marco {
+  /* SOLO el color del texto; el fondo lo pinta el <body> (arriba). Asi el marco
+     no se ve en ningun modo, y el fondo elegido sigue siendo de la pantalla
+     entera. Un marco que se pinta a si mismo es un marco que se ve. */
+  color: var(--palabra-texto, var(--text));
+}
+
+body.pantalla-lectura[data-palabra="1"] .palabra-escena,
+body.pantalla-lectura[data-palabra="1"] .palabra-centro {
+  color: var(--palabra-texto, var(--text));
+}
+
+body.pantalla-lectura[data-palabra="1"] .palabra-foco {
+  color: var(--palabra-foco, var(--accent));
+  font-weight: 700;
+}
+
+/* El marco tampoco necesita quitarle la caja: no la tiene, en ningun modo
+   (ver la regla base). */
+
+/* =========================================================================
+   LOS COLORES DEL MODO GRUPO (CHUNK)
+   -------------------------------------------------------------------------
+   Los mismos tres que en palabra por palabra, y por el mismo motivo: el texto
+   es corto y centrado, y hay UNA palabra resaltada. Aqui esa palabra es la del
+   ORP (el punto de fijación óptico), la nitida, y es la que lleva el color de
+   "foco". Las otras dos se distinguen por el desenfoque, no por el color, asi
+   que el color del texto basta para todas.
+
+   Se aplica con data-grupo="1" en el <body>, que pone el motor al montar y
+   quita al limpiar. Igual que en los otros modos: la marca va en el body y no
+   solo en el marco, porque el fondo tiene que pintar la pantalla entera.
+   ========================================================================= */
+body.pantalla-lectura[data-grupo="1"] {
+  background: var(--grupo-fondo, var(--bg));
+}
+
+body.pantalla-lectura[data-grupo="1"] .lectura-marco {
+  /* Solo el color del texto; el fondo lo pinta el <body> (arriba). */
+  color: var(--grupo-texto, var(--text));
+}
+
+body.pantalla-lectura[data-grupo="1"] .grupo-escena,
+body.pantalla-lectura[data-grupo="1"] .grupo-centro {
+  color: var(--grupo-texto, var(--text));
+}
+
+/* La palabra nitida del ORP es la que lleva el color de foco. La base pone
+   --accent, que ya esta medido en los cinco temas; esto solo lo deja cambiar. */
+body.pantalla-lectura[data-grupo="1"] .grupo-palabra.orp {
+  color: var(--grupo-foco, var(--accent));
+  font-weight: 700;
+}
+
+/* =========================================================================
+   LOS COLORES DEL MODO FRASES
+   -------------------------------------------------------------------------
+   Solo DOS: fondo y texto. No hay color de foco porque este modo no resalta
+   ninguna palabra ni letra — se muestra la oración completa — y un campo de
+   color del foco aqui seria un control que no cambia nada.
+
+   Y aqui si hay INTERLINEADO, que es lo que distingue a este modo de los otros
+   tres: es el unico donde el texto ocupa varios renglones, y por lo tanto el
+   unico donde separar los renglones se ve. Por eso el unico que trae un slider.
+   ========================================================================= */
+body.pantalla-lectura[data-frases="1"] {
+  background: var(--frases-fondo, var(--bg));
+}
+
+body.pantalla-lectura[data-frases="1"] .lectura-marco {
+  /* Solo el color del texto y el interlineado; el fondo lo pinta el <body>
+     (arriba), que es lo que deja el marco invisible. */
+  color: var(--frases-texto, var(--text));
+  line-height: var(--frases-interlineado, 1.4);
+}
+
+body.pantalla-lectura[data-frases="1"] .frases-texto,
+body.pantalla-lectura[data-frases="1"] .frases-centro {
+  color: var(--frases-texto, var(--text));
+}
+
+/* =========================================================================
+   LAS VISTAS PREVIAS DE GRUPO Y DE FRASES
+   -------------------------------------------------------------------------
+   Los dos cuadritos que faltan, con el mismo criterio que los otros dos: usan
+   las clases de la pantalla real, y por eso lo que se ve aqui es lo que se ve
+   alla. No pintan los colores: los heredan de <html>, igual que en palabra por
+   palabra, asi que un cambio se ve en los dos lados en el mismo instante.
+
+   El de grupo muestra tres palabras con su ORP en la del medio, que es justo
+   lo que hay que ver en este modo: COMO SE DIBUJA LA PALABRA FIJADA y como se
+   distinguen las otras dos por el desenfoque. Sin la nitida al lado, el cuadrito
+   no enseñaría nada del modo.
+
+   Y la escena va en data-fase="lee", por la misma razón que en palabra por
+   palabra: fuera de esa fase el CSS esconde la línea.
+   ========================================================================= */
+.ajustes-vista--grupo {
+  display: grid;
+  align-items: center;
+  background: var(--grupo-fondo, var(--bg));
+  color: var(--grupo-texto, var(--text));
+  padding: 0 var(--space-md);
+  /* La letra de un grupo de tres o cuatro palabras tiene que caber en el
+     cuadrito sin partirse: si no cabe, la fila se sale del borde. */
+  font-size: 1.4rem;
+}
+
+.ajustes-vista--frases {
+  display: grid;
+  align-items: center;
+  background: var(--frases-fondo, var(--bg));
+  color: var(--frases-texto, var(--text));
+  padding: 0 var(--space-md);
+  /* Aqui la letra es MAS CHICA que en los otros cuadritos a proposito: el
+     ejemplo es una oración entera, no una palabra. A 3 rem no cabria ni media
+     frase y habria que medirla y achicarla con JavaScript, que es justo lo que
+     esta pantalla no hace. Con 1.2 rem cabe una frase corta y completa, que es
+     lo que hace falta para ver los renglones y el interlineado. */
+  font-size: 1.2rem;
+}
+
+.ajustes-vista--frases .frases-texto {
+  margin: 0;
+  text-align: center;
+  text-wrap: balance;
+  color: var(--frases-texto, var(--text));
+  line-height: var(--frases-interlineado, 1.4);
+}
+
+.ajustes-vista--grupo .grupo-palabra.orp {
+  color: var(--grupo-foco, var(--accent));
+  font-weight: 700;
+}
+
+/* =========================================================================
+   PALABRAS EN GRUPO (CHUNK) — 3 o 4 palabras por fijación
+   -------------------------------------------------------------------------
+   Igual que palabra por palabra (RSVP), pero muestra un grupo de 3-4 palabras
+   centradas en el ORP (punto de fijación óptico). El grupo se pinta en una
+   grid de una fila: cada palabra es un span con blur progresivo según su
+   distancia al ORP.
+
+   Estructura (la crea crearGrupo() en scripts/reto-lectura.js):
+
+      .grupo-escena     la caja centrada (igual que .palabra-escena)
+      .grupo-linea      el grupo: spans .grupo-palabra
+      .grupo-centro     el 3-2-1, "Toca para empezar" y "Fin"
+
+   BLUR PROGRESIVO (span perceptual, Rayner et al.):
+      - ORP (palabra central): nítida, negrita, color --accent
+      - ±1 posición: blur ligero (0.5px), opacidad 0.85
+      - ±2 posiciones: blur medio (1.5px), opacidad 0.5
+      - ±3+ posiciones: blur fuerte (3px), opacidad 0.15 (fantasma)
+
+   LA LÍNEA SE ESCONDE IGUAL QUE EN PALABRA POR PALABRA
+   visibility: hidden fuera de la fase "lee", para que el marco no cambie de alto.
+   ========================================================================== */
+
+.grupo-escena {
+  width: 100%;
+  display: grid;
+  align-items: center;
+  justify-content: center;
+}
+
+.grupo-linea,
+.grupo-centro {
+  grid-area: 1 / 1;
+  margin: 0;
+}
+
+.grupo-linea {
+  display: flex;
+  gap: 0.35ch;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.grupo-palabra {
+  transition: filter 80ms ease, opacity 80ms ease;
+  will-change: filter, opacity;
+}
+
+/* Palabra en el ORP: nítida, negrita, color de acento */
+.grupo-palabra.orp {
+  font-weight: 700;
+  color: var(--accent);
+  filter: none;
+  opacity: 1;
+}
+
+/* Vecinas del ORP (±1): blur ligero */
+.grupo-palabra.cerca {
+  filter: blur(0.5px);
+  opacity: 0.85;
+}
+
+/* ±2 posiciones: blur medio */
+.grupo-palabra.lejos {
+  filter: blur(1.5px);
+  opacity: 0.5;
+}
+
+/* ±3+ posiciones: blur fuerte, casi invisible (fantasma) */
+.grupo-palabra.lejanis {
+  filter: blur(3px);
+  opacity: 0.15;
+}
+
+/* Lo que dice el centro. Mismas fases que palabra por palabra. */
+.grupo-centro {
+  text-align: center;
+}
+
+.grupo-centro:empty {
+  display: none;
+}
+
+.grupo-centro[data-fase="cuenta"] { font-size: 2.2em; }
+.grupo-centro[data-fase="espera"] { font-size: 0.45em; font-weight: 400; }
+.grupo-centro[data-fase="fin"]    { font-size: 1.4em; }
+
+/* La línea se oculta con visibility (no display) para mantener el alto del marco */
+.grupo-escena:not([data-fase="lee"]) .grupo-linea {
+  visibility: hidden;
+}
+
+/* =========================================================================
+   TOGGLE GRUPO 3 / 4 (botón del panel)
+   =========================================================================
+   Un solo cuadrado con el número actual [3] o [4]. Al clicar alterna. */
+.grupo-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.8em;
+  height: 1.8em;
+  background: var(--border);
+  border-radius: var(--radius);
+  font-size: 0.75em;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.grupo-valor {
+  line-height: 1;
+}
+
+/* =========================================================================
+   FRASES COMPLETAS
+   -------------------------------------------------------------------------
+   Una oracion entera a la vez, centrada. Lo arma crearFrases() en
+   scripts/reto-lectura.js. Por dentro del marco:
+
+     .frases-escena        la caja de UNA columna con dos filas: arriba la
+                           frase (o lo que dice el centro, ENCIMADOS en la misma
+                           celda) y abajo la barrita
+     .frases-texto         la frase
+     .frases-centro        el 3-2-1, "Toca para empezar" y "Fin"
+     .frases-barra         la pista de la barrita
+     .frases-barra-relleno lo que se vacia durante el tiempo de la frase
+
+   LA FRASE SE PARTE EN RENGLONES, NO SE ESTIRA
+   A diferencia de palabra por palabra, aqui el texto es largo: puede ser una
+   oracion de veinte palabras. Se deja que baje de renglon (sin white-space:
+   nowrap) y se centra. "text-wrap: balance" reparte las palabras parejas entre
+   los renglones. Esta dentro del piso de navegadores del sitio (los ultimos dos
+   anos) y es solo comodidad: en uno que no la entienda se ignora y queda el
+   reparto normal, que se lee igual. No hay camino alterno que escribir.
+
+   LA LETRA DE UNA FRASE QUE NO CABE
+   --frases-escala la pone reto-lectura.js solo cuando la frase se pasa del alto
+   del marco (un 10 % menos cada vez, hasta el 40 %). Sin ella vale 1: la letra
+   es la que eligio la persona. Multiplica a "1em", que es la letra del marco.
+
+   LA BARRITA
+   Una raya fina con el relleno en --accent sobre una pista en --border (los dos
+   existen en los cinco temas, no se inventa ningun color). La barrita no es lo
+   unico que dice cuanto falta: es una ayuda, y quien no la vea lee igual. El
+   relleno nace lleno y se vacia hacia la IZQUIERDA (transform-origin: left):
+   el tiempo se acaba por la derecha. La anima el reloj de JavaScript, sin
+   "transition": con una transicion iria un paso atras del reloj, y al pausar
+   seguiria vaciandose.
+   ========================================================================== */
+.frases-escena {
+  /* EL TOPE DE ANCHO DE LA PANTALLA, Y ESTA SU UNICO SITIO.
+
+     El marco no lleva tope (para eso se quito el del <main>): aqui la lectura
+     es de texto largo y centrado, y en un monitor de 4K una oracion repartida
+     en 3.000 px de ancho es una linea tan larga que el ojo pierde el hilo al
+     volver al principio. 70 rem es lo que ya usaba la pantalla entera, asi que
+     la frase se ve exactamente como antes y el resto de los modos, que son de
+     texto corto, ahora si ocupan toda la pantalla.
+
+     El relleno lateral va con el tope: sin el, en un celular el texto rozaria
+     los bordes. */
+  width: 100%;
+  max-width: 70rem;
+  padding-inline: var(--space-lg);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+}
+
+.frases-texto,
+.frases-centro {
+  grid-area: 1 / 1;
+  margin: 0;
+}
+
+.frases-texto {
+  font-size: calc(1em * var(--frases-escala, 1));
+  text-align: center;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+/* Lo que dice el centro. Mismas proporciones que en los otros modos. */
+.frases-centro {
+  text-align: center;
+}
+
+.frases-centro:empty {
+  display: none;
+}
+
+.frases-centro[data-fase="cuenta"] { font-size: 2.2em; }
+.frases-centro[data-fase="espera"] { font-size: 0.45em; font-weight: 400; }
+.frases-centro[data-fase="fin"]    { font-size: 1.4em; }
+
+/* La frase y la barrita se esconden con visibility, no con display, fuera de la
+   fase "lee": siguen ocupando su sitio y el marco no cambia de alto al pasar de
+   la cuenta a la primera frase ni al "Fin". */
+.frases-escena:not([data-fase="lee"]) .frases-texto,
+.frases-escena:not([data-fase="lee"]) .frases-barra {
+  visibility: hidden;
+}
+
+.frases-barra {
+  grid-area: 2 / 1;
+  height: 0.35rem;
+  margin-top: var(--space-md);
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.frases-barra-relleno {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--accent);
+  transform-origin: left center;
+  will-change: transform;
+}

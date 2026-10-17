@@ -1,0 +1,123 @@
+/* =============================================================================
+   R.E.T.O. — 10 BASE
+   -----------------------------------------------------------------------------
+   Reinicio minimo, tipografia y el elemento body. Solo lo que afecta a TODA
+   pagina. Si una regla solo le importa a un componente, va en 30.
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* El tamano base de letra. Los ajustes de accesibilidad van a cambiar este
+     valor, y por eso todo lo demas esta expresado en rem y no en px. */
+  font-size: var(--font-size-base);
+}
+
+/* "hidden" QUE DE VERDAD ESCONDE
+   El navegador trae su propia regla "[hidden] { display: none }", y aqui se
+   vuelve a escribir por un motivo que ya ha roto cosas dos veces: CUALQUIER
+   regla de esta pagina que ponga "display" le gana a la del navegador. Eso no
+   es un detalle de especificidad, es una regla general: lo que escribe la
+   pagina siempre le gana a lo que trae el navegador.
+
+   Y en este sitio casi todas las clases ponen display: los botones usan
+   inline-flex, las acciones del modal usan flex, las listas usan flex. Con eso,
+   poner "hidden" en un boton NO lo escondia: se seguia viendo.
+
+   SeRompio con un modal que tenia que mostrar un solo boton y mostraba dos,
+   porque el segundo seguia en pantalla. Un boton de mas que dice lo mismo que
+   el de al lado es ruido, y con un dedo cerca se aprieta el equivocado.
+
+   El "!important" es necesario y no es un descuido: hace falta para ganarle a
+   las reglas de la pagina, no solo a la del navegador. Y esta es una de las
+   pocas veces que esta justificado en todo el sitio, porque aca se esta
+   corrigiendo al navegador, no overrideando una decision de diseno. */
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 1rem;
+  line-height: var(--line-height);
+  background: var(--bg);
+  /* La decoracion del fondo (los puntos del tema infantil) va aqui y no en
+     html a proposito. Cuando el html no tiene fondo propio, el del body sube a
+     canvas y se esparce por TODA la pagina, que es lo que se quiere: si se
+     pusiera en html, el fondo se quedaria en la altura de la primera pantalla
+     y abajo quedaria color plano.
+
+     En los otros cinco casos --deco-imagen es "none", que con cualquier
+     --deco-tamano no dibuja nada. Y como la cabecera y las tarjetas llevan
+     --surface encima, los puntos solo se ven en los huecos: nunca debajo de
+     una palabra, que es lo que habria roto el contraste. */
+  background-image: var(--deco-imagen);
+  background-size: var(--deco-tamano);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+h2 {
+  margin: 0 0 var(--space-sm);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Respeta la preferencia del sistema operativo de reducir el movimiento.
+
+   EXCEPTO SI LA PERSONA YA CONTESTO. Este es el "html:not([data-anim=on])" de
+   abajo, y no es un detalle: la pagina de configuracion LE PROMETE al usuario
+   que puede prenderlas aqui si en este sitio si le sirven. Sin este "not", esa
+   promesa era falsa, porque esta regla es incondicional y le apagaba las
+   animaciones aunque el interruptor estuviera encendido.
+
+   O sea: el sistema ES EL VALOR INICIAL, no un cerrojo. Decide hasta que la
+   persona decida; despues, si ella escoge animations, gana su eleccion.
+
+   Asi quedan los tres estados, y solo tres:
+
+     data-anim="on"    la persona las prendio  -> mandan ellas
+     data-anim="off"   las apago              -> apagadas, siempre
+     sin atributo       no ha decidido         -> decide el sistema
+
+   Lleva !important, asi que da igual en que punto de la hoja este. */
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-anim="on"]) * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* --- Fondos Sutiles Configurables (WCAG 1.4.3 / 2.3.1) --- */
+html[data-fondo="puntos"] body {
+  background-image: radial-gradient(circle, var(--borde-fuerte) 1.2px, transparent 1.2px);
+  background-size: 36px 36px;
+  background-color: var(--bg);
+  opacity: 0.98;
+}
+
+html[data-fondo="diagonales"] body {
+  background-image: repeating-linear-gradient(45deg, var(--border) 0, var(--border) 1px, transparent 0, transparent 32px);
+  background-color: var(--bg);
+}
+
+html[data-fondo="liso"] body {
+  background-image: var(--deco-imagen);
+  background-size: var(--deco-tamano);
+  background-color: var(--bg);
+}

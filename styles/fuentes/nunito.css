@@ -1,0 +1,15 @@
+/* Nunito autoalojada, de Google Fonts, con licencia SIL Open Font License 1.1.
+   Se descarga UNA sola vez porque es una fuente variable: un archivo
+   sirve para los cinco pesos, con font-weight como rango. Descargarla
+   cinco veces eran 192 KB donde basta 39.
+
+   Autoalojada y no enlazada a Google: el sitio tiene que funcionar sin
+   internet, y no depender de un tercero en un sitio para ninos. */
+
+@font-face {
+  font-family: 'Nunito';
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+  src: url('nunito-300.woff2') format('woff2');
+}

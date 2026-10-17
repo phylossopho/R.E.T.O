@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="papel">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configuración - R.E.T.O.</title>
+<link rel="preload" href="styles/fuentes/nunito.css" as="style">
+<link rel="stylesheet" href="styles/fuentes/nunito.css">
+<link rel="stylesheet" href="styles/styles.css?v=c85-flexfix">
+<script src="scripts/reto-panel-prefs.js?v=c01-0f3ddb54"></script>
+<script>
+// Se aplica en el head para que la pagina no aparezca un instante con el tema
+// por defecto antes de cambiarse.
+(function () {
+var t = localStorage.getItem('tema') || 'papel';
+  document.documentElement.setAttribute('data-theme', t);
+  var a = localStorage.getItem('animaciones');
+  if (a === 'off' || a === 'on') {
+    document.documentElement.setAttribute('data-anim', a);
+  }
+
+  // Las tarjetas se animan solo la primera vez de cada sesion. CSS no tiene
+  // memoria, asi que el aviso se deja aqui, en el head, antes de pintar: si se
+  // hiciera al final del body, las tarjetas alcanzarian a animarse y despues se
+  // congelarian, que se ve como un salto.
+  //
+  // Con try/catch porque en algunos modos de privacidad el almacenamiento
+  // lanza al escribir. Si eso pasa, el atributo no se pone, la animacion se
+  // repite y no se rompe nada: es como estaba antes.
+  try {
+    // ?anim=1 fuerza la entrada de las tarjetas aunque esta sesion ya las haya
+    // visto. Sin esto no habria forma de comprobar que la animacion funciona:
+    // solo se veria una vez al abrir el navegador, y no se sabria si a la
+    // segunda ya no aparece por decision o porque dejo de funcionar.
+    var forzar = /[?&]anim=1/.test(location.search);
+    if (sessionStorage.getItem('reto_anim_tarjetas') && !forzar) {
+      document.documentElement.setAttribute('data-anim-tarjetas', 'off');
+    } else {
+      sessionStorage.setItem('reto_anim_tarjetas', '1');
+    }
+  } catch (e) {}
+})();
+</script>
+</head>
+<body>
+<header>
+<h1>Configuración</h1>
+</header>
+<main>
+<ul class="rejilla">
+<li>
+<a class="tarjeta tarjeta-nav" href="configuracion-tema.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">🎨</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg></span>
+<h2 class="tarjeta-titulo">Tema</h2>
+<p class="tarjeta-texto">Elige el aspecto visual del sitio</p>
+</a>
+</li>
+<li>
+<a class="tarjeta tarjeta-nav" href="configuracion-animaciones.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">✨</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="M15 5l-3 3"/><path d="M12 8l-3 3"/></svg></span>
+<h2 class="tarjeta-titulo">Animaciones</h2>
+<p class="tarjeta-texto">Activa o desactiva los movimientos suaves</p>
+</a>
+</li>
+<li>
+<a class="tarjeta tarjeta-nav" href="configuracion-interfaz.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">🖼️</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span>
+<h2 class="tarjeta-titulo">Interfaz</h2>
+<p class="tarjeta-texto">Texturas y detalles sutiles de fondo</p>
+</a>
+</li>
+<li>
+<a class="tarjeta tarjeta-nav" href="configuracion-paneles.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">📱</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2" ry="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></span>
+<h2 class="tarjeta-titulo">Paneles</h2>
+<p class="tarjeta-texto">Posición, tamaño y comportamiento de la barra</p>
+</a>
+</li>
+<li>
+<a class="tarjeta tarjeta-nav" href="configuracion-sonido.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">🔊</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></span>
+<h2 class="tarjeta-titulo">Sonido</h2>
+<p class="tarjeta-texto">Efectos de sonido para acciones y avisos</p>
+</a>
+</li>
+<li>
+<a class="tarjeta tarjeta-nav" href="configuracion-datos.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">💾</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
+<h2 class="tarjeta-titulo">Datos</h2>
+<p class="tarjeta-texto">Exportar e importar tu información</p>
+</a>
+</li>
+</ul>
+</main>
+<div class="panel-flotante" data-panel>
+  <a class="panel-boton" href="index.html"
+     aria-label="Volver a la portada" title="Volver a la portada">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8592;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></span>
+  </a>
+  <a class="panel-boton" href="index.html"
+     aria-label="Ir a la portada" title="Ir a la portada">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8962;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 3l9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/><path d="M10 21v-6h4v6"/></svg></span>
+  </a>
+</div>
+<footer hidden>
+<p>R.E.T.O.</p>
+</footer>
+<script src="scripts/reto-panel.js?v=c04-f73a0fa9"></script>
+<script src="scripts/reto-debug.js?v=c25-5ac10ea0"></script>
+</body>
+</html>
+
+
+
+
+

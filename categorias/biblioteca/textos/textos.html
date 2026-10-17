@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="papel">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Textos - Biblioteca - R.E.T.O.</title>
+<link rel="preload" href="../../../styles/fuentes/nunito.css" as="style">
+<link rel="stylesheet" href="../../../styles/fuentes/nunito.css">
+<link rel="stylesheet" href="../../../styles/styles.css?v=c85-flexfix">
+<script src="../../../scripts/reto-panel-prefs.js?v=c01-0f3ddb54"></script>
+<script>
+// El tema y el interruptor de animaciones se aplican aqui, en el head, y no al
+// final del body: si se hiciera despues, el navegador pintaria primero el
+// estado por defecto y luego lo cambiaria, y se veria un destello en cada carga.
+(function () {
+  var t = localStorage.getItem('tema');
+  if (t) { document.documentElement.setAttribute('data-theme', t); }
+  // Las animaciones tienen tres estados, y el atributo es el que manda:
+  //   "on"   la persona las prendio, y gana su eleccion sobre el sistema
+  //   "off"  las apago, y se quedan apagadas siempre
+  //   nada   todavia no ha decidido, y decide el sistema operativo
+  // Por eso el "on" se escribe explicitamente: sin el, las reglas del sistema
+  // lo volvian a apagar y el interruptor no servia para nada.
+  var a = localStorage.getItem('animaciones');
+  if (a === 'off' || a === 'on') { document.documentElement.setAttribute('data-anim', a); }
+
+  // Las tarjetas se animan solo la primera vez de cada sesion. CSS no tiene
+  // memoria, asi que el aviso se deja aqui, en el head, antes de pintar: si se
+  // hiciera al final del body, las tarjetas alcanzarian a animarse y despues se
+  // congelarian, que se ve como un salto.
+  //
+  // Con try/catch porque en algunos modos de privacidad el almacenamiento
+  // lanza al escribir. Si eso pasa, el atributo no se pone, la animacion se
+  // repite y no se rompe nada: es como estaba antes.
+  try {
+    // ?anim=1 fuerza la entrada de las tarjetas aunque esta sesion ya las haya
+    // visto. Sin esto no habria forma de comprobar que la animacion funciona:
+    // solo se veria una vez al abrir el navegador, y no se sabria si a la
+    // segunda ya no aparece por decision o porque dejo de funcionar.
+    var forzar = /[?&]anim=1/.test(location.search);
+    if (sessionStorage.getItem('reto_anim_tarjetas') && !forzar) {
+      document.documentElement.setAttribute('data-anim-tarjetas', 'off');
+    } else {
+      sessionStorage.setItem('reto_anim_tarjetas', '1');
+    }
+  } catch (e) {}
+})();
+</script>
+</head>
+<body data-biblioteca="texto" data-ruta-importar="../importar/importar.html">
+<header>
+<h1>Textos</h1>
+</header>
+<main>
+<div class="estado-vacio" id="lib-vacio" hidden>
+  <p class="ayuda" id="lib-vacio-texto"></p>
+  <a class="boton" id="lib-vacio-boton" href="../importar/importar.html">Importar un archivo</a>
+</div>
+<ul class="rejilla rejilla-densa" id="lib-lista"></ul>
+</main>
+
+<!--
+  EL CAMPO DE BUSQUEDA
+  Va suelto, arriba a la derecha y debajo del header, y no dentro de la lista,
+  por una razon que se nota al usarlo: si estuviera en medio de las tarjetas,
+  al desplegarse taparia las de arriba y habria que cerrarlo para volver a
+  verlas.
+
+  El campo arranca oculto (ancho cero, no display:none) para que al abrirlo no
+  "salte": el campo ya esta ahi desde el principio y solo se esta mostrando. Un
+  campo que aparece de golpe obliga a perseguirlo con el raton.
+-->
+<div class="buscador" id="buscador">
+  <input type="search" class="buscador-campo" id="buscador-campo"
+    placeholder="Buscar por nombre" aria-label="Buscar un texto por su nombre"
+    autocomplete="off">
+  <button type="button" class="buscador-boton" id="buscador-boton"
+    aria-label="Buscar" aria-expanded="false" title="Buscar">
+    <span class="reserva" aria-hidden="true">&#128269;</span>
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+  </button>
+</div>
+
+<!--
+  EL PANEL DE LA BIBLIOTECA
+  Seis botones. Volver, Seguir leyendo, Seleccionar, Marcar, Importar y
+  Eliminar. Los dos ultimos solo hacen algo si hay algo elegido, y por eso el
+  panel lleva el atributo data-seleccion: el CSS lo usa para apagarlos cuando no
+  hay nada que marcar ni que borrar, en vez de dejarlos ahi para que se aprieten
+  y no pase nada. Un boton que a veces no hace nada ensena a apretar sin mirar.
+
+  NOTA: la lupa NO esta aqui a proposito. El filtro es algo que se usa seguido,
+  y lo que se usa seguido tiene que estar a un clic, no escondido en un menu.
+-->
+<div class="panel-flotante" data-panel>
+  <a class="panel-boton" href="../biblioteca.html"
+     aria-label="Volver a la biblioteca" title="Volver a la biblioteca">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8592;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></span>
+  </a>
+  <button type="button" class="panel-boton" data-seguir hidden
+     aria-label="Seguir leyendo donde lo dejaste" title="Seguir leyendo">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#9654;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2Z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7Z"/></svg></span>
+  </button>
+  <button type="button" class="panel-boton" data-seleccionar
+     aria-label="Seleccionar uno o varios" title="Seleccionar">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#9745;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m8 12 3 3 5-6"/></svg></span>
+  </button>
+  <button type="button" class="panel-boton" data-marcar-lista
+     aria-label="Marcar de color lo seleccionado" title="Marcar de color">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#9679;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.7 1.6-1.6 0-.4-.2-.8-.5-1.1-.3-.3-.5-.7-.5-1.1 0-.9.7-1.6 1.6-1.6H16c3.3 0 6-2.7 6-6 0-5-4.5-8.6-10-8.6z"/></svg></span>
+  </button>
+  <button type="button" class="panel-boton" data-importar
+     aria-label="Importar un archivo" title="Importar">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8615;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg></span>
+  </button>
+  <button type="button" class="panel-boton panel-boton--aviso" data-borrar-lista
+     aria-label="Eliminar lo seleccionado" title="Eliminar lo seleccionado">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#128465;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></span>
+  </button>
+</div>
+<footer hidden>
+<p>R.E.T.O.</p>
+</footer>
+<script src="../../../scripts/reto-datos.js?v=c19-c6fe548d"></script>
+<script src="../../../scripts/reto-dialogo.js?v=c08-ae075893"></script>
+<script src="../../../scripts/reto-panel.js?v=c04-f73a0fa9"></script>
+<script src="../../../scripts/reto-marcado.js?v=c02-badbdf81"></script>
+<script src="../../../scripts/reto-ejemplos.js?v=c01-f542a02f"></script>
+<script src="../../../scripts/reto-biblioteca.js?v=c09-5971e503"></script>
+<script src="../../../scripts/reto-debug.js?v=c25-5ac10ea0"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+

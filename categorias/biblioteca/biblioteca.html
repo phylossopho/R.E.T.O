@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="papel">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biblioteca - R.E.T.O.</title>
+<link rel="preload" href="../../styles/fuentes/nunito.css" as="style">
+<link rel="stylesheet" href="../../styles/fuentes/nunito.css">
+<link rel="stylesheet" href="../../styles/styles.css?v=c85-flexfix">
+<script>
+// El tema y el interruptor de animaciones se aplican aqui, en el head, y no al
+// final del body: si se hiciera despues, el navegador pintaria primero el
+// estado por defecto y luego lo cambiaria, y se veria un destello en cada carga.
+(function () {
+  var t = localStorage.getItem('tema');
+  if (t) { document.documentElement.setAttribute('data-theme', t); }
+  // Las animaciones tienen tres estados, y el atributo es el que manda:
+  //   "on"   la persona las prendio, y gana su eleccion sobre el sistema
+  //   "off"  las apago, y se quedan apagadas siempre
+  //   nada   todavia no ha decidido, y decide el sistema operativo
+  // Por eso el "on" se escribe explicitamente: sin el, las reglas del sistema
+  // lo volvian a apagar y el interruptor no servia para nada.
+  var a = localStorage.getItem('animaciones');
+  if (a === 'off' || a === 'on') { document.documentElement.setAttribute('data-anim', a); }
+
+  // Las tarjetas se animan solo la primera vez de cada sesion. CSS no tiene
+  // memoria, asi que el aviso se deja aqui, en el head, antes de pintar: si se
+  // hiciera al final del body, las tarjetas alcanzarian a animarse y despues se
+  // congelarian, que se ve como un salto.
+  //
+  // Con try/catch porque en algunos modos de privacidad el almacenamiento
+  // lanza al escribir. Si eso pasa, el atributo no se pone, la animacion se
+  // repite y no se rompe nada: es como estaba antes.
+  try {
+    // ?anim=1 fuerza la entrada de las tarjetas aunque esta sesion ya las haya
+    // visto. Sin esto no habria forma de comprobar que la animacion funciona:
+    // solo se veria una vez al abrir el navegador, y no se sabria si a la
+    // segunda ya no aparece por decision o porque dejo de funcionar.
+    var forzar = /[?&]anim=1/.test(location.search);
+    if (sessionStorage.getItem('reto_anim_tarjetas') && !forzar) {
+      document.documentElement.setAttribute('data-anim-tarjetas', 'off');
+    } else {
+      sessionStorage.setItem('reto_anim_tarjetas', '1');
+    }
+  } catch (e) {}
+})();
+</script>
+<script src="../../scripts/reto-panel-prefs.js?v=c01-0f3ddb54"></script>
+</head>
+<body>
+<header>
+<h1>Biblioteca</h1>
+</header>
+<main>
+<ul class="rejilla">
+<li>
+<a class="tarjeta tarjeta-nav" href="textos/textos.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">&#128196;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /><path d="M14 2v5a1 1 0 0 0 1 1h5" /><path d="M10 9H8" /><path d="M16 13H8" /><path d="M16 17H8" /></svg></span>
+<h2 class="tarjeta-titulo">Textos</h2>
+<p class="tarjeta-texto">Lecturas para practicar y reforzar</p>
+</a>
+</li>
+<li>
+<a class="tarjeta tarjeta-nav" href="libros/libros.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">&#128218;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20" /></svg></span>
+<h2 class="tarjeta-titulo">Libros</h2>
+<p class="tarjeta-texto">Libros completos para estudiar a tu ritmo</p>
+</a>
+</li>
+<li>
+<a class="tarjeta tarjeta-nav" href="prompts/prompts.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">&#10024;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z" /></svg></span>
+<h2 class="tarjeta-titulo">Crear con IA</h2>
+<p class="tarjeta-texto">Un prompt para pedirle a una IA libros y textos.</p>
+</a>
+</li>
+  <li>
+    <a class="tarjeta tarjeta-nav" href="importar/importar.html">
+      <span class="tarjeta-icono" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg><span class="reserva">&#8615;</span></span>
+      <h2 class="tarjeta-titulo">Importar</h2>
+      <p class="tarjeta-texto">Trae un archivo .txt de tu computadora a la biblioteca.</p>
+    </a>
+  </li>
+  <li>
+    <a class="tarjeta tarjeta-nav" href="edicion/edicion.html">
+      <span class="tarjeta-icono" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg><span class="reserva">&#9998;</span></span>
+      <h2 class="tarjeta-titulo">Edición</h2>
+      <p class="tarjeta-texto">Crea y edita tus propios textos con niveles y marcas.</p>
+    </a>
+  </li>
+
+</ul>
+</main>
+<div class="panel-flotante" data-panel>
+  <a class="panel-boton" href="../../index.html"
+     aria-label="Volver a la portada" title="Volver a la portada">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8592;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></span>
+  </a>
+  <a class="panel-boton" href="../../index.html"
+     aria-label="Ir a la portada" title="Ir a la portada">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8962;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 3l9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/><path d="M10 21v-6h4v6"/></svg></span>
+  </a>
+</div>
+<footer hidden>
+<p>R.E.T.O.</p>
+</footer>
+<script src="../../scripts/reto-panel.js?v=c04-f73a0fa9"></script>
+<script src="../../scripts/reto-debug.js?v=c25-5ac10ea0"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+

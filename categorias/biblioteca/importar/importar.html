@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="papel">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Importar - Biblioteca - R.E.T.O.</title>
+<link rel="preload" href="../../../styles/fuentes/nunito.css" as="style">
+<link rel="stylesheet" href="../../../styles/fuentes/nunito.css">
+<link rel="stylesheet" href="../../../styles/styles.css?v=c85-flexfix">
+<script>
+(function () {
+  var t = localStorage.getItem('tema');
+  if (t) { document.documentElement.setAttribute('data-theme', t); }
+  var a = localStorage.getItem('animaciones');
+  if (a === 'off' || a === 'on') { document.documentElement.setAttribute('data-anim', a); }
+
+  try {
+    var forzar = /[?&]anim=1/.test(location.search);
+    if (sessionStorage.getItem('reto_anim_tarjetas') && !forzar) {
+      document.documentElement.setAttribute('data-anim-tarjetas', 'off');
+    } else {
+      sessionStorage.setItem('reto_anim_tarjetas', '1');
+    }
+  } catch (e) {}
+})();
+</script>
+<script src="../../../scripts/reto-panel-prefs.js?v=c01-0f3ddb54"></script>
+</head>
+<body>
+<header>
+<h1>Importar</h1>
+</header>
+<main>
+<section class="editor">
+  <h2>Trae tus textos</h2>
+  <p class="ayuda">
+    Elige un archivo <strong>.txt</strong> de tu computadora y se guarda en tu
+    biblioteca. El archivo se queda donde está: aquí solo se copia su contenido.
+  </p>
+  <p class="ayuda" id="im-ayuda">
+    Si el archivo trae marcadores <code>[N1]</code> hasta <code>[N4]</code>, se
+    guarda como <strong>libro</strong>. Si no trae ninguno, se guarda como
+    <strong>texto</strong>. Abajo se ve en cuál de los dos quedó, antes de
+    guardarlo.
+  </p>
+
+  <div class="fila-botones">
+    <div class="accion">
+      <button type="button" class="boton boton--principal" id="im-buscar">Buscar un archivo</button>
+      <p class="accion-ayuda">Se abre la ventana de archivos de tu computadora.</p>
+    </div>
+  </div>
+  <input type="file" id="im-archivo" accept=".txt,text/plain" hidden>
+
+  <p class="datos-estado" id="im-estado" role="status" aria-live="polite"></p>
+</section>
+
+<section class="vista" id="im-vista" hidden>
+  <h2>Vista previa</h2>
+  <p class="tipo" id="im-tipo"></p>
+  <p class="vista-cuenta" id="im-cuenta"></p>
+  <div class="vista-arbol" id="im-arbol"></div>
+  <div id="im-problemas-zona">
+    <h3 class="problema-titulo" id="im-problemas-titulo" hidden>Problemas que hay que arreglar</h3>
+    <ul class="problemas" id="im-problemas"></ul>
+  </div>
+</section>
+</main>
+<div class="panel-flotante" data-panel>
+  <a class="panel-boton" href="../biblioteca.html"
+     aria-label="Volver a Biblioteca" title="Volver a Biblioteca">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8592;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></span>
+  </a>
+  <a class="panel-boton" href="../../../index.html"
+     aria-label="Ir a la portada" title="Ir a la portada">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8962;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 3l9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/><path d="M10 21v-6h4v6"/></svg></span>
+  </a>
+</div>
+<footer hidden>
+<p>R.E.T.O.</p>
+</footer>
+<script src="../../../scripts/reto-panel.js?v=c04-f73a0fa9"></script>
+<script src="../../../scripts/reto-marcado.js?v=c02-badbdf81"></script>
+<script src="../../../scripts/reto-datos.js?v=c19-c6fe548d"></script>
+<script>
+(function () {
+  'use strict';
+
+  var NOMBRES = { 1: 'Bloque', 2: 'Capítulo', 3: 'Sección', 4: 'Texto' };
+  var ETIQUETAS = ['h2', 'h3', 'h4', 'h5'];
+  var btnBuscar = document.getElementById('im-buscar');
+  var archivo   = document.getElementById('im-archivo');
+  var estado    = document.getElementById('im-estado');
+  var vista     = document.getElementById('im-vista');
+  var tipoEl    = document.getElementById('im-tipo');
+  var cuenta    = document.getElementById('im-cuenta');
+  var arbol     = document.getElementById('im-arbol');
+  var probsEl   = document.getElementById('im-problemas');
+  var probsT    = document.getElementById('im-problemas-titulo');
+
+  var pendiente = null;
+
+  function crear(etiqueta, clase, texto) {
+    var e = document.createElement(etiqueta);
+    if (clase) e.className = clase;
+    if (texto !== undefined) e.textContent = texto;
+    return e;
+  }
+
+  function limpiar(e) {
+    while (e.firstChild) e.removeChild(e.firstChild);
+  }
+
+  function decir(texto, error) {
+    estado.textContent = texto;
+    estado.className = 'datos-estado' + (error ? ' es-error' : ' es-ok');
+  }
+
+  function pintarArbol(nodos, en) {
+    (nodos || []).forEach(function (nodo) {
+      if (nodo.t === 'n') {
+        var h = crear(ETIQUETAS[Math.min(nodo.n, 4) - 1], null, nodo.titulo);
+        en.appendChild(h);
+        pintarArbol(nodo.hijos, en);
+      } else {
+        var p = crear('p');
+        p.appendChild(document.createTextNode(nodo.txt));
+        en.appendChild(p);
+      }
+    });
+  }
+
+  function refrescar() {
+    if (!pendiente) {
+      vista.hidden = true;
+      limpiar(arbol);
+      limpiar(probsEl);
+      return;
+    }
+    var doc = pendiente.doc;
+    var revision = pendiente.revision;
+
+    limpiar(arbol);
+    limpiar(probsEl);
+    vista.hidden = false;
+
+    tipoEl.textContent = doc.tipo === 'libro'
+      ? 'Se va a guardar como LIBRO, en la página de Libros.'
+      : 'Se va a guardar como TEXTO, en la página de Textos.';
+
+    var partes = [];
+    partes.push(doc.palabras + (doc.palabras === 1 ? ' palabra' : ' palabras'));
+    cuenta.textContent = partes.join(' · ');
+
+    pintarArbol(doc.raiz, arbol);
+
+    var todos = (doc.problemas || []).concat(revision.problemas || []);
+    var hayError = todos.some(function (p) { return p.tipo === 'error'; });
+    var hayAviso = todos.some(function (p) { return p.tipo === 'aviso'; });
+
+    probsT.hidden = todos.length === 0;
+    probsT.textContent = hayError
+      ? 'Problemas que hay que arreglar'
+      : (hayAviso ? 'Avisos' : 'Problemas que hay que arreglar');
+    todos.forEach(function (p) {
+      var li = crear('li');
+      li.appendChild(crear('strong', null, 'Línea ' + p.linea + ': '));
+      li.appendChild(document.createTextNode(p.mensaje));
+      probsEl.appendChild(li);
+    });
+
+    if (hayError) {
+      btnBuscar.disabled = false;
+      btnBuscar.textContent = 'Buscar otro archivo';
+      decir('No se guardó nada. Corrige el archivo y vuelve a elegirlo.', true);
+    } else {
+      guardar();
+    }
+  }
+
+function guardar() {
+    /* El registro lo arma RetoMarcado.documentoNuevo(), que es el MISMO camino
+       que usa la siembra de los textos de ejemplo. Las dos puertas de entrada
+       producen el mismo registro, y si cada una armara el suyo, un dia uno se
+       quedaria sin un campo y el documento se veria bien en la lista y se
+       romperia al abrirlo. Ver "El registro" en reto-marcado.js. */
+    var registro = window.RetoMarcado.documentoNuevo(pendiente.nombre, pendiente.cuerpo).registro;
+
+    window.RetoDatos.libros.guardar(registro).then(function () {
+      var destino = registro.tipo === 'libro' ? '../libros/libros.html' : '../textos/textos.html';
+      btnBuscar.disabled = false;
+      btnBuscar.textContent = 'Buscar otro archivo';
+      decir('Listo: "' + registro.nombre + '" se guardó como ' +
+        (registro.tipo === 'libro' ? 'libro' : 'texto') + '. Abriendo…');
+      setTimeout(function () { location.href = destino; }, 1100);
+    }).catch(function (e) {
+      btnBuscar.disabled = false;
+      btnBuscar.textContent = 'Buscar otro archivo';
+      
+      if (e.name === 'QuotaExceededError' || (e.message && e.message.indexOf('almacenamiento') !== -1)) {
+        decir('Sin espacio suficiente: Si estás en navegación privada o en un celular con espacio ajustado, abre en una pestaña normal.', true);
+      } else {
+        decir('No se pudo guardar: ' + e.message, true);
+      }
+    });
+  }
+
+  btnBuscar.addEventListener('click', function () { archivo.click(); });
+
+  archivo.addEventListener('change', function () {
+    var f = archivo.files && archivo.files[0];
+    if (!f) return;
+    var lector = new FileReader();
+    btnBuscar.disabled = true;
+    btnBuscar.textContent = 'Leyendo…';
+    decir('Abriendo ' + f.name + '…');
+    lector.onload = function () {
+      var cuerpo = String(lector.result || '');
+      archivo.value = '';
+      if (!cuerpo.trim()) {
+        btnBuscar.disabled = false;
+        btnBuscar.textContent = 'Buscar un archivo';
+        decir('El archivo está vacío.', true);
+        return;
+      }
+      pendiente = {
+        nombre: f.name.replace(/\.[^.]+$/, ''),
+        cuerpo: cuerpo,
+        doc: window.RetoMarcado.analizar(cuerpo),
+        revision: null
+      };
+      pendiente.revision = window.RetoMarcado.revisar(pendiente.doc);
+      refrescar();
+    };
+    lector.onerror = function () {
+      btnBuscar.disabled = false;
+      btnBuscar.textContent = 'Buscar un archivo';
+      decir('No se pudo leer el archivo.', true);
+    };
+    lector.readAsText(f, 'utf-8');
+  });
+})();
+</script>
+<script src="../../../scripts/reto-debug.js?v=c25-5ac10ea0"></script>
+</body>
+</html>
+
+
+
+
+
+

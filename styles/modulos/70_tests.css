@@ -1,0 +1,1499 @@
+/* =========================================================================
+   R.E.T.O. - 70 TESTS
+   -------------------------------------------------------------------------
+   La interfaz de "Gestionar banco de tests" (.tst-*) y de "Resolver test".
+   Es la maqueta: ver ESTADO.md. Los datos todavia no se guardan.
+
+   Igual que en los juegos: AQUI NO se declara con valor por defecto ninguna
+   de las variables que pone reto-tests-ajustes.js en <html> (--tst-fuente,
+   --tst-texto-escala). Una variable declarada en un elemento TAPA la que llega
+   heredada y el ajuste se guardaria sin verse. El valor por defecto va EN EL
+   SITIO DONDE SE USA: var(--tst-fuente, var(--font)).
+
+   Lo que el modulo de ajustes escribe en <html> como ATRIBUTOS:
+     data-tst-espaciado  normal | amplio     (letras, palabras y lineas)
+     data-tst-columna    normal | estrecha | completa   (largo de la linea de lectura)
+     data-tst-borde      on | off            (contornos gruesos)
+     data-tst-mov        on | off            (movimiento suave)
+
+   LO QUE NUNCA SE HACE AQUI: dar un significado solo con color. Cada estado
+   lleva un icono y una palabra: "Falta", "Aqui se va el valor", "Elegida".
+   ========================================================================= */
+
+.tst {
+  font-family: var(--tst-fuente, var(--font));
+  font-size: calc(var(--tst-texto-escala, 1) * 1rem);
+}
+
+/* EL CONTENEDOR PRINCIPAL OCUPA UN PORCENTAJE DE LA PANTALLA, no un ancho fijo:
+   93 % en movil y 85 % desde tablet (el escalon de 48 rem esta en
+   40_adaptativo.css, que es el unico modulo con consultas de tamano). Es
+   `main.tst` y no `.tst` a proposito: tiene que ganarle al `main` de
+   20_estructura.css, que lo limita a --max-ancho (de 560 px a 1500 px).
+
+   EL TOPE DE 110 rem existe para las pantallas gigantes: el 85 % de un monitor
+   4K son 3264 px, y a ese ancho las tarjetas quedan lejisimos unas de otras.
+   110 rem son unos 2100 px con la letra base, que cubre hasta 1920 px sin
+   tocar el 85 %. Lo que no se ensancha es el TEXTO: un parrafo de 200
+   caracteres por linea no se puede leer, asi que los bloques de lectura usan
+   --tst-medida (75 caracteres, o 55, o todo el ancho, segun el ajuste "Ancho
+   de la linea"). */
+main.tst {
+  --tst-medida: 75ch;
+  box-sizing: border-box;
+  width: 93%;
+  max-width: 110rem;
+  margin-inline: auto;
+  padding: var(--space-md) 0;
+}
+
+/* EL PANEL FLOTANTE NO TAPA NADA. Va fijo (por defecto abajo, centrado) y se
+   despierta al pasar el mouse por encima; si el ultimo boton o la ultima tarjeta
+   quedan debajo de el, no se pueden tocar sin que aparezca. Por eso la pagina
+   reserva, del lado donde esta el panel, lo que mide el panel mas un respiro.
+   (Con el panel a un costado no hace falta: el 85 % y el 93 % ya dejan margen
+   en pantallas anchas.) La altura sube un poco con el tamano grande del panel. */
+main.tst { --tst-reserva-panel: calc(var(--space-md) * 2 + 3.75rem + env(safe-area-inset-bottom, 0px)); padding-bottom: var(--tst-reserva-panel); }
+html[data-panel-tam="grande"] main.tst { --tst-reserva-panel: calc(var(--space-md) * 2 + 4.5rem + env(safe-area-inset-bottom, 0px)); }
+html[data-panel-pos="arriba"] main.tst { padding-top: var(--tst-reserva-panel); padding-bottom: var(--space-md); }
+
+html[data-tst-columna="estrecha"] main.tst { --tst-medida: 55ch; }
+html[data-tst-columna="completa"] main.tst { --tst-medida: 100%; }
+
+/* Un bloque de lectura: no pasa de la medida y se centra en su espacio. */
+.tst-columna {
+  width: 100%;
+  max-width: var(--tst-medida);
+  margin-inline: auto;
+}
+
+html[data-tst-espaciado="amplio"] .tst {
+  letter-spacing: 0.12em;
+  word-spacing: 0.2em;
+  line-height: 1.8;
+}
+
+/* Un icono SVG de linea que acompana a un texto. Hereda el color del texto. */
+.tst-icono {
+  flex: none;
+  width: 1.25em;
+  height: 1.25em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tst h2 { margin: var(--space-md) 0 var(--space-xs); font-size: 1.35em; }
+.tst h3 { margin: var(--space-md) 0 var(--space-xs); font-size: 1.15em; }
+.tst p { margin: var(--space-xs) 0; }
+.tst [hidden] { display: none; }
+
+.tst-con-icono { display: inline-flex; align-items: center; gap: 0.35em; }
+.tst-fila-cab { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); }
+.tst-grupo-campos--ancho { grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+.tst-fila-pregunta .tst-correcta { margin-right: var(--space-sm); }
+.tst-bloque .tst-correcta { margin: 0 var(--space-sm) var(--space-sm) 0; }
+
+/* El mensaje de lo que acaba de pasar ("se guardo", "se borro"). Reserva su
+   sitio para que lo de abajo no salte cuando aparece, y lo anuncia el lector
+   de pantalla. */
+.tst-estado { min-height: 1.6em; margin: 0 0 var(--space-sm); font-weight: 700; }
+
+.tst-vista:focus { outline: none; }
+.tst-vista > h2:first-child { margin-top: 0; }
+.tst-vista h2:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
+
+/* EL AVISO DE MAQUETA: visible, corto y sin alarma. */
+.tst-maqueta {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border: 2px dashed var(--borde-fuerte);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.tst-ruta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  margin: 0 0 var(--space-md);
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+}
+
+.tst-ruta li + li::before { content: "\203A"; margin-right: var(--space-xs); }
+
+/* -------------------------------------------------------------------------
+   LOS BOTONES Y LOS CAMPOS
+   Nada de depender del placeholder: cada campo lleva su etiqueta visible
+   (dislexia, memoria de trabajo) y su ayuda en una linea aparte.
+   ------------------------------------------------------------------------- */
+.tst-barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-sm);
+  margin: var(--space-md) 0;
+}
+
+.tst-barra .tst-campo { flex: 1 1 12rem; margin: 0; }
+
+.tst-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin: var(--space-md) 0 0;
+}
+
+.tst .boton { display: inline-flex; align-items: center; gap: var(--space-xs); min-height: 48px; }
+
+.tst-campo { display: block; margin: 0 0 var(--space-md); }
+.tst-campo > label,
+.tst-campo > .tst-etiqueta { display: block; margin: 0 0 var(--space-xs); font-weight: 700; }
+.tst-campo .ayuda { display: block; margin: 0 0 var(--space-xs); font-weight: 400; }
+.tst-campo textarea.editor-campo { min-height: 6rem; resize: vertical; }
+
+/* Un campo de texto no se estira por toda la pantalla: a 1600 px de ancho un
+   campo para escribir una pregunta deja de ser comodo de leer. */
+.tst-campo > .editor-campo { max-width: 64rem; }
+
+html[data-tst-borde="on"] .tst .editor-campo,
+html[data-tst-borde="on"] .tst-opcion,
+html[data-tst-borde="on"] .tst .tarjeta,
+html[data-tst-borde="on"] .tst-fila-pregunta {
+  border-width: 3px;
+  border-color: var(--text);
+}
+
+/* LA CABECERA DICE QUE TEST SE ESTA RESOLVIENDO. El "Resolviendo el test" se
+   esconde en pantallas chicas (40_adaptativo.css lo muestra desde tablet) y,
+   si aun asi el titulo no cabe, se corta con puntos suspensivos; el nombre
+   completo queda en el atributo title y en el titulo de la pestana. */
+.tst-cab-pre { display: none; }
+
+html[data-tst-vista="pregunta"] header h1,
+html[data-tst-vista="resultado"] header h1 {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* UN ERROR SE DICE CON PALABRAS Y UN ICONO, no con un borde rojo. */
+.tst-error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  margin: var(--space-xs) 0 0;
+  font-weight: 700;
+}
+
+.tst-error[hidden] { display: none; }
+
+.editor-campo[aria-invalid="true"] { border-width: 3px; border-style: dashed; }
+
+.tst-resumen {
+  margin: 0 0 var(--space-md);
+  padding: var(--space-md);
+  border: 3px solid var(--text);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.tst-resumen:focus { outline: 3px solid var(--focus); outline-offset: 3px; }
+.tst-resumen h3 { margin-top: 0; }
+.tst-resumen ul { margin: 0; padding-left: 1.2em; }
+.tst-resumen a { color: inherit; font-weight: 700; }
+
+/* -------------------------------------------------------------------------
+   EL BANCO: UNA TARJETA POR TEST
+   ------------------------------------------------------------------------- */
+/* LOS TESTS SE MUESTRAN EN TARJETAS, las mismas del resto de la plataforma
+   (.rejilla > li > .tarjeta, con .tarjeta-icono, .tarjeta-titulo y
+   .tarjeta-texto de 30_componentes.css). La entrada animada y el zoom al pasar
+   el mouse vienen de 50_animaciones.css, igual que en las demas: aqui NO se
+   escribe ninguna animacion, para que cuando se pueda variar desde
+   Configuracion, estas cambien con las demas.
+
+   COMPACTAS: la plataforma tiene tarjetas grandes con un icono enorme de marca
+   de agua; para una lista de tests, que puede tener muchos, se achican (el
+   tamano lo elige la persona: pequena, mediana o grande).
+   En "Resolver" cada tarjeta es un enlace (a.tarjeta-nav) y trae el borde de
+   acento al pasar el mouse. En el banco lleva botones adentro y no puede ser un
+   enlace, asi que ese borde se repite aqui (.tst-tarjeta:hover). */
+.tst-rejilla {
+  --tst-tarjeta-min: 12.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--tst-tarjeta-min), 100%), 1fr));
+  gap: var(--space-sm);
+}
+
+.tst-rejilla[data-tarjeta="mediana"] { --tst-tarjeta-min: 17rem; }
+.tst-rejilla[data-tarjeta="grande"] { --tst-tarjeta-min: 22rem; }
+
+.tst .tst-tarjeta {
+  --tamano-icono: 2.4rem;
+  --glifo-icono: 1.4rem;
+  gap: 0.2rem;
+  padding: var(--space-sm) var(--space-md);
+  text-align: left;
+}
+
+.tst .tst-tarjeta .tarjeta-titulo { margin: 0; font-size: 1.05em; }
+.tst .tst-tarjeta .tarjeta-texto { margin: 0; font-size: 0.9em; }
+.tst-rejilla[data-tarjeta="pequena"] .tarjeta-texto { display: none; }
+.tst-rejilla[data-tarjeta="grande"] .tst-tarjeta { padding: var(--space-md); }
+.tst-rejilla[data-tarjeta="grande"] .tarjeta-titulo { font-size: 1.25em; }
+
+.tst-tarjeta-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs) var(--space-sm); margin: 0; font-size: 0.85em; }
+.tst-tarjeta-hecho { margin: 0; font-size: 0.8em; color: var(--muted); }
+.tst-tarjeta-acciones { margin-top: auto; padding-top: var(--space-xs); }
+
+.tst-empezar { display: inline-flex; align-items: center; gap: var(--space-xs); margin-top: auto; font-weight: 700; }
+.tst-empezar .tst-icono { width: 1em; height: 1em; }
+
+article.tst-tarjeta:hover {
+  background: var(--tarjeta-hover-bg);
+  border-color: var(--accent);
+  box-shadow: 0 8px 22px var(--shadow);
+}
+
+/* Las tarjetas que se vuelven a pintar (al buscar, al filtrar, al cambiar el
+   orden) NO repiten la entrada animada: solo la primera vez que aparece la
+   lista. Si no, cada letra que se escribe en la busqueda las haria entrar de
+   nuevo. */
+html .tst-sin-entrada.rejilla > li { animation: none; }
+
+/* AGRUPADAS POR MATERIA */
+.tst-grupo { margin: 0 0 var(--space-md); }
+.tst-grupo-titulo { margin: var(--space-sm) 0 var(--space-xs); font-size: 1.15em; }
+.tst-grupo-cuenta { font-weight: 400; color: var(--muted); }
+
+/* EN LISTA: una fila por test, con la misma tarjeta (y por eso las mismas
+   animaciones). */
+.tst-rejilla[data-vista="lista"] { grid-template-columns: minmax(0, 1fr); gap: var(--space-xs); }
+
+.tst-rejilla[data-vista="lista"][data-tarjeta="pequena"] {
+  gap: var(--space-2xs);
+}
+
+.tst-rejilla[data-vista="lista"][data-tarjeta="pequena"] .tst-tarjeta {
+  --tamano-icono: 1.2rem;
+  --glifo-icono: 0.75rem;
+  padding: 0.2rem var(--space-sm);
+  gap: var(--space-2xs) var(--space-sm);
+}
+
+.tst-rejilla[data-vista="lista"][data-tarjeta="pequena"] .tarjeta-titulo {
+  font-size: 0.95em;
+}
+
+.tst-rejilla[data-vista="lista"][data-tarjeta="pequena"] .tst-tarjeta-meta,
+.tst-rejilla[data-vista="lista"][data-tarjeta="pequena"] .tst-tarjeta-hecho {
+  font-size: 0.75em;
+}
+
+.tst-rejilla[data-vista="lista"] .tst-tarjeta {
+  --tamano-icono: 1.6rem;
+  --glifo-icono: 1rem;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs) var(--space-md);
+  padding: var(--space-xs) var(--space-md);
+}
+
+.tst-rejilla[data-vista="lista"] .tarjeta-titulo { flex: 1 1 14rem; }
+.tst-rejilla[data-vista="lista"] .tarjeta-texto { display: none; }
+.tst-rejilla[data-vista="lista"] .tst-tarjeta-acciones,
+.tst-rejilla[data-vista="lista"] .tst-empezar { margin-top: 0; padding-top: 0; margin-left: auto; }
+
+.tst-zona-lista { margin-top: var(--space-xs); }
+
+.tst-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs) var(--space-md);
+  margin: 0 0 var(--space-sm);
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+}
+
+.tst-meta li { display: inline-flex; align-items: center; gap: var(--space-xs); }
+
+/* El tipo de pregunta: icono + palabra. Tres formas, ninguna depende del color. */
+.tst-tipo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0 var(--space-sm);
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tst-tipo[data-tipo="dinamica"] { border-style: dashed; }
+.tst-tipo[data-tipo="mixto"] { border-style: double; border-width: 4px; }
+
+.tst-vacio {
+  padding: var(--space-lg);
+  border: 2px dashed var(--borde-fuerte);
+  border-radius: var(--radius);
+  text-align: center;
+}
+
+/* -------------------------------------------------------------------------
+   EL EDITOR: LAS PREGUNTAS DE UN TEST
+   Subir y bajar son botones: nada se hace solo arrastrando (WCAG 2.5.7).
+   ------------------------------------------------------------------------- */
+.tst-preguntas { display: grid; gap: var(--space-sm); margin: 0; padding: 0; list-style: none; }
+
+.tst-fila-pregunta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.tst-fila-info { flex: 1 1 18rem; min-width: 0; }
+.tst-fila-pregunta .tst-num { font-weight: 700; }
+.tst-fila-pregunta p { margin: 0; }
+.tst-fila-botones { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.tst .boton--chico { min-height: 44px; }
+
+/* Dos grandes elecciones: pregunta fija o con numeros que cambian. */
+.tst-elegir-tipo { display: grid; gap: var(--space-md); }
+
+.tst-eleccion {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  width: 100%;
+  min-height: 6rem;
+  padding: var(--space-md);
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: var(--surface);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.tst-eleccion:hover { border-color: var(--accent); }
+.tst-eleccion strong { display: inline-flex; align-items: center; gap: var(--space-xs); font-size: 1.1em; }
+.tst-eleccion:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+/* Las opciones de una pregunta fija y los distractores: una tarjeta cada una. */
+.tst-bloques {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(22rem, 100%), 1fr));
+  gap: var(--space-md);
+  margin: 0 0 var(--space-md);
+  padding: 0;
+  list-style: none;
+}
+
+.tst-bloque {
+  padding: var(--space-md);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.tst-bloque > h4 { margin: 0 0 var(--space-sm); font-size: 1.05em; }
+.tst-bloque .tst-campo:last-of-type { margin-bottom: var(--space-sm); }
+
+.tst-grupo-campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: var(--space-sm); }
+
+.tst-insertar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs); margin: var(--space-xs) 0 0; }
+
+.tst-codigo {
+  padding: 0 var(--space-xs);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+.tst-correcta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-weight: 700;
+}
+
+/* La vista previa de una pregunta con numeros que cambian. */
+.tst-previa {
+  margin: var(--space-md) 0;
+  padding: var(--space-md);
+  border: 2px dashed var(--borde-fuerte);
+  border-radius: var(--radius);
+}
+
+.tst-previa h3 { margin-top: 0; }
+.tst-previa dl { margin: 0; }
+.tst-previa dt { font-weight: 700; margin-top: var(--space-sm); }
+.tst-previa dd { margin: 0; }
+
+/* -------------------------------------------------------------------------
+   RESOLVER: ELEGIR, RESPONDER, MIRAR EL RESULTADO
+   ------------------------------------------------------------------------- */
+.tst-pregunta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-md);
+}
+
+/* Lo de al lado (cuantas van, la racha). En movil va ARRIBA, antes de la
+   pregunta; en pantalla ancha (40_adaptativo.css) pasa a una columna fija a la
+   derecha y se queda pegada mientras se baja. */
+.tst-lateral { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs) var(--space-md); }
+.tst-lateral:empty { display: none; }
+
+.tst-avance { flex: 1 1 10rem; margin: 0; }
+.tst-avance p { margin: 0 0 var(--space-xs); font-weight: 700; font-variant-numeric: tabular-nums; }
+.tst-racha { margin: 0; }
+.tst-barra-avance { height: 8px; overflow: hidden; border-radius: 999px; background: color-mix(in srgb, currentColor 22%, transparent); }
+.tst-barra-relleno { width: 0%; height: 100%; background: currentColor; transition: width 0.2s ease; }
+html[data-tst-mov="off"] .tst-barra-relleno,
+html[data-anim="off"] .tst-barra-relleno { transition: none; }
+
+/* LA RACHA. El fuego es un emoji y NO lo es todo: el numero va escrito al lado
+   ("Racha de 3"), asi que quien no ve el emoji, o lo ve sin color, tiene el
+   mismo dato. La llama crece un poco con la racha (--nivel, de 0 a 3) y se
+   anima UNA vez cada vez que sube, no en bucle: algo que se mueve sin parar
+   compite con la pregunta que se esta leyendo. */
+.tst-racha {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  justify-self: start;
+  padding: var(--space-xs) var(--space-md);
+  border: 3px solid var(--text);
+  border-radius: 999px;
+  background: var(--surface);
+  font-weight: 700;
+}
+
+.tst-llama {
+  display: inline-block;
+  font-size: calc(1.1em + var(--nivel, 0) * 0.3em);
+  line-height: 1;
+  transform-origin: 50% 90%;
+}
+
+.tst-racha[data-sube="1"] .tst-llama { animation: tst-llama 0.45s ease; }
+
+@keyframes tst-llama {
+  0% { transform: scale(0.6) rotate(-8deg); }
+  55% { transform: scale(1.25) rotate(6deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.tst-enunciado { margin: 0 0 var(--space-md); font-size: 1.2em; font-weight: 700; }
+
+/* LA PANTALLA DE LA PREGUNTA CABE SIN SCROLL: la cabecera, la pregunta y las
+   respuestas. La seccion toma como alto MINIMO lo que queda de ventana
+   (--tst-libre, que mide reto-resolver-test.js al dibujar y al cambiar el
+   tamano) y reparte ese alto: la pregunta toma lo que necesita y las respuestas
+   (2 x 2) se estiran en lo que sobra. Si de verdad no cabe (un texto muy largo,
+   una letra enorme), la pagina crece y se desplaza: antes eso que cortar. */
+.tst-vista--pregunta { display: flex; flex-direction: column; min-height: var(--tst-libre, auto); }
+.tst-vista--pregunta > .tst-pregunta { flex: 1; min-height: 0; }
+.tst-pregunta { align-items: stretch; }
+.tst-columna--pregunta { display: flex; flex-direction: column; gap: var(--space-sm); min-height: 0; }
+.tst-columna--pregunta > .tst-opciones { flex: 1; }
+
+/* La pregunta y su icono de escuchar, en un renglon: el altavoz va DELANTE. */
+.tst-enunciado-fila { display: flex; align-items: center; gap: var(--space-sm); }
+.tst-enunciado-fila .tst-enunciado { flex: 1; margin: 0; font-size: clamp(1.05em, 3vh, 1.5em); }
+
+.tst .boton.tst-escuchar-icono {
+  flex: none;
+  justify-content: center;
+  width: 2.75rem;
+  min-width: 44px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.tst .boton.tst-escuchar-opcion {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--accent);
+}
+
+.tst .boton.tst-escuchar-opcion:hover {
+  background: var(--bg);
+}
+
+.tst .boton.tst-escuchar-opcion svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+/* Un texto para leer largo se desplaza POR DENTRO, sin empujar las respuestas. */
+.tst-columna--pregunta > .tst-pasaje { max-height: 28vh; margin: 0; overflow-y: auto; }
+.tst-pasaje:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+/* En la pantalla de la pregunta no hay relleno: el aviso de maqueta, el titulo y
+   el mensaje de estado se esconden a la vista (siguen para el lector de
+   pantalla: el mensaje es una region de aviso). */
+html[data-tst-vista="pregunta"] main.tst { padding-top: var(--space-xs); }
+html[data-tst-vista="pregunta"][data-panel-pos="arriba"] main.tst { padding-top: var(--tst-reserva-panel); }
+html[data-tst-vista="pregunta"] .tst-maqueta { display: none; }
+html[data-tst-vista="pregunta"] .tst-estado {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.tst-pasaje {
+  margin: 0 0 var(--space-md);
+  padding: var(--space-md);
+  border-left: 6px solid var(--text);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.tst-pasaje p { margin: 0 0 var(--space-xs); }
+
+/* La frase señalada del pasaje: subrayada y en negrita (no es un amarillo).
+   Para quien no ve, el script le pone delante "Aqui:" escondido a la vista;
+   para quien ve, la nota con icono de debajo dice que la subrayada es la que hay
+   que mirar. */
+.tst-marca {
+  padding: 0;
+  font-weight: 700;
+  color: inherit;
+  background: transparent;
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 4px;
+}
+
+/* SIN FONDO: el `fieldset` global (30_componentes.css) trae fondo de --surface,
+   y en los temas claros (papel, basketball, infantil) se veia un recuadro
+   blanco detras de las respuestas. Aqui el fieldset es solo una agrupacion para
+   el lector de pantalla, no una caja: se le quita todo lo visual en todos los
+   temas. */
+.tst-opciones {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(3.5rem, 1fr);
+  gap: var(--space-sm);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* UNA RESPUESTA ES UN BOTON (no un radio): con radios, la primera flecha del
+   teclado ya elegiria, y como elegir ENVIA, enviaria. Con botones las flechas
+   solo mueven el foco. Lleva la letra, el texto y, cuando esta elegida o es la
+   correcta, un visto y una palabra. */
+.tst-opcion {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-height: 56px;
+  margin: 0;
+  padding: var(--space-xs) var(--space-md);
+  box-sizing: border-box;
+  font: inherit;
+  font-size: clamp(0.95em, 2.3vh, 1.2em);
+  text-align: left;
+  color: inherit;
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.tst-opcion:hover { border-color: var(--accent); }
+.tst-opcion:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.tst-opcion[aria-disabled="true"] { cursor: default; }
+
+.tst-letra {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 2em;
+  height: 2em;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  font-weight: 700;
+}
+
+.tst-opcion-texto { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+
+.tst-visto { display: none; }
+
+.tst-estado-opcion { display: none; font-weight: 700; }
+
+/* LA ELEGIDA: borde grueso, la letra en negativo y un visto. */
+.tst-opcion[aria-pressed="true"],
+.tst-opcion.tst-opcion--elegida { border-width: 5px; padding: calc(var(--space-xs) - 3px) calc(var(--space-md) - 3px); }
+
+.tst-opcion[aria-pressed="true"] .tst-letra,
+.tst-opcion.tst-opcion--elegida .tst-letra { background: var(--text); color: var(--bg); }
+
+.tst-opcion[aria-pressed="true"] .tst-visto,
+.tst-opcion.tst-opcion--elegida .tst-visto { display: inline-block; }
+
+/* LA RESPUESTA CORRECTA, cuando la persona tiene prendido "pintar de verde".
+   Usa --acierto como fondo y --bg como letra: son justo las dos cuentas que
+   00_tokens.css ya midio para este token en cada tema (icono contra superficie
+   y fondo de la pagina contra el icono), asi que el verde se adapta solo al
+   tema (oscuro en los claros, claro en los oscuros) sin tokens nuevos. Y no es
+   solo color: lleva el visto y la palabra "Correcta". Los selectores llevan
+   .tst-opciones delante para ganarle al estado "elegida" de arriba. */
+.tst-opciones .tst-opcion[data-resultado="acierto"] {
+  border-width: 5px;
+  border-color: var(--acierto);
+  background: var(--acierto);
+  color: var(--bg);
+}
+
+.tst-opciones .tst-opcion[data-resultado="acierto"] .tst-letra {
+  border-color: var(--bg);
+  background: var(--bg);
+  color: var(--acierto);
+}
+
+.tst-opciones .tst-opcion[data-resultado="acierto"] .tst-visto { display: inline-block; }
+.tst-opcion[data-resultado="acierto"] .tst-estado-opcion { display: inline; }
+
+/* El pulso, solo si el juego lo pidio (data-anim="1" lo pone el script cuando
+   hay movimiento). Una vez, de 0.35 s: dentro de la escala de
+   50_animaciones.css. Con las animaciones apagadas en el sitio, esa hoja ya
+   las anula con !important. */
+.tst-opcion[data-resultado="acierto"][data-anim="1"] { animation: tst-acierto 0.35s ease; }
+.tst-opcion[data-resultado="acierto"][data-anim="1"] .tst-visto { animation: tst-visto 0.35s ease; }
+
+html[data-tst-mov="off"] .tst-opcion[data-anim],
+html[data-tst-mov="off"] .tst-opcion[data-anim] .tst-visto,
+html[data-tst-mov="off"] .tst-racha .tst-llama { animation: none; }
+
+@keyframes tst-acierto {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+@keyframes tst-visto {
+  0% { transform: scale(0.4); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.tst-seguridad { margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.tst-seguridad legend { padding: 0; margin: 0; font-weight: 700; }
+.tst-seguridad .ayuda { margin: 0 0 var(--space-sm); }
+.tst-seguridad-cab { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-xs); margin: 0 0 var(--space-xs); }
+.tst-confirmar-zona { margin: 0; justify-content: center; }
+.tst-confirmar[aria-disabled="true"] { cursor: default; border-style: dashed; background: transparent; }
+
+/* Las tres maneras de responder: cada una es un boton que ENVIA la respuesta
+   (en vez de elegir un radio y despues tocar "Responder": un toque menos). */
+.tst-seguridad .tst-opciones-fila { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: var(--space-sm); }
+
+.tst-responder {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  min-height: 48px;
+  padding: var(--space-xs) var(--space-md);
+  text-align: left;
+}
+
+.tst-responder .ayuda { margin: 0; font-weight: 400; font-size: 0.85em; }
+.tst-responder[aria-disabled="true"] { cursor: default; border-style: dashed; background: transparent; }
+
+.tst-resultado-lista { display: grid; gap: var(--space-sm); margin: var(--space-md) 0; padding: 0; list-style: none; }
+
+.tst-resultado-linea {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.tst-resultado-linea[data-acierto="0"] { border-style: dashed; border-width: 2px; }
+.tst-resultado-linea p { margin: 0; }
+.tst-resultado-linea .tst-etiqueta-estado { font-weight: 700; }
+
+/* -------------------------------------------------------------------------
+   EL MODAL DEL ERROR (PROPUESTA 4.4): se enseña que mirar. En las preguntas con
+   numeros que cambian, la formula, la formula con los numeros y el resultado.
+   ------------------------------------------------------------------------- */
+.tst-modal { max-width: 36rem; max-height: 92vh; overflow-y: auto; font-family: var(--tst-fuente, var(--font)); font-size: calc(var(--tst-texto-escala, 1) * 1rem); }
+@supports (height: 100dvh) { .tst-modal { max-height: 92dvh; } }
+.tst-modal h2 { margin-top: 0; }
+.tst-modal h2:focus { outline: none; }
+
+/* LA EXPLICACION DE UNA PREGUNTA DINAMICA: tres filas, la formula, la formula con
+   los numeros de esa pregunta y el resultado. Se arma sola (ver
+   scripts/reto-tests-eval.js) y se dibuja con RetoTestsMuestra.explicacion().
+   El resultado va con borde grueso: se distingue por la forma, no por el color. */
+.tst-explica { display: grid; gap: var(--space-sm); margin: var(--space-md) 0; }
+
+.tst-explica-fila {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+
+.tst-explica-fila[data-final="1"] { border: 3px solid var(--text); }
+.tst-explica dt { margin: 0 0 0.15rem; font-size: 0.85em; font-weight: 700; color: var(--muted); }
+
+.tst-explica dd {
+  margin: 0;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 1.1em;
+  overflow-wrap: anywhere;
+}
+
+.tst-explica-linea { margin: 0 0 var(--space-xs); }
+
+.tst-aqui {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+  font-weight: 700;
+}
+
+/* -------------------------------------------------------------------------
+   EL MODAL DE AJUSTES (compartido por las dos pantallas)
+   El cuadrito va pegado arriba mientras se baja por los ajustes.
+   ------------------------------------------------------------------------- */
+.tst-config { max-width: 36rem; max-height: 92vh; overflow-y: auto; text-align: left; }
+@supports (height: 100dvh) { .tst-config { max-height: 92dvh; } }
+.tst-config .dialogo-titulo { text-align: center; }
+
+.tst-muestra-caja {
+  position: sticky;
+  top: calc(-1 * var(--space-lg));
+  z-index: 3;
+  margin: 0 calc(-1 * var(--space-lg)) var(--space-lg);
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.tst-muestra {
+  font-family: var(--tst-fuente, var(--font));
+  font-size: calc(var(--tst-texto-escala, 1) * 1rem);
+}
+
+html[data-tst-espaciado="amplio"] .tst-muestra { letter-spacing: 0.12em; word-spacing: 0.2em; line-height: 1.8; }
+.tst-muestra .tst-enunciado { margin-bottom: var(--space-xs); font-size: 1.1em; }
+.tst-muestra .tst-opcion { min-height: 44px; }
+
+.tst-perfiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: var(--space-sm); }
+
+.tst-perfil {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  height: 100%;
+  text-align: left;
+  font: inherit;
+  background: transparent;
+}
+
+.tst-perfil .ayuda { margin: 0; font-size: 0.85rem; }
+
+@media (prefers-contrast: more) {
+  .tst-opcion, .tst .tarjeta, .tst-fila-pregunta { border-width: 3px; border-color: var(--text); }
+}
+
+@media (forced-colors: active) {
+  .tst-opcion[aria-pressed="true"] { outline: 4px solid Highlight; }
+}
+
+/* -------------------------------------------------------------------------
+   EL TEMA DE UNA PREGUNTA (niveles 2 a 4), Y LO QUE SE DICE AL REPASAR
+   El nivel 1 es el titulo del test. Los otros tres son opcionales y NO se
+   concatenan si faltan: "Bloque I, Las fracciones" y no "Bloque I, , Las
+   fracciones".
+   ------------------------------------------------------------------------- */
+.tst-tema-ruta { margin: 0; font-size: 0.9em; color: var(--muted); }
+
+.tst-repasar {
+  margin: var(--space-md) 0;
+  padding: var(--space-md);
+  border: 3px solid var(--text);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.tst-repasar h3 { margin: 0 0 var(--space-xs); }
+.tst-repasar ul { margin: var(--space-xs) 0 0; padding-left: 1.2em; }
+.tst-repasar li { margin: 0 0 var(--space-xs); font-weight: 700; }
+.tst-repasar li span { font-weight: 400; color: var(--muted); }
+
+/* -------------------------------------------------------------------------
+   IMPORTAR TESTS
+   ------------------------------------------------------------------------- */
+.tst-importar-texto { min-height: 14rem; width: 100%; max-width: 64rem; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 0.95em; resize: vertical; }
+
+.tst-resumen-import { margin: var(--space-md) 0; }
+.tst-resumen-import h3 { margin: 0 0 var(--space-xs); }
+.tst-arbol { margin: var(--space-xs) 0 var(--space-sm); padding-left: 1.2em; }
+.tst-arbol li { margin: 0 0 var(--space-xs); }
+
+.tst-problemas { display: grid; gap: var(--space-xs); margin: var(--space-sm) 0; padding: 0; list-style: none; }
+
+.tst-problema {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs) var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.tst-problema[data-tipo="error"] { border-width: 3px; border-style: solid; border-color: var(--text); }
+.tst-problema[data-tipo="aviso"] { border-style: dashed; }
+.tst-problema p { margin: 0; flex: 1 1 14rem; }
+.tst-problema strong { white-space: nowrap; }
+
+/* -------------------------------------------------------------------------
+   PREPARAR UNA RONDA: cuantas preguntas, y cuales
+   ------------------------------------------------------------------------- */
+.tst-preparar { max-width: 32rem; text-align: left; font-family: var(--tst-fuente, var(--font)); font-size: calc(var(--tst-texto-escala, 1) * 1rem); }
+.tst-preparar .dialogo-titulo { margin-bottom: var(--space-xs); text-align: center; }
+.tst-prep-test { margin: 0 0 var(--space-sm); font-weight: 700; text-align: center; }
+.tst-prep-sub { margin: var(--space-sm) 0 var(--space-xs); font-weight: 700; }
+.tst-prep-temas { margin: 0 0 var(--space-sm); padding-left: 1.2em; }
+.tst-preparar fieldset { margin: var(--space-sm) 0; }
+.tst-preparar .opciones { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-md); }
+
+/* "12 por repasar" en la tarjeta de un test. Icono y palabra: no depende del color. */
+.tst-tarjeta-repasar { display: inline-flex; align-items: center; gap: var(--space-xs); margin: 0; font-size: 0.85em; font-weight: 700; }
+.tst-tarjeta-repasar .tst-icono { width: 1em; height: 1em; }
+
+/* -------------------------------------------------------------------------
+   ANIMACIÓN INTERACTIVA DE DIVISIÓN LARGA (GALERA)
+   ------------------------------------------------------------------------- */
+.div-anim-container {
+  margin: var(--space-md) 0;
+  padding: var(--space-md);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-align: center;
+}
+.div-anim-header h4 { margin: 0 0 var(--space-sm); color: var(--accent); }
+.div-anim-galera {
+  display: inline-flex;
+  align-items: flex-start;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: var(--space-sm) auto;
+  padding: var(--space-xs) var(--space-md);
+  background: var(--bg);
+  border-radius: var(--radius);
+}
+.div-anim-divisor {
+  padding-right: var(--space-sm);
+  border-right: 3px solid var(--text);
+  line-height: 1.8;
+}
+.div-anim-techo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-left: var(--space-sm);
+  border-top: 3px solid var(--text);
+}
+.div-anim-cociente {
+  padding-bottom: var(--space-2xs);
+  color: var(--muted);
+}
+.div-anim-cociente.destacado { color: var(--accent); font-size: 1.1em; }
+.div-anim-dividendo {
+  padding-top: var(--space-2xs);
+  letter-spacing: 0.1em;
+}
+.div-anim-paso-box {
+  margin: var(--space-md) auto;
+  max-width: 28rem;
+  padding: var(--space-sm);
+  border: 1px dashed var(--borde-fuerte);
+  border-radius: var(--radius);
+  background: var(--bg);
+  text-align: left;
+}
+.div-anim-paso-titulo { font-weight: 700; margin-bottom: var(--space-2xs); color: var(--accent); }
+.div-anim-paso-texto { margin: 0; font-size: 0.95em; line-height: 1.4; }
+.div-anim-controles {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-xs);
+  margin-top: var(--space-md);
+}
+
+
+/* =============================================================================
+   ASOCIAR
+   -----------------------------------------------------------------------------
+   Unir con líneas cada pregunta con su pareja. Todo sale de los tokens del tema
+   (--surface, --border, --text, --accent, --acierto, --focus) y de las variables
+   de los ajustes compartidos de tests (--tst-fuente, --tst-texto-escala, que
+   ya aplica .tst). Los únicos colores que no son del tema son los de las
+   líneas, que viven en reto-asociar.js (las paletas).
+
+   LO QUE NUNCA SE HACE AQUI: dar un significado solo con color. Una ficha
+   elegida lleva borde grueso y la palabra "Elegida"; una unida lleva su
+   letra; un acierto, "Bien" con un visto; un fallo, "Falló" con una cruz. Y
+   cada línea, ademas de su color, tiene un patron y una letra en los extremos.
+   ========================================================================== */
+.aso-juego { max-width: 72rem; margin-inline: auto; }
+
+.aso-instruccion {
+  max-width: var(--tst-medida, 75ch);
+  margin: 0 0 var(--space-md);
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+/* EL TABLERO: columna, hueco para las lineas, columna. El SVG de las líneas
+   cubre todo el tablero y no recibe toques (los reciben las fichas). */
+.aso-tablero {
+  position: relative;
+  display: grid;
+  /* Móvil primero: poco hueco entre columnas. Desde tablet se ensancha (ver
+     40_adaptativo.css). */
+  grid-template-columns: minmax(0, 1fr) 1.75rem minmax(0, 1fr);
+  align-items: start;
+  margin: var(--space-md) 0;
+}
+
+.aso-lineas {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  color: var(--text);
+  pointer-events: none;
+}
+
+.aso-linea-fondo,
+.aso-linea,
+.aso-linea-temp {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.aso-linea-fondo { stroke: var(--bg); stroke-width: 9; }
+.aso-linea { stroke-width: 4; }
+.aso-linea-temp { stroke: var(--accent); stroke-width: 3; stroke-dasharray: 6 6; }
+.aso-punto { stroke: var(--bg); stroke-width: 2; }
+
+.aso-col {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.aso-fila {
+  display: flex;
+  flex-direction: column;       /* en el celular, el altavoz va DEBAJO de la ficha */
+  align-items: stretch;
+  gap: 0.15rem;
+}
+
+.aso-fila .aso-item { order: 1; }
+.aso-fila .aso-escuchar { order: 2; }
+.aso-fila[data-lado="izq"] .aso-escuchar { align-self: flex-start; }
+.aso-fila[data-lado="der"] .aso-escuchar { align-self: flex-end; }
+
+/* LA FICHA. Un botón con el texto, las marcas (la letra de la línea) del lado
+   donde llega la línea, y debajo el estado si lo hay. */
+.aso-item {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  align-items: center;
+  gap: 0.2rem 0.4rem;
+  min-height: 3rem;
+  margin: 0;
+  padding: 0.5rem;
+  font: inherit;
+  font-size: 0.92em;
+  text-align: left;
+  color: var(--text);
+  background: var(--surface);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  cursor: pointer;
+  overflow-wrap: anywhere;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.aso-item[data-lado="izq"] { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "texto marcas" "etiqueta etiqueta"; }
+.aso-item[data-lado="der"] { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "marcas texto" "etiqueta etiqueta"; }
+.aso-texto { grid-area: texto; }
+.aso-marcas { grid-area: marcas; display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.aso-marcas:empty { display: none; }
+
+.aso-item:hover { border-color: var(--accent); }
+.aso-item:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* La letra de la línea: un círculo con su color y su letra. */
+.aso-letra {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.45rem;
+  height: 1.45rem;
+  padding: 0 0.15rem;
+  font-size: 0.8em;
+  font-weight: 800;
+  line-height: 1;
+  border: 2px solid var(--text);
+  border-radius: 999px;
+  box-sizing: border-box;
+}
+
+.aso-item--unida { border-color: var(--accent); }
+
+.aso-item--elegida {
+  border-color: var(--accent);
+  outline: 3px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.aso-item--elegida::after {
+  content: "Elegida";
+  position: absolute;
+  top: -0.7rem;
+  right: 0.6rem;
+  padding: 0 0.5rem;
+  font-size: 0.75em;
+  font-weight: 800;
+  color: var(--bg);
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.aso-item--bloqueada { cursor: default; border-color: var(--acierto, var(--accent)); }
+.aso-item--bloqueada:hover { border-color: var(--acierto, var(--accent)); }
+
+.aso-etiqueta {
+  grid-area: etiqueta;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.85em;
+  font-weight: 700;
+}
+
+.aso-etiqueta svg { width: 1.1em; height: 1.1em; flex: none; }
+.aso-etiqueta[data-tipo="bien"] { color: var(--acierto, var(--text)); }
+
+.aso-tablero.aso-arrastrando { cursor: grabbing; user-select: none; }
+.aso-tablero.aso-arrastrando .aso-item { cursor: grabbing; }
+
+.aso-contador { margin: var(--space-sm) 0; font-weight: 700; }
+
+/* EL RESULTADO */
+.aso-resumen { display: grid; gap: var(--space-sm); margin: var(--space-md) 0; padding: 0; list-style: none; }
+
+.aso-resumen-fila {
+  padding: var(--space-sm) var(--space-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.aso-resumen-fila[data-acierto="no"] { border: 2px solid var(--borde-fuerte); }
+.aso-resumen-fila p { margin: 0 0 var(--space-xs); }
+.aso-resumen-estado { display: flex; align-items: center; gap: 0.35rem; font-weight: 700; }
+.aso-resumen-estado svg { width: 1.1em; height: 1.1em; flex: none; }
+.aso-detalle summary { display: flex; align-items: center; min-height: 44px; font-weight: 700; cursor: pointer; }
+.aso-detalle[open] summary { margin-bottom: var(--space-xs); }
+
+/* EL MODAL DE AJUSTES, con su cuadrito de muestra */
+.aso-config {
+  max-width: 38rem;
+  max-height: 92vh;
+  overflow-y: auto;
+  font-family: var(--tst-fuente, var(--font));
+  font-size: calc(var(--tst-texto-escala, 1) * 1rem);
+}
+
+@supports (height: 100dvh) { .aso-config { max-height: 92dvh; } }
+
+.aso-config h2 { margin-top: 0; }
+.aso-config fieldset[hidden],
+.aso-config [hidden] { display: none; }
+
+.aso-muestra {
+  margin: 0 0 var(--space-md);
+  padding: var(--space-md);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.aso-muestra .aso-tablero { grid-template-columns: minmax(0, 1fr) 4rem minmax(0, 1fr); margin: 0; }
+.aso-muestra .aso-item { min-height: 2.5rem; cursor: default; padding-block: var(--space-xs); }
+.aso-muestra .aso-item:hover { border-color: var(--borde-fuerte); }
+
+/* =============================================================================
+   ESCRIBIR y TARJETAS DE ESTUDIO
+   -----------------------------------------------------------------------------
+   Dos maneras de repasar con el mismo banco de tests. Todo sale de los tokens
+   del tema y de los ajustes compartidos de tests (--tst-fuente,
+   --tst-texto-escala). Reutilizan las clases de "Resolver" para el avance, la
+   racha y el enunciado (tst-*).
+
+   NINGUN ESTADO DEPENDE SOLO DEL COLOR: un acierto lleva el visto y la palabra
+   "Correcta"; las tres autoevaluaciones llevan icono y texto.
+   ========================================================================== */
+
+/* ---- ESCRIBIR ---- */
+.esc-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  max-width: 36rem;
+}
+
+.esc-etiqueta { font-weight: 700; }
+
+.esc-campo {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 3rem;
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  font: inherit;
+  font-size: 1.15em;
+  color: var(--text);
+  background: var(--surface);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+}
+
+.esc-campo:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+.esc-campo[data-resultado="acierto"] {
+  border-color: var(--acierto, var(--accent));
+  box-shadow: inset 0 0 0 1px var(--acierto, var(--accent));
+}
+
+@keyframes esc-acierto {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+.esc-campo[data-anim="1"] { animation: esc-acierto 0.4s ease; }
+
+.esc-pista { margin: 0; color: var(--muted); }
+.esc-pista-titulo { font-weight: 700; }
+.esc-pista-texto { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; letter-spacing: 0.08em; }
+
+.esc-aviso {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 1.6em;
+  margin: 0;
+  font-weight: 700;
+}
+
+.esc-aviso svg { width: 1.1em; height: 1.1em; flex: none; }
+.esc-aviso[data-resultado="acierto"] { color: var(--acierto, var(--text)); }
+
+.esc-resumen { display: grid; gap: var(--space-sm); margin: var(--space-md) 0; padding: 0; list-style: none; }
+
+.esc-resumen-fila {
+  padding: var(--space-sm) var(--space-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.esc-resumen-fila[data-acierto="no"] { border: 2px solid var(--borde-fuerte); }
+.esc-resumen-fila p { margin: 0 0 var(--space-xs); }
+.esc-resumen-estado { display: flex; align-items: center; gap: 0.35rem; font-weight: 700; }
+.esc-resumen-estado svg { width: 1.1em; height: 1.1em; flex: none; }
+.esc-detalle summary { display: flex; align-items: center; min-height: 44px; font-weight: 700; cursor: pointer; }
+.esc-detalle[open] summary { margin-bottom: var(--space-xs); }
+
+/* ---- TARJETAS DE ESTUDIO ---- */
+.tar-columna { max-width: 40rem; }
+.tar-fila { display: flex; align-items: flex-start; gap: var(--space-xs); }
+
+.tar-tarjeta {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-sm);
+  min-height: 12rem;
+  margin: 0;
+  padding: var(--space-lg) var(--space-md);
+  font: inherit;
+  text-align: center;
+  color: var(--text);
+  background: var(--surface);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: calc(var(--radius) * 1.5);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tar-tarjeta:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.tar-tarjeta[data-cara="dorso"] { border-color: var(--accent); cursor: default; }
+
+.tar-rotulo {
+  margin: 0;
+  font-size: 0.8em;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.tar-texto { margin: 0; font-size: 1.3em; font-weight: 700; line-height: 1.35; overflow-wrap: anywhere; }
+
+.tar-extra {
+  margin-top: var(--space-sm);
+  padding-top: var(--space-sm);
+  text-align: left;
+  font-size: 0.95em;
+  font-weight: 400;
+  border-top: 1px solid var(--border);
+}
+
+.tar-extra p { margin: 0 0 var(--space-xs); }
+.tar-extra-titulo { font-weight: 700; }
+
+@keyframes tar-voltear {
+  from { transform: rotateY(90deg); opacity: 0.2; }
+  to { transform: rotateY(0); opacity: 1; }
+}
+
+.tar-tarjeta[data-gira="1"] { animation: tar-voltear 0.3s ease; }
+
+.tar-zona { margin-top: var(--space-md); text-align: center; }
+.tar-pregunta-auto { margin: 0 0 var(--space-xs); font-weight: 700; }
+.tar-autos { display: grid; grid-template-columns: 1fr; gap: var(--space-sm); }
+
+.tar-auto {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 3rem;
+}
+
+.tar-atajo {
+  padding: 0 0.35rem;
+  font-size: 0.75em;
+  border: 1px solid currentColor;
+  border-radius: 0.3rem;
+  opacity: 0.75;
+}
+
+.tar-cuenta { display: grid; gap: var(--space-xs); margin: var(--space-sm) 0; padding: 0; list-style: none; }
+.tar-cuenta-fila { display: flex; align-items: center; gap: 0.4rem; }
+.tar-cuenta-fila svg { width: 1.2em; height: 1.2em; flex: none; }
+
+.tar-repasar { display: grid; gap: var(--space-sm); margin: var(--space-sm) 0 var(--space-md); padding: 0; list-style: none; }
+
+.tar-repasar-fila {
+  padding: var(--space-sm) var(--space-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.tar-repasar-fila p { margin: 0 0 var(--space-xs); }
+.tar-repasar-p { font-weight: 700; }
+.tar-repasar-e { font-size: 0.85em; color: var(--muted); }
+
+.esc-config,
+.tar-config {
+  max-width: 38rem;
+  max-height: 92vh;
+  overflow-y: auto;
+  font-family: var(--tst-fuente, var(--font));
+  font-size: calc(var(--tst-texto-escala, 1) * 1rem);
+}
+
+@supports (height: 100dvh) {
+  .esc-config,
+  .tar-config { max-height: 92dvh; }
+}
+
+.esc-config h2,
+.tar-config h2 { margin-top: 0; }
+
+/* =============================================================================
+   GENERADOR DE PROMPTS (Biblioteca y Test de conocimientos)
+   -----------------------------------------------------------------------------
+   Un formulario largo con una vista previa del texto que se va a copiar. Todo
+   sale de los tokens del tema (--surface, --border, --text, --muted, --accent,
+   --focus) y de las clases de formulario del sitio (.editor-label,
+   .editor-campo, .interruptor, .problemas). Móvil primero: una sola columna;
+   desde tablet, las filas de variables se reparten en columnas.
+
+   NINGUN ESTADO DEPENDE SOLO DEL COLOR: un error dice "Error", un aviso "Aviso" y
+   lo obligatorio dice "obligatorio" con letras.
+   ========================================================================== */
+.prompts { max-width: 52rem; margin-inline: auto; padding-bottom: 7rem; }
+
+.pr-pantalla h2 { margin-top: 0; }
+
+.pr-tipos {
+  display: grid;
+  gap: var(--space-sm);
+  margin: var(--space-md) 0;
+  padding: 0;
+  border: 0;
+}
+
+.pr-tipos legend { padding: 0; margin-bottom: var(--space-xs); font-weight: 800; }
+
+.pr-tipo {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--surface);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.pr-tipo input { margin-top: 0.3rem; flex: none; }
+.pr-tipo-texto { display: grid; gap: 0.1rem; }
+.pr-tipo-texto .ayuda { margin: 0; }
+.pr-tipo:has(input:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.pr-tipo:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+.pr-grupo {
+  margin: 0 0 var(--space-lg);
+  padding: var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.pr-grupo > legend { padding: 0 var(--space-xs); font-weight: 800; }
+.pr-campo { margin-bottom: var(--space-sm); }
+.pr-campo .editor-label { margin-top: var(--space-sm); }
+.pr-ayuda { margin: 0 0 var(--space-xs); }
+.pr-obl { margin-left: 0.5rem; font-size: 0.8em; font-weight: 400; color: var(--muted); }
+.pr-obl::before { content: "("; }
+.pr-obl::after { content: ")"; }
+.pr-area { resize: vertical; min-height: 4.5rem; }
+.pr-numero { max-width: 9rem; }
+
+.pr-ejemplos { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-top: var(--space-xs); }
+.pr-ejemplos-titulo { font-size: 0.9em; font-weight: 700; }
+
+.pr-filas { display: grid; gap: var(--space-sm); }
+
+.pr-fila {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+  border: 1px dashed var(--borde-fuerte);
+  border-radius: var(--radius);
+}
+
+.pr-celda span { display: block; margin-bottom: 0.15rem; font-size: 0.85em; font-weight: 700; }
+.pr-quitar { justify-self: start; }
+
+.pr-salida { margin-top: var(--space-lg); }
+.pr-salida h3 { margin: var(--space-md) 0 var(--space-xs); }
+.pr-problemas { margin-bottom: var(--space-sm); }
+.pr-acciones { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin: var(--space-sm) 0; }
+.pr-acciones .boton[aria-disabled="true"] { opacity: 0.6; cursor: not-allowed; }
+.pr-razon { min-height: 1.4em; margin: 0 0 var(--space-sm); font-weight: 700; }
+
+.pr-vista { margin: var(--space-sm) 0; }
+.pr-vista summary { display: flex; align-items: center; min-height: 44px; font-weight: 700; cursor: pointer; }
+
+.pr-prompt {
+  min-height: 14rem;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.pr-cuenta { margin: var(--space-xs) 0 0; }
+.pr-sigue { margin-top: var(--space-lg); padding-top: var(--space-md); border-top: 1px solid var(--border); }
+.pr-sigue h3 { margin-top: 0; }
+
+.pr-config {
+  max-width: 38rem;
+  max-height: 92vh;
+  overflow-y: auto;
+}
+
+@supports (height: 100dvh) { .pr-config { max-height: 92dvh; } }
+
+.pr-config h2 { margin-top: 0; }

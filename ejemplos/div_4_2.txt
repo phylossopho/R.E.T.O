@@ -1,0 +1,97 @@
+[N1] Test Avanzado de Divisiones (4 y 2 Dígitos)
+[MATERIA] Matemáticas
+[DESCRIPCION] 10 preguntas dinámicas de divisiones con dividendos de 4 dígitos (con decimales) y divisores de 2 dígitos.
+
+[N2] Aritmética
+[N3] División con decimales
+
+[DINAMICA] Resuelve la división de {dividendo} entre {divisor}. Redondea el resultado a dos decimales.
+[VAR] dividendo: 1000.00, 9999.99, 0.50, 2
+[VAR] divisor: 10.00, 99.99, 0.25, 2
+[FORMULA] round(dividendo / divisor, 2)
+[DISTRACTOR] round(dividendo / divisor + 0.1, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor - 0.1, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor + 1.0, 2) | calculo
+[EXPLICA] Iguala los decimales del divisor convirtiéndolo en entero y divide paso a paso.
+
+[DINAMICA] Una tienda reparte una ganancia total de {dividendo} pesos equitativamente entre {divisor} socios. ¿Cuánto le toca a cada uno? Redondea a dos decimales.
+[VAR] dividendo: 2000.00, 8500.50, 1.00, 2
+[VAR] divisor: 12.00, 45.00, 1.00, 2
+[FORMULA] round(dividendo / divisor, 2)
+[DISTRACTOR] round(dividendo / divisor + 0.5, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor - 0.5, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor + 2.0, 2) | calculo
+[EXPLICA] Divide el total entre el número de partes iguales.
+
+[DINAMICA] Un vehículo recorre una distancia de {dividendo} kilómetros en {divisor} horas. ¿Cuál es su velocidad promedio en km/h? Redondea a dos decimales.
+[VAR] dividendo: 1500.00, 9500.00, 2.50, 2
+[VAR] divisor: 12.00, 75.00, 0.50, 2
+[FORMULA] round(dividendo / divisor, 2)
+[DISTRACTOR] round(dividendo / divisor + 0.2, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor - 0.2, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor * 1.1, 2) | concepto
+[EXPLICA] La velocidad se obtiene dividiendo la distancia recorrida entre el tiempo empleado.
+
+[DINAMICA] Se deben envasar {dividendo} litros de aceite en {divisor} bidones idénticos. ¿Cuántos litros contendrá cada bidón? Redondea a dos decimales.
+[VAR] dividendo: 1100.00, 7800.00, 1.25, 2
+[VAR] divisor: 15.00, 85.00, 1.00, 2
+[FORMULA] round(dividendo / divisor, 2)
+[DISTRACTOR] round(dividendo / divisor + 0.15, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor - 0.15, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor + 1.5, 2) | calculo
+[EXPLICA] Reparte el total de litros de forma equitativa entre todos los recipientes.
+
+[DINAMICA] Un lote de {dividendo} kilogramos de producto cuesta un total de {divisor} ... calcula el precio por kilogramo dividiendo {dividendo} entre {divisor}. Redondea a dos decimales.
+[VAR] dividendo: 2500.00, 9800.00, 1.00, 2
+[VAR] divisor: 15.00, 95.00, 0.50, 2
+[FORMULA] round(dividendo / divisor, 2)
+[DISTRACTOR] round(dividendo / divisor + 0.25, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor - 0.25, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor + 2.0, 2) | calculo
+[EXPLICA] El valor unitario se calcula dividiendo el costo total entre la cantidad total.
+
+[N3] Problemas de aplicación
+[DINAMICA] Para completar un proyecto, se requiere repartir {dividendo} páginas de información en {divisor} capítulos iguales. ¿Cuántas páginas tendrá cada capítulo? Redondea a dos decimales.
+[VAR] dividendo: 1200.00, 4800.00, 1.00, 2
+[VAR] divisor: 10.00, 40.00, 1.00, 2
+[FORMULA] round(dividendo / divisor, 2)
+[DISTRACTOR] round(dividendo / divisor + 0.5, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor - 0.5, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor + 1.0, 2) | calculo
+[EXPLICA] Divide el número total de elementos entre el número de grupos.
+
+[DINAMICA] Una máquina produce {dividendo} piezas en {divisor} horas de funcionamiento continuo. ¿Cuál es su tasa de producción por hora? Redondea a dos decimales.
+[VAR] dividendo: 3000.00, 9999.00, 2.00, 2
+[VAR] divisor: 12.00, 80.00, 0.50, 2
+[FORMULA] round(dividendo / divisor, 2)
+[DISTRACTOR] round(dividendo / divisor + 0.1, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor - 0.1, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor * 0.9, 2) | concepto
+[EXPLICA] La tasa por unidad de tiempo resulta de dividir la producción total entre las horas trabajadas.
+
+[DINAMICA] Se reparte una herencia o fondo de {dividendo} pesos entre {divisor} fundaciones benéficas. ¿Cuánto recibe cada fundación? Redondea a dos decimales.
+[VAR] dividendo: 2500.50, 9100.75, 1.25, 2
+[VAR] divisor: 11.00, 55.00, 1.00, 2
+[FORMULA] round(dividendo / divisor, 2)
+[DISTRACTOR] round(dividendo / divisor + 0.2, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor - 0.2, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor + 5.0, 2) | calculo
+[EXPLICA] Divide el monto total entre el número de beneficiarios.
+
+[DINAMICA] Un tanque almacena {dividendo} litros de agua y se vacía de forma constante mediante {divisor} mangueras auxiliares equivalentes en caudal. ¿Cuántos litros descarga cada manguera? Redondea a dos decimales.
+[VAR] dividendo: 1400.00, 6500.00, 1.50, 2
+[VAR] divisor: 10.00, 35.00, 0.50, 2
+[FORMULA] round(dividendo / divisor, 2)
+[DISTRACTOR] round(dividendo / divisor + 0.3, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor - 0.3, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor + 2.0, 2) | calculo
+[EXPLICA] Divide el total de litros entre el número de salidas.
+
+[DINAMICA] Calcula el cociente de dividir {dividendo} entre {divisor} con máxima precisión a dos decimales para verificar el resultado exacto de la operación aritmética avanzada.
+[VAR] dividendo: 1050.25, 8999.75, 0.75, 2
+[VAR] divisor: 14.00, 95.00, 0.25, 2
+[FORMULA] round(dividendo / divisor, 2)
+[DISTRACTOR] round(dividendo / divisor + 0.05, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor - 0.05, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor + 1.0, 2) | calculo
+[EXPLICA] Realiza la división dividiendo el dividendo entre el divisor y redondea correctamente a dos cifras decimales.

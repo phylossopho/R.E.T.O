@@ -1,0 +1,260 @@
+/* =============================================================================
+   R.E.T.O. — 40 ADAPTATIVO
+   -----------------------------------------------------------------------------
+   Escalas segun el ancho de pantalla. Va al FINAL para que sus reglas ganen a
+   las de 20 y 30 por orden, sin tener que subir especificidad.
+
+   Este es el unico modulo con media queries. Si algo se descuadra por tamano de
+   pantalla, se corrige aqui y no en el componente.
+
+   COMO FUNCIONA LA ESCALERA
+   Es movil primero: cada escalon usa min-width y aplica DESDE ese ancho hacia
+   arriba, sobreescribiendo el anterior. Asi no hay huecos ni solapamientos, y
+   el caso mas pequeno es el que esta en :root (modulo 00), sin consulta.
+
+   Para anadir un escalon: copia el bloque del escalon anterior, cambia el
+   min-width y los valores, y ordenalo de menor a mayor.
+
+   DATO IMPORTANTE
+   Las unidades relativas dentro de media queries usan el valor INICIAL de
+   font-size, que es 16 px, NO el --font-size-base que aqui se modifica. Por
+   eso estos min-width son valores FIJOS aunque cambiemos el tamano de letra
+   de la pagina. Y al reescribir --font-size-base, tampoco se mueven.
+   ========================================================================== */
+
+/* --- Pantallas muy angostas (Galaxy Fold cerrado, 280 px) -----------------
+   Con --space-lg en 1rem el contenido de 320 px queda en 284 px y la tarjeta
+   pide 270: cabe por poco. En 280 px el relleno fijo se comeria casi toda la
+   pantalla, asi que aqui se reduce mas todavia. */
+@media (max-width: 20rem) {
+  :root {
+    --space-lg: 0.6rem;
+  }
+
+  /* La cabecera en una sola fila necesita que titulo y acronimo bajen de letra
+     en pantallas angostas: con los tamanos normales no caben en una linea y el
+     acronimo se quebra en tres. Sigue siendo UNA fila; lo que se reduce es el
+     tamano, no la disposicion. */
+  header h1 {
+    font-size: 1.5rem;
+  }
+
+  .significado {
+    font-size: 0.8rem;
+    letter-spacing: 0.03em;
+  }
+}
+
+/* --- Escalera: 15 escalones min-width, mas el nivel base de :root ----------
+   Dan 16 niveles en total contando el mas pequeno, que no lleva consulta.
+
+   UN BLOQUE POR TAMANO. Si un tamano necesita ademas tocar un componente, se
+   escribe DENTRO del bloque de ese tamano, no en un segundo bloque aparte. Con
+   dos bloques para el mismo ancho, editar la escalera obliga a acordarse de los
+   dos, y es la forma como una media query se queda sin actualizar. */
+
+/* 320 px  iPhone SE, Android pequeno */
+@media (min-width: 20rem) {
+  :root {
+    --max-ancho: 560px;
+  }
+}
+
+/* 360 px  Android muy comun */
+@media (min-width: 22.5rem) {
+  :root {
+    --max-ancho: 600px;
+  }
+}
+
+/* 390 px  iPhone moderno */
+@media (min-width: 24.375rem) {
+  :root {
+    --font-size-base: 18px;
+    --max-ancho: 640px;
+  }
+}
+
+/* 414 px  iPhone Plus y Max */
+@media (min-width: 25.875rem) {
+  :root {
+    --max-ancho: 680px;
+  }
+}
+
+/* 480 px  movil grande */
+@media (min-width: 30rem) {
+  :root {
+    --max-ancho: 720px;
+  }
+}
+
+/* 600 px  tablet pequena. Los cinco temas pasan a dos columnas.
+   Se usa repeat(2, ...) y no auto-fill porque auto-fill, si cupieran mas
+   pistas, dejaria una vacia y un hueco visible al final de la fila. */
+@media (min-width: 37.5rem) {
+  :root {
+    --max-ancho: 760px;
+  }
+
+  .rejilla-tema {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Asociar: con más ancho, más hueco para las líneas, fichas más holgadas y
+     el altavoz AL LADO de cada ficha (por el lado de afuera). */
+  .aso-tablero {
+    grid-template-columns: minmax(0, 1fr) minmax(2.5rem, 7rem) minmax(0, 1fr);
+  }
+
+  .aso-fila {
+    flex-direction: row;
+    gap: var(--space-xs);
+  }
+
+  .aso-fila .aso-item { order: 0; }
+  .aso-fila .aso-escuchar { order: 0; align-self: auto; }
+  .aso-fila[data-lado="izq"] .aso-escuchar { order: -1; }
+
+  .aso-item {
+    min-height: 3.25rem;
+    padding: var(--space-sm) var(--space-md);
+    gap: 0.2rem var(--space-sm);
+    font-size: 1em;
+  }
+
+  .aso-letra {
+    min-width: 1.7rem;
+    height: 1.7rem;
+    padding: 0 0.2rem;
+    font-size: 0.85em;
+  }
+
+  /* Tarjetas de estudio: con más ancho, las tres respuestas en una fila. */
+  .tar-autos { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+  /* Prompts: con más ancho, los datos de cada fila (variable, error típico,
+     paso) se reparten en columnas. */
+  .pr-fila {
+    grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)) auto;
+    align-items: end;
+  }
+
+  .pr-tipos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* 768 px  tablet en vertical. Los cinco temas pasan a TRES columnas.
+   Antes era a cuatro desde 64rem, y en una tablet de 10 pulgadas (1080 px de
+   lado, o 810 px de alto en vertical) eso apretaba las tarjetas a 177 px y el
+   nombre mas largo se partia en dos lineas. A tres columnas la tarjeta queda
+   cerca de 260 px y el nombre entra de sobra.
+
+   Y son cinco temas en tres columnas, o sea que la ultima fila queda con dos y
+   un espacio. Con cinco elementos cualquier reparto deja un hueco: en cinco
+   columnas la tarjeta caeria a 180 px, que es justo lo que se estaba intentando
+   evitar. Un hueco al final se ve normal; un nombre partido se ve roto. */
+@media (min-width: 48rem) {
+  :root {
+    --max-ancho: 820px;
+  }
+
+  .rejilla-tema {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* Tests: de tablet para arriba el contenedor ocupa el 85 % (en movil, el
+     93 %, que esta en 70_tests.css). */
+  main.tst {
+    width: 85%;
+  }
+
+  /* Tests: "Resolviendo el test" se muestra desde tablet; en movil la cabecera
+     dice solo el titulo entre comillas. */
+  .tst-cab-pre {
+    display: inline;
+  }
+}
+
+/* 834 px  tablet mediana */
+@media (min-width: 52.125rem) {
+  :root {
+    --max-ancho: 860px;
+  }
+}
+
+/* 1024 px  tablet en horizontal, laptop chica. Los cinco temas siguen en TRES
+   columnas, no pasan a cuatro: a 900 px de contenido, cuatro columnas dan 205 px
+   y el nombre de "Crepusculo" (10 caracteres) ya se parte. Con tres quedan en
+   280 px, que es lo que se busca. En un monitor grande tampoco se pasan a
+   cuatro: ahi las tarjetas de la biblioteca, que si son muchas, son las que
+   aprovechan el ancho. */
+@media (min-width: 64rem) {
+  :root {
+    --max-ancho: 900px;
+  }
+
+  .rejilla-tema {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* Tests: la pregunta a la izquierda y, a la derecha, cuantas van y la
+     racha, pegadas mientras se baja. Debajo de este ancho van arriba. */
+  .tst-pregunta {
+    grid-template-columns: minmax(0, 1fr) 15rem;
+  }
+
+  .tst-lateral {
+    order: 2;
+    position: sticky;
+    top: var(--space-md);
+  }
+}
+
+/* 1280 px  laptop comun. Aqui ya conviene agrandar la letra: a esta
+   distancia 18 px se empieza a ver pequeno. */
+@media (min-width: 80rem) {
+  :root {
+    --font-size-base: 19px;
+    --max-ancho: 980px;
+  }
+}
+
+/* 1440 px  escritorio */
+@media (min-width: 90rem) {
+  :root {
+    --max-ancho: 1080px;
+  }
+}
+
+/* 1600 px  escritorio grande */
+@media (min-width: 100rem) {
+  :root {
+    --font-size-base: 20px;
+    --max-ancho: 1160px;
+  }
+}
+
+/* 1920 px  pantalla completa */
+@media (min-width: 120rem) {
+  :root {
+    --max-ancho: 1240px;
+    --space-lg: 3rem;
+  }
+}
+
+/* 2560 px  pantalla QHD */
+@media (min-width: 160rem) {
+  :root {
+    --font-size-base: 21px;
+    --max-ancho: 1360px;
+  }
+}
+
+/* 3840 px  pantalla 4K. A esta distancia el sitio tiene que dejar de crecer
+   en texto y seguir creciendo en aire: mas margen, misma legibilidad. */
+@media (min-width: 240rem) {
+  :root {
+    --max-ancho: 1500px;
+    --space-lg: 3.4rem;
+  }
+}

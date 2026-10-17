@@ -1,0 +1,14 @@
+[N1] Práctica de Divisiones Dinámicas (Sexto)
+[MATERIA] Matemáticas
+[DESCRIPCION] Test dinámico de divisiones con 4 dígitos y decimales.
+
+[N2] Aritmética
+[N3] Divisiones con decimales
+[DINAMICA] Resuelve la siguiente operación: {dividendo} ÷ {divisor}. Redondea el resultado a dos decimales.
+[VAR] dividendo: 1000.00, 9999.99, 1.00, 2
+[VAR] divisor: 10.0, 99.9, 0.5, 1
+[FORMULA] round(dividendo / divisor, 2)
+[DISTRACTOR] round(dividendo / divisor + 0.1, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor - 0.1, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor + 1.0, 2) | calculo
+[EXPLICA] Para dividir un número decimal entre otro, transforma el divisor en entero multiplicando ambos por la misma potencia de 10. Luego realiza la división larga y coloca el punto decimal en el cociente alineado correctamente.

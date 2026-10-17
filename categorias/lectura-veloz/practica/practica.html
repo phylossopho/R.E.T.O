@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="papel">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lectura veloz - R.E.T.O.</title>
+<link rel="preload" href="../../../styles/fuentes/nunito.css" as="style">
+<link rel="stylesheet" href="../../../styles/fuentes/nunito.css">
+<link rel="stylesheet" href="../../../styles/fuentes/lectura/lectura.css">
+<link rel="stylesheet" href="../../../styles/styles.css?v=c85-flexfix">
+<script src="../../../scripts/reto-panel-prefs.js?v=c01-0f3ddb54"></script>
+<script>
+// El tema y el interruptor de animaciones se aplican aqui, en el head, y no al
+// final del body: si se hiciera despues, el navegador pintaria primero el
+// estado por defecto y luego lo cambiaria, y se veria un destello en cada carga.
+(function () {
+  var t = localStorage.getItem('tema');
+  if (t) { document.documentElement.setAttribute('data-theme', t); }
+  // Las animaciones tienen tres estados, y el atributo es el que manda:
+  //   "on"   la persona las prendio, y gana su eleccion sobre el sistema
+  //   "off"  las apago, y se quedan apagadas siempre
+  //   nada   todavia no ha decidido, y decide el sistema operativo
+  // Por eso el "on" se escribe explicitamente: sin el, las reglas del sistema
+  // lo volvian a apagar y el interruptor no servia para nada.
+  var a = localStorage.getItem('animaciones');
+  if (a === 'off' || a === 'on') { document.documentElement.setAttribute('data-anim', a); }
+
+  // AQUI NO ESTA EL AVISO DE LAS TARJETAS, y es a proposito: esa parte del
+  // script del head (el atributo "data-anim-tarjetas") es para las paginas con
+  // tarjetas, y esta pantalla no tiene ninguna. Copiarlo seria dejar codigo que
+  // no hace nada, que es justo lo que este proyecto no quiere.
+})();
+</script>
+</head>
+
+<!--
+  UNA SOLA PANTALLA PARA LOS NUEVE MOTORES
+
+  Esta pagina es la de leer, y da igual con que motor: no hay una por motor.
+  Lo que cambia es COMO se parte el texto y QUE se dibuja, y eso lo decide
+  Python (logica/lectura_veloz.py), que devuelve el plan entero de la lectura.
+  El motor y el texto llegan en la direccion:
+      practica.html?motor=palabra&id=el-texto-elegido
+
+  El <body> trae DOS clases a proposito:
+    - "pantalla-juego"   ya sabe centrar en vertical lo que esta en el <main>,
+                         sin encogerlo, y esta escrita en 60_juegos.css;
+    - "pantalla-lectura" es lo unico que esta pantalla hace distinto: el panel
+                         no se transparenta y el ancho del <main> es otro.
+  Repetir aqui el flex del centrado seria tener la misma regla en dos archivos.
+-->
+<body class="pantalla-juego pantalla-lectura">
+
+<!--
+  SIN CABECERA NI PIE, A PROPOSITO
+
+  En una pantalla de lectura, el titulo arriba y el nombre del sitio abajo son
+  dos franjas que empujan el texto hacia abajo y no dicen nada mientras se lee.
+  En un celular restan altura, y el alto es justo lo que necesita el marco.
+
+  EL TITULO NO SE BORRA: SE ESCONDE. Sigue estando en la pagina, y un lector de
+  pantalla lo lee al abrir, para saber donde esta. Lo que no esta es a la vista.
+-->
+<h1 class="oculto-a-la-vista">Lectura veloz</h1>
+
+<main>
+  <!--
+    EL MARCO
+
+    Aqui caera el texto, y cae siempre en el mismo punto: en el modo palabra
+    por palabra esa es la tecnica entera, porque si cada palabra saliera en un
+    sitio distinto el ojo tendria que buscarla y se perderia la ventaja.
+
+    DENTRO HAY DOS COSAS, Y SOLO ESTA HECHA UNA:
+
+      1. el aviso de abajo, que esta VACIO y por eso no se ve nada. Se llena
+         solo cuando hay que decir algo ("no hay ningun texto todavia"), y se
+         vuelve a vaciar. Mientras esta vacio, la pantalla queda en blanco.
+
+      2. el texto de la lectura, que pondra el motor. Todavia no existe: falta
+         el motor de palabra por palabra y el Python que reparte las palabras.
+
+    LO QUE HAY QUE REVISAR AHORA es el marco, que es donde va a pasar todo lo
+    demas: si queda centrado, si el panel no lo tapa y si la letra se ve bien.
+  -->
+  <section class="lectura-marco" id="marco">
+    <p class="lectura-aviso ayuda" id="aviso" role="status" aria-live="polite"></p>
+  </section>
+</main>
+
+<!--
+  EL PANEL: EL MANDO DE LA LECTURA
+
+  Los botones son de dos clases:
+
+    - "volver" y "reiniciar" se entienden solos, asi que llevan dibujito.
+    - "play/pausa" es un solo boton que cambia de dibujito segun lo que este
+      pasando. No son dos botones: con dos, en un dedo, se aprieta el que no
+      queria, y ademas uno de los dos esta apagado medio tiempo.
+    - la velocidad NO lleva dibujito, lleva el NUMERO (300, 400...). Es la
+      forma mas honesta de mostrarla: con dos botones de mas y menos nunca se
+      sabe a que ritmo se esta leyendo. Al tocarlo sale la lista de velocidades.
+    - la letra lleva dos botones, porque "mas grande" y "mas chico" se
+      entienden con el dibujito de la A, sin numero.
+-->
+<div class="panel-flotante" data-panel>
+  <!--
+    VOLVER
+
+    "data-accion=atras" devuelve a donde se venia (reto-panel.js), que es la
+    lista de textos de donde se eligio este. El href queda como camino de
+    salida si alguien abrio esta pagina pegada, sin historial: en ese caso
+    lleva al indice de motores, que siempre es una salida valida.
+  -->
+  <a class="panel-boton" data-accion="atras" href="../lectura-veloz.html"
+     aria-label="Volver" title="Volver">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8592;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></span>
+  </a>
+
+  <!--
+    PLAY / PAUSA
+
+    Un solo boton con dos dibujitos. El de play se ve cuando esta parado, y el
+    de pausa cuando esta leyendo. El texto que lee el lector de pantalla esta
+    en el "aria-label", y ese tambien cambia, para que no diga "reproducir"
+    cuando lo que hace es pausar.
+  -->
+  <button type="button" class="panel-boton" data-leer data-estado="parado"
+          aria-label="Empezar a leer" title="Empezar a leer">
+    <span class="panel-boton-icono">
+      <svg data-dibujo="play" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+      <svg data-dibujo="pausa" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+    </span>
+  </button>
+
+  <!--
+    REINICIAR
+
+    Vuelve la lectura al principio. Cuando no hay nada que reiniciar, este
+    boton NO se apaga: abre el dialogo y lo explica. Un boton que se hace el
+    muerto deja a quien lo aprieta sin saber si fallo la pagina o el.
+  -->
+  <button type="button" class="panel-boton" data-reiniciar
+          aria-label="Empezar de nuevo" title="Empezar de nuevo">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#128260;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></span>
+  </button>
+
+  <!--
+    LA VELOCIDAD: BARRA, MAS Y MENOS
+
+    Son tres controles que mueven la MISMA velocidad, y van juntos a proposito:
+    juntos se leen como una sola cosa, "la velocidad".
+
+      - la BARRA es para buscar rapido: se arrastra y el numero se ve al mismo
+        tiempo, sin soltar;
+      - los BOTONES de mas y de menos son para afinar de diez en diez, que es
+        como se elige de verdad. Con el dedo es lo mas comodo.
+
+    El numero va al lado y no dentro de un boton, porque un circulo de 2.75 rem
+    no entra con tres cifras. Y es un <output> de verdad, que ademas lo lee el
+    lector de pantalla.
+
+    Se reusa ".rango" de Configuracion: el mismo control que ya se usa para la
+    transparencia del panel. No se inventa uno nuevo.
+
+    EL RANGO VA DE 50 A 999, DE DIEZ EN DIEZ. Abajo de 50 ya no es lectura, es
+    arrastrar el dedo; y arriba de 999 no hay nada que medir: el texto entra
+    antes de que el ojo lo lea, y eso no es leer mas rapido, es no leer. El 999
+    es el tope pedido, y por eso el maximo del <input> queda en 999.
+  -->
+  <div class="panel-velocidad">
+    <button type="button" class="panel-boton" data-wpm="menos"
+            aria-label="Bajar la velocidad" title="Bajar la velocidad">
+      <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8722;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg></span>
+    </button>
+
+    <input type="range" class="rango" id="wpm-rango"
+           min="50" max="999" step="10" value="300"
+           aria-label="Velocidad de lectura, en palabras por minuto">
+
+    <output class="rango-valor" id="wpm-valor" for="wpm-rango">300</output>
+
+    <button type="button" class="panel-boton" data-wpm="mas"
+            aria-label="Subir la velocidad" title="Subir la velocidad">
+      <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#43;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span>
+    </button>
+  </div>
+
+<!--
+    LA LETRA, MAS CHICA Y MAS GRANDE
+
+    Un solo control partido en dos, porque "mas grande" y "mas chico" se
+    entienden con el dibujito de la A sin necesidad de ningun numero. El paso es
+    de 0.25 rem, y hay topes: no se puede bajar de 1.5 ni subir de 6, porque
+    por debajo de 1.5 no se lee ni con lupa y por arriba de 6 no caben ni dos
+    palabras. Cuando se llega a un tope, el boton NO se apaga: avisa por el
+    dialogo que ya no se puede mas.
+
+    EL ORDEN DE LOS TRES, Y POR QUE ESTE Y NO OTRO
+    Este grupo tiene tres piezas —el boton de letra mas chica, el numero, y el
+    boton de letra mas grande— y el HTML las pone **en el orden que se ven con
+    el panel abajo o arriba**: primero el que disminuye, al final el que
+    aumenta. Es el orden que ya traia el de la velocidad, y el que se aplica a
+    todos los grupos con boton de mas y de menos del sitio.
+
+    Cuando el panel se pone a la izquierda o a la derecha, el orden se
+    INVIERTE (el que aumenta va arriba, el que disminuye abajo) porque en una
+    columna el ojo baja, no avanza. Eso lo hace el CSS con "order" en
+    65_lectura_veloz.css, y por eso el HTML esta en el orden horizontal: el
+    orden de las piezas en el archivo es el de la posicion por defecto, y el
+    CSS solo lo cambia cuando hace falta.
+  -->
+  <div class="panel-fuente">
+    <button type="button" class="panel-boton" data-fuente="menos"
+            aria-label="Letra más chica" title="Letra más chica">
+      <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">A&#8722;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg></span>
+    </button>
+    <output class="panel-indicador" id="fuente-valor" aria-live="polite">3</output>
+    <button type="button" class="panel-boton" data-fuente="mas"
+            aria-label="Letra más grande" title="Letra más grande">
+      <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">A&#43;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/><path d="M19 15v6"/><path d="M16 18h6"/></svg></span>
+    </button>
+</div>
+
+  <!--
+    TAMAÑO DEL GRUPO (3 / 4 palabras por fijación)
+
+    Un solo botón que alterna entre 3 y 4. Nace ESCONDIDO y reto-lectura.js lo
+    muestra solo en el modo grupo (chunk), que es el único donde existe la
+    idea de "grupo de varias palabras": en palabra por palabra se muestra UNA
+    palabra, en frases UNA oración, y en galáctico el texto entero subiendo.
+    En los otros modos el botón se veía pero no hacia nada, y eso es peor que
+    que no estuviera: la persona lo aprieta, no pasa nada, y concluye que la
+    lectura está fallando.
+  -->
+  <button type="button" class="panel-boton" data-grupo hidden
+          aria-label="Cambiar tamaño del grupo" title="Cambiar tamaño del grupo">
+    <span class="panel-boton-icono">
+      <span class="grupo-toggle" aria-hidden="true">
+        <span class="grupo-valor">3</span>
+      </span>
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="8" height="8" rx="1"/>
+        <rect x="13" y="3" width="8" height="8" rx="1"/>
+        <rect x="3" y="13" width="8" height="8" rx="1"/>
+        <rect x="13" y="13" width="8" height="8" rx="1"/>
+      </svg>
+    </span>
+  </button>
+
+  <!--
+    LOS AJUSTES DEL MODO (el modal de la animacion y las fuentes)
+
+    Nace ESCONDIDO y reto-lectura.js lo muestra cuando el modo galactico esta
+    listo para leer. Un boton que abre ajustes de algo que todavia no esta seria
+    un boton que no hace nada. Abre el modal de reto-lectura-ajustes.js.
+    Nota: "data-fuente" de los dos botones de arriba es el TAMANO de la letra
+    (A- y A+), y no la fuente; la fuente se elige en el modal de este boton.
+  -->
+  <button type="button" class="panel-boton" data-ajustes hidden
+          aria-haspopup="dialog" aria-label="Ajustes de la animación y la fuente" title="Ajustes de la animación y la fuente">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#9881;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h9"/><path d="M17 6h3"/><circle cx="15" cy="6" r="2"/><path d="M4 12h3"/><path d="M11 12h9"/><circle cx="9" cy="12" r="2"/><path d="M4 18h11"/><path d="M19 18h1"/><circle cx="17" cy="18" r="2"/></svg></span>
+  </button>
+</div>
+
+<!--
+  EL TECLADO TAMBIEN MANDA
+
+  En una pantalla donde se lee media hora, tener que ir a buscar el boton con
+  el raton cada dos minutos cansa. Con el teclado esta todo a mano:
+
+    espacio   reproducir o pausar
+    -  y  +   diez palabras por minuto mas, o menos
+    flechas   lo mismo, cuando el foco no esta en la barrita
+    R         empezar de nuevo
+
+  Va en reto-lectura.js, y no aqui, porque es comportamiento y no estructura.
+  Y solo suena si el foco no esta en un boton, un campo o la barrita: con el
+  foco en un boton, el espacio ya lo aprieta el navegador por su cuenta, y si
+  este script tambien lo hiciera se pausaria y reiniciaria en el mismo
+  instante. Ahi manda el control, no el atajo.
+-->
+<script src="../../../scripts/reto-datos.js?v=c19-c6fe548d"></script>
+<script src="../../../scripts/reto-dialogo.js?v=c08-ae075893"></script>
+<script src="../../../scripts/reto-panel.js?v=c04-f73a0fa9"></script>
+<script src="../../../scripts/reto-fuentes.js?v=c01-86f25e1c"></script>
+<script src="../../../scripts/reto-lectura.js?v=c13-54c4ff91"></script>
+<script src="../../../scripts/reto-lectura-ajustes.js?v=c07-039f9500"></script>
+<script src="../../../scripts/reto-debug.js?v=c25-5ac10ea0"></script>
+</body>
+</html>
+
+
+
+
+
+

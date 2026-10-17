@@ -1,0 +1,447 @@
+/* =============================================================================
+   R.E.T.O. — 50 ANIMACIONES
+   -----------------------------------------------------------------------------
+   Va al final, despues de 30_componentes, para poder sobrescribir sin
+   pelearse con las transiciones de los botones.
+
+   CRITERIO: aqui solo van animaciones que ORIENTAN, no que decoran. Si una
+   animacion no ayuda a entender donde estas o que acaba de cambiar, sobra. En
+   un sitio de estudio la animacion compite por la atencion con el contenido.
+
+   NO se hacen: nada que se mueva solo, nada con rebote ni elastico, nada que
+   espere bloqueando, nada que tape contenido, nada sobre texto que se esta
+   leyendo.
+
+    ESCALA DE TIEMPOS
+    Las duraciones no se eligen al azar, salen de esta escala. Si agregas una
+    animacion nueva, buscale su lugar aqui en lugar de inventar un numero.
+
+      100-150 ms   reaccion inmediata: hover, presion
+      180-220 ms   cambio de estado reversible: interruptor, casilla marcada
+      200-260 ms   entrada de contenido: tarjetas, avisos
+      250-300 ms   cambio de PAGINA: ver abajo
+      mas de 350ms  NUNCA en este sitio: se siente lento y roba tiempo real
+
+    POR QUE EL CAMBIO DE PAGINA PUEDE SER MAS LENTO
+    Es la unica duracion que esta fuera de las bandas cortas, y no por capricho:
+    las otras animaciones se repiten decenas de veces por minuto, y una de 300 ms
+    en cada hover se sentiria pesada. El cambio de pagina pasa UNA vez por
+    navegacion, y ademas reemplaza la pantalla entera: es el unico momento en que
+    el sitio puede mostrarse como una sola cosa en vez de como paginas sueltas.
+
+    A 150-200 ms la transicion se cumple y casi no se registra. A 300 ms se ve
+    que algo entro, y 300 sigue estando lejos del techo de 350 ms. Si alguna vez
+    se pasa de ahi, el sitio se va a sentir lento y hay que quitarle transicion,
+    no alargarla.
+
+   OJO CON EL RETARDO
+   Una animacion con retardo deja su elemento INVISIBLE durante ese retardo, por
+   el animation-fill-mode: both. Con una entrada de 260 ms y escalones de 60 ms,
+   la quinta tarjeta no aparecia hasta los 680 ms: medio segundo de pantalla
+   vacia. Por eso el escalonado es corto y esta acotado: el contenido siempre
+   esta disponible en menos de 400 ms.
+
+    INTERRUPTOR
+    El atributo data-anim en <html> es lo que manda, y tiene TRES estados:
+
+      data-anim="on"    la persona prendio las animaciones -> mandan ellas
+      data-anim="off"   las apago -> apagadas, siempre
+      sin atributo      todavia no ha decidido -> decide el sistema operativo
+
+    Este texto antes decia que el interruptor "no puede encender contra el
+    sistema", y era lo que hacia el codigo. Pero la pagina de configuracion le
+    promete al usuario, en letras visibles, que puede prenderlas aqui si en este
+    sitio si le sirven. Las dos cosas no pueden ser verdad a la vez, y gano la
+    segunda: es la persona la que decide, y el sistema es el valor inicial hasta
+    que ella conteste. Ver el mismo patron en 10_base.
+
+    Lo aplica el script del <head> de cada pagina, antes de pintar, para que no
+    haya destello: si se hiciera despues, se veria una animacion que luego se
+    apaga, o al reves.
+
+    ADEMAS DE LAS DE ABAJO, HAY DOS COSAS MAS
+      - Las tarjetas solo se animan la PRIMERA VEZ de cada sesion, no siempre.
+        Ver "Entrada de las tarjetas".
+      - El cambio entre paginas. Ver "Cambio de pagina", al final del archivo.
+    ========================================================================== */
+
+/* --- Apagado manual -------------------------------------------------------
+   El !important es lo que hace que gane a las animaciones de este mismo modulo.
+   Se aplica al elemento y a sus pseudoelementos porque algunos se animan. */
+[data-anim="off"] *,
+[data-anim="off"] *::before,
+[data-anim="off"] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Y CON LAS ANIMACIONES APAGADAS NADA SE MUEVE AL PASAR EL MOUSE.
+
+   Esta regla faltaba, y es la que hacia que el interruptor no sirviera para lo
+   que dice su nombre. Con solo quitar animation y transition, el hover seguia
+   aplicando su transform: la tarjeta no se deslizaba poco a poco, pero DABA UN
+   SALTO de golpe al ladearse. Para alguien que apago las animaciones porque le
+   molestan, un salto de 8 grados instantaneo es peor que el movimiento suave:
+   la molestia no esta en que algo se mueva despacio, esta en que se mueva.
+
+   Asi que aqui no se quita la transicion: se quita el MOVIMIENTO. El hover sigue
+   cambiando la sombra y el borde, que no es movimiento y sigue diciendo que la
+   tarjeta se puede tocar. Se pierde el gesto, se conserva el aviso.
+
+   La especificidad es mayor que la de los hover de 30_componentes, asi que gana
+   sin necesidad de !important.
+
+   LO QUE SE QUITA: el hover de las tarjetas, el de los botones flotantes de
+   configuracion y de volver, y el de los botones normales.
+
+   LO QUE SE DEJA: la sensacion al apretar (:active). Esa responde al dedo en el
+   momento en que se toca, y sin ella quien usa el celular se queda sin ninguna
+   confirmacion de que toco bien. Ademas con la transicion ya anulada, apretar
+   se traduce en un cambio de estado inmediato, no en un desplazamiento. */
+[data-anim="off"] .tarjeta:hover,
+[data-anim="off"] .boton-config:hover,
+[data-anim="off"] .boton-volver:hover,
+[data-anim="off"] .boton:hover {
+  transform: none;
+}
+
+/* El panel entra aqui por una razon propia: el zoom del icono y el desplazamiento
+   de los vecinos son movimiento, y movimiento es justo lo que se quita. Con las
+   animaciones apagadas el raton pasa por encima y no pasa NADA: ni el icono
+   crece, ni los vecinos se apartan.
+
+   Lo que se conserva es el fondo del boton, porque un cambio de color no es
+   movimiento: quien apago las animaciones sigue viendo que el boton se puede
+   tocar, que es lo unico que el hover tiene que decir. Ver el mismo
+   razonamiento aplicado a las tarjetas, mas arriba. */
+[data-anim="off"] .panel-boton:hover .panel-boton-icono,
+[data-anim="off"] .panel-boton:focus-visible .panel-boton-icono,
+[data-anim="off"] .panel-boton:hover + .panel-boton,
+[data-anim="off"] .panel-boton:has(+ .panel-boton:hover) {
+  transform: none;
+}
+
+/* El buscador S obeyece el interruptor, a diferencia de la transparencia del
+   panel. La razon es que una es informacion y la otra es decoracion: que el
+   panel se ponga transparente dice "este boton se puede tocar", y eso no se
+   apaga nunca; que el campo de busqueda se deslice es solo eso, un movimiento.
+   Con las animaciones apagadas, el campo aparece de golpe, que es justo lo que
+   se pide al apagar animaciones. */
+[data-anim="off"] .buscador-campo,
+[data-anim="off"] .buscador-boton {
+  transition: none !important;
+}
+
+[data-anim="off"] .buscador-boton:hover {
+  transform: none;
+}
+
+/* --- LOS JUEGOS
+   El giro de la carta del memorama, y el desplazamiento de sus botones, tienen
+   que obedecer el interruptor como todo lo demas. Sin esto, con el interruptor
+   apagado el juego SEGUIA moviendose: uno apagaba las animaciones y el juego se
+   movia igual, que es peor que no respetar el interruptor en nada.
+
+   LA CARTA QUE SE LEVANTA AL PASAR EL RATON TAMBIEN ENTRA, pero OJO con lo que
+   eso no apaga: la sombra y el brillo de la carta SE QUEDAN. El interruptor
+   apaga el movimiento, no el aspecto. Si al apagar las animaciones desaparecieran
+   las sombras, las cartas se verian planas y la pagina pareceria rota, cuando lo
+   que se pidio fue no moverse. */
+[data-anim="off"] .memo-carta-interior,
+[data-anim="off"] .memo-carta,
+[data-anim="off"] .memo-opcion,
+[data-anim="off"] .dialogo-cancelar {
+  transition: none !important;
+}
+
+[data-anim="off"] .memo-carta[data-pareja="1"] .memo-carta-interior {
+  animation: none !important;
+}
+
+/* La carta que se esta presionando deja de hundirse, como los demas botones. */
+[data-anim="off"] .memo-carta:active,
+[data-anim="off"] .dialogo-cancelar:active {
+  transform: none;
+}
+
+/* --- Entrada de las tarjetas ----------------------------------------------
+    Desplazamiento corto y escalonado: al entrar en orden se ve de donde viene
+    la lista. 200 ms y 45 ms de escalon, con el retardo TOPADO en 180 ms para
+    que ninguna tarjeta tarde mas de 380 ms en aparecer. La portada tiene 5
+    tarjetas, que es la lista mas larga del sitio.
+
+    SOLO LA PRIMERA VEZ DE CADA SESION.
+
+    Una animacion que se repite en cada carga deja de decir nada. Alguien que
+    entra al sitio cinco veces al dia la veria quince veces, y para la semana
+    seria ruido con el que ya ni se registra. Asi que se muestra una vez, para
+    dar la bienvenida, y despues las tarjetas simplemente estan.
+
+    Que sea por SESION y no para siempre es a proposito: quien abre el sitio por
+    la manana otra vez si quiere verlas entrar. Lo que se quiere evitar es el
+    repetir dentro de la misma sesion, no el volver manana.
+
+    CSS no tiene memoria, asi que de esto se encarga el script del <head> de cada
+    pagina, que pone data-anim-tarjetas="off" en <html> si la sesion ya vio las
+    tarjetas. Va en el head, y no al final del body, por la misma razon que el
+    tema: si se hiciera despues, las tarjetas alcanzarian a pintar animadas y
+    despues se congelarian, que es un salto visible.
+
+    Si el navegador no deja guardar (modo privado con el almacenamiento
+    bloqueado, o el sitio abierto con doble clic), el atributo nunca se pone, la
+    animacion se repite y no pasa nada grave: es el comportamiento anterior. */
+@keyframes reto-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+html:not([data-anim-tarjetas="off"]) .rejilla > li {
+  animation: reto-entrada 200ms ease-out both;
+}
+
+/* El escalonado va con :nth-child y no con una variable por elemento, para no
+   depender de JavaScript. Al agregar tarjetas hay que ampliar esta lista. */
+html:not([data-anim-tarjetas="off"]) .rejilla > li:nth-child(1) { animation-delay: 0ms; }
+html:not([data-anim-tarjetas="off"]) .rejilla > li:nth-child(2) { animation-delay: 45ms; }
+html:not([data-anim-tarjetas="off"]) .rejilla > li:nth-child(3) { animation-delay: 90ms; }
+html:not([data-anim-tarjetas="off"]) .rejilla > li:nth-child(4) { animation-delay: 135ms; }
+html:not([data-anim-tarjetas="off"]) .rejilla > li:nth-child(n + 5) { animation-delay: 180ms; }
+
+/* --- Avisos de resultado -------------------------------------------------
+   Cuando se exporta o restaura, el texto aparece despues de una accion
+   asincrona. Sin esto cambia de golpe y es facil no notarlo. 200 ms, con la
+   misma curva de entrada: es la misma idea que las tarjetas, en otro sitio. */
+@keyframes reto-surgir {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.datos-estado:not(:empty) {
+  animation: reto-surgir 200ms ease-out both;
+}
+
+/* --- Ajustes de duracion -------------------------------------------------
+   Estos valores se ajustan aqui y no en el resto de reglas, para que cambiar la
+   sensacion general del sitio sea cambiar un numero en un solo lugar. */
+.tarjeta,
+.boton,
+.fab {
+  transition-duration: 150ms;
+}
+
+.interruptor-caja,
+.interruptor-caja::after {
+  transition-duration: 200ms;
+}
+
+/* --- Hover de las tarjetas ------------------------------------------------
+   Un ligero zoom (scale 1.04 ~ 9px en tarjetas de 220px) y elevacion de 2px.
+   Se quita la rotacion de -1.5deg porque en tactil el hover se quedaba pegado
+   y la tarjeta se veia inclinada. El zoom es mas limpio y no estorba la lectura.
+
+   La transicion de transform ya venia declarada en .tarjeta (30_componentes),
+   asi que el escalado se interpola solo y aqui no hay que anadir nada. */
+.tarjeta:hover {
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 6px 16px var(--shadow, rgba(0, 0, 0, 0.12));
+}
+
+/* Nivel de animación expresivo (modo vivo / enriquecido para niños y adultos) */
+html[data-anim-nivel="expresivo"]:not([data-anim="off"]) .tarjeta:hover {
+  transform: translateY(-4px) scale(1.06);
+  box-shadow: 0 8px 24px var(--shadow, rgba(0, 0, 0, 0.16));
+}
+
+/* --- Modos de Hover Avanzados (Configurables) --- */
+html[data-anim-hover="flotacion-3d"]:not([data-anim="off"]) .tarjeta:hover {
+  transform: perspective(800px) rotateX(8deg) translateY(-14px) scale(1.06);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3), 0 0 0 3px var(--accent);
+  transition: transform 250ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 250ms ease;
+}
+
+@keyframes reto-pulso-latido {
+  0% { transform: translateY(-4px) scale(1.03); }
+  50% { transform: translateY(-12px) scale(1.12); }
+  100% { transform: translateY(-4px) scale(1.03); }
+}
+
+html[data-anim-hover="pulso-ludico"]:not([data-anim="off"]) .tarjeta:hover {
+  animation: reto-pulso-latido 0.8s ease-in-out infinite;
+  box-shadow: 0 22px 45px var(--shadow, rgba(0, 0, 0, 0.28));
+}
+
+/* --- Modos de Acción (Click / Active) --- */
+@keyframes reto-rebote-tactil {
+  0% { transform: scale(1); }
+  30% { transform: scale(0.82); }
+  65% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+html[data-anim-accion="rebote"]:not([data-anim="off"]) .tarjeta:active,
+html[data-anim-accion="rebote"]:not([data-anim="off"]) .boton:active {
+  animation: reto-rebote-tactil 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* --- Modos de Animación de Panel Flotante --- */
+html[data-anim-panel="elastico"]:not([data-anim="off"]) .panel-flotante {
+  transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms ease;
+}
+html[data-anim-panel="elastico"]:not([data-anim="off"]) .panel-flotante:hover {
+  transform: scale(1.18);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
+}
+
+html[data-anim-panel="giro"]:not([data-anim="off"]) .panel-flotante {
+  transition: transform 300ms ease, opacity 200ms ease;
+}
+html[data-anim-panel="giro"]:not([data-anim="off"]) .panel-flotante:hover {
+  transform: rotate(1.2deg) scale(1.15);
+}
+
+/* Transiciones suaves para modales y diálogos */
+dialog, .modal, .dialogo {
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+
+[data-anim-nivel="expresivo"]:not([data-anim="off"]) dialog:not([open]),
+[data-anim-nivel="expresivo"]:not([data-anim="off"]) .modal:not([open]) {
+  transform: scale(0.95);
+  opacity: 0;
+}
+
+[data-anim-nivel="expresivo"]:not([data-anim="off"]) dialog[open],
+[data-anim-nivel="expresivo"]:not([data-anim="off"]) .modal[open] {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* --- Cambio de pagina -----------------------------------------------------
+    Dos lineas de CSS levantan la transicion entre PAGINAS, que es donde se
+    nota que esto se comporta como una app y no como una coleccion de archivos.
+
+    Al navegar, el navegador toma una foto de la pagina que se va, carga la
+    nueva, y mezcla las dos mientras dura la transicion. No hace falta
+    JavaScript, ni el sitio tiene que ser una sola pagina.
+
+    La pagina nueva REAPROVECHA reto-entrada, la misma que usan las tarjetas. No
+    es pereza: si todo el sitio se mueve con el mismo gesto, se lee como una sola
+    cosa. Si la entrada de las tarjetas y la de las paginas fueran distintas, se
+    sentirian dos cosas Pegadas, no una sola.
+
+    La vieja solo se desvanece, sin moverse. Se ve que entra algo nuevo, no que
+    la pagina selvantara hacia arriba.
+
+    DONDE NO FUNCIONA
+    Chrome 126+, Edge 126+ y Safari 18.2+ lo hacen. Firefox todavia no. Ahi la
+    regla se ignora por completo y la pagina nueva aparece de golpe: es
+    exactamente como se comportaba antes, no se rompe nada. Por eso esto es
+    ADITIVO y no un requisito.
+
+    Tampoco se anima cuando se escribe la direccion o se abre un marcador: solo
+    cuando el navegante toca algo, o cuando usa el boton de atras. Que un sitio
+    se mueva solo al abrirlo seria molesto, asi que la regla lo excluye a
+    proposito.
+
+    Y en el test, cuando la respuesta se mande con un formulario, tambien
+    cuenta como "tocar algo": la pagina siguiente entra con la misma animacion.
+    Eso es justo lo que hace que el test se sienta como una sola sesion y no
+    como una lista de preguntas sueltas. */
+@view-transition {
+  navigation: auto;
+}
+
+@keyframes reto-salida {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+::view-transition-old(root) {
+  animation: reto-salida 200ms ease-in both;
+}
+
+::view-transition-new(root) {
+  animation: reto-entrada 300ms ease-out both;
+}
+
+/* Estas dos reglas son la parte que no se puede dejar de escribir.
+
+    Los pseudoelementos de la transicion de pagina (::view-transition-old y
+    ::view-transition-new) NO son hijos del DOM: no los alcanza la regla global
+    de [data-anim="off"] *. Por eso el interruptor de la configuracion general
+    tiene que nombrarlos aqui, o el interruptor apagaria las animaciones de la
+    pagina y dejaria estas dos andando.
+
+    La del sistema operativo se escribe aunque el navegador ya la respete solo:
+    que funcione hoy no garantiza que funcione en todos, y esta regla no cuesta
+    nada. Con cualquiera de las dos, la pagina cambia de golpe, que es lo que
+    quiere quien pidio menos movimiento. */
+html[data-anim="off"]::view-transition-old(root),
+html[data-anim="off"]::view-transition-new(root) {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Lo mismo que el interruptor manual, y por la misma razon: sin esto, quien
+     tiene apagados los efectos de animacion en su sistema seguia viendo la
+     tarjeta ladearse de golpe al pasar el mouse.
+
+     El "html:not([data-anim=on])" es lo que respeta la eleccion de la persona.
+     Sin el, la pagina de configuracion le promete que puede prender las
+     animaciones y aqui se lo impide: la tarjeta se quedaria sin giro aunque el
+     interruptor este encendido. Ver el mismo patron explicado en 10_base.
+
+El "html" del principio NO es decorativo ademas. Los hovers que se
+      neutralizan estan escritos como ".tarjeta:hover" y ".tarjeta-nav:hover",
+     que llevan un elemento y por eso son MAS ESPECIFICOS que un ".tarjeta:hover"
+     de aqui: 0,2,1 contra 0,2,0. Con solo ".tarjeta:hover" esta regla habria
+     perdido y el giro habria seguido apareciendo en las tarjetas de enlace, que
+     son justo las de la portada. Con "html" delante empatan y, como esta hoja es
+     la ultima, gana la que va despues. */
+  html:not([data-anim="on"]) .tarjeta:hover,
+  html:not([data-anim="on"]) .boton-config:hover,
+  html:not([data-anim="on"]) .boton-volver:hover,
+  html:not([data-anim="on"]) .boton:hover {
+    transform: none;
+  }
+
+  /* El panel, por lo mismo que arriba: sin zoom del icono y sin que los vecinos
+     se aparten. El color de fondo sigue cambiandose, que no es movimiento. */
+  html:not([data-anim="on"]) .panel-boton:hover .panel-boton-icono,
+  html:not([data-anim="on"]) .panel-boton:focus-visible .panel-boton-icono,
+  html:not([data-anim="on"]) .panel-boton:hover + .panel-boton,
+  html:not([data-anim="on"]) .panel-boton:has(+ .panel-boton:hover) {
+    transform: none;
+  }
+
+  /* Y el buscador, por lo mismo: sin deslizamiento, de golpe. */
+  html:not([data-anim="on"]) .buscador-campo,
+  html:not([data-anim="on"]) .buscador-boton {
+    transition: none !important;
+  }
+
+  html:not([data-anim="on"]) .buscador-boton:hover {
+    transform: none;
+  }
+
+  html:not([data-anim="on"])::view-transition-old(root),
+  html:not([data-anim="on"])::view-transition-new(root) {
+    animation: none;
+  }
+}

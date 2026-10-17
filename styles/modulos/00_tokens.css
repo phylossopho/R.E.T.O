@@ -1,0 +1,447 @@
+/* =============================================================================
+   R.E.T.O. — 00 TOKENS
+   -----------------------------------------------------------------------------
+   Variables de diseno. Este modulo va PRIMERO porque todo lo demas depende de
+   el nombre de estas variables: si una falta, el sitio entero se descuadra.
+
+   Cada tema redefine las mismas variables, asi que los componentes no necesitan
+   saber en que tema estan: nunca se escribe una regla por tema.
+
+   Para cambiar el aspecto general del sitio, se toca aqui. No hay que buscar
+   colores sueltos en los componentes.
+   ========================================================================== */
+
+/* Valores por defecto. El tema "papel" repite estos mismos valores, de modo
+   que si se edita aqui hay que editar tambien alla para que no cambien. */
+/* Dos variables de borde, y no una, a proposito.
+
+   --border es el filete decorativo: separadores de cabecera y pie, tarjetas, el
+  fieldset de ajustes, la miniatura del tema. Ahi el borde separa cosas pero no
+   identifica ningun control, y puede ser tan tenue como quiera.
+
+   --borde-fuerte es para los TRES sitios donde el contorno es lo unico que dice
+   "esto se puede tocar": .boton-volver, .boton y la pista del interruptor. Con
+   --border esos tres daban 1.25:1 a 2.07:1, muy por debajo del 3:1 que pide
+   WCAG 1.4.11, y en el boton de volver era el caso mas grave: su relleno
+   --surface sobre un fondo --bg da cerca de 1.05:1, o sea que sin el borde el
+   circulo no existia.
+
+   Cada valor sale de mover el --border del mismo tema hasta que da 3:1 contra
+   --bg Y contra --surface, conservando su tono. Por eso los dos bordes se parecen
+   entre si: uno es el mismo color, mas fuerte y con trabajo. */
+:root {
+  --bg: #fdf6e3;
+  --surface: #ffffff;
+  --text: #3e3e3e;
+  --muted: #6b6b6b;
+  --accent: #5c4b7a;
+  /* --aviso: el color del boton de eliminar. Es el UNICO uso de esta variable
+     en todo el sitio, y es a proposito: no hay un "color de error" general
+     porque no hay un solo tipo de error. Este es un boton concreto.
+
+     Se eligio un naranja de los que se usan para avisar en el camino, y no un
+     rojo. El rojo de plano se lee como "error" o como "prohibido", y aqui no
+     hay ni un error ni una prohibicion: hay una pregunta. El naranja quemado
+     dice "cuidado" sin gritar, que es justo lo que hace falta.
+
+     Y no se usa para NADA mas que el icono. El fondo del boton sigue siendo el
+     de los otros, y solo se pinta de este color al pasar el raton. Un boton
+     rojo de todo el tiempo no dice "cuidado", dice "presiona aqui": el color
+     llama la vista y el dedo llega solo. El aviso va en el dialogo, que es donde
+     la persona ya decidio que iba a hacer algo.
+
+     ESTOS NUMEROS ESTAN MEDIDOS, NO ELEGIDOS A OJO. Las dos cuentas que hay que
+     cumplir son las unicas que aplican:
+       - el icono contra la superficie del panel, sin pasar el raton;
+       - y el fondo de la pagina contra el icono, cuando el boton se pinta de
+         este color. Esa segunda es la que se olvida siempre, y es la que
+         manda, porque es el estado en el que la persona esta decidiendo.
+     Las dos se miden con la misma cuenta de siempre, la mezcla con el icono de
+     fondo incluida. */
+  /* --ayuda: el color del boton de ayuda. Es el segundo color propio del sitio
+     despues de --aviso, y tambien va medido en los cinco temas.
+
+     Por que verde y no el color del sitio (--accent): el boton de ayuda es el
+     UNICO del panel que no ejecuta nada, solo explica. Si tuviera el color de
+     los demas se perderia entre ellos, y entonces el "?" no dira "esto es otro
+     tipo de boton", que es justo lo que tiene que decir. El verde ademas no se
+     confunde con el naranja de aviso ni con el rojo de eliminar.
+
+     Las dos cuentas que hay que cumplir son las de siempre: el icono contra la
+     superficie del panel, y el fondo de la pagina contra el icono cuando se
+     pinta de este color. */
+  /* --acierto: el color de "lo has acertado". Lo usa la tabla de Schulte, para
+     la casilla que se ha encontrado bien.
+
+     POR QUE ES EL MISMO VERDE QUE --ayuda Y NO UNO NUEVO
+     Es el mismo color, escrito otra vez con otro nombre, y a proposito. Dos
+     razones, y las dos son reglas del proyecto.
+
+     Una: NO se reusa --ayuda, porque el significado de un token esta en su
+     nombre. Si el boton de ayuda y el acierto compartieran color, el "?" dejaria
+     de decir "esto es otro tipo de boton", que es lo unico que dice.
+
+     Dos: no se mide de nuevo. Los valores de arriba ya estan medidos contra la
+     superficie y contra el fondo de cada tema, y los numeros estan al lado de
+     cada --ayuda. Copiar un color ya medido con otro nombre NO es inventar un
+     color: es el mismo color con el nombre que le corresponde. Y si manana se
+     cambia el verde de ayuda, este se cambia con el, que es justo lo que se
+     busca al no haberlos separado.
+
+     OJO: si alguna vez hace falta un acierto que NO sea verde, el sitio ya
+     tiene la salida: los tres --marca-* llevan el NOMBRE del color al lado y se
+     puede filtrar por color. No es un problema de este token. */  /* --marca-1, --marca-2 y --marca-3: los tres colores con los que se puede
+     marcar un documento para organizarlo. NO son colores de aviso ni de peligro:
+     el naranja de --aviso y el rojo de eliminar se reservan para lo que avisa y
+     lo que destruye, y si un color significa dos cosas, deja de significar las
+     dos.
+
+     LOS TRES, Y POR QUE SON ESTOS
+     Azul, verde y rosa. Los tres se distinguen de un vistazo en la maioria de
+     las pantallas, y ninguno se parece al color de acento de ningun tema, que
+     es donde vive el texto: si el punto se pareciera al acento, se perderia.
+
+     Verde y rosa son el par que mas se confunde con el tipo de daltonismo mas
+     comun (el que no distingue el rojo del verde). Eso no se arregla con el
+     color, porque son tres y siempre habra un par dificil. Se arregla por
+     aparte, de dos formas que estan escritas abajo.
+
+     COMO SE NEUTRALIZA ESA LIMITACION
+     Uno: en el menus de "marcar" cada color aparece con su NOMBRE (azul, verde,
+     rosa), y el punto de la tarjeta lleva ese nombre al pasar el raton. Asi la
+     persona aprende "el rosa" y no un tono, y de ahi en adelante reconoce el
+     punto por el nombre y no por ver el color.
+     Dos: el filtro cuenta cuantos documentos hay de cada color, y se puede
+     filtrar por color. Es la salida para cuando el color no reacha: se dice el
+     nombre y ya.
+
+      Estos valores estan medidos contra la superficie de cada tema (WCAG
+      1.4.11, que es un objeto grafico y necesita 3.00). Los numeros estan al lado
+      de cada uno. */
+  --aviso: #a03500;   /* este bloque es el mismo que el tema papel:  6.99 con --surface, 6.48 con --bg */
+  --marca-1: #1d4ed8;  /* azul  6.70 con --surface */
+  --marca-2: #15803d;  /* verde  5.02 con --surface */
+  --marca-3: #be185d;  /* rosa   6.04 con --surface */
+--ayuda: #166534;
+--acierto: #166534;   /* papel:  7.13 con --surface, 6.61 con --bg */
+  --border: #e3ddd0;
+  --borde-fuerte: #a18c61;
+  --focus: #af8941;
+  --shadow: rgba(60, 50, 30, 0.1);
+  /* Sombra propia de los botones flotantes. Es DELIBERADAMENTE mas marcada que
+     --shadow: con 0.3 sobre fondo crema la sombra casi no se ve, y un boton
+     flotante que no proyecta sombra no se percibe como flotante: parece un
+     circulo pegado a la esquina. Por eso 0.4 en los temas claros. No la bajes
+     sin comprobar antes como se ve en papel y en basketball. */
+  --sombra-fab: rgba(60, 50, 30, 0.4);
+
+  --font: "Nunito", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-size-base: 18px;
+  --line-height: 1.7;
+  --radius: 12px;
+
+  /* Ancho maximo del contenido. La escalera de 40_adaptativo lo sube por
+     escalones: en un monitor grande, 821 px de contenido en una pantalla de
+     2560 px deja dos tercios de la pagina vacios. */
+  --max-ancho: 560px;
+  --space-xs: 0.4rem;
+  --space-sm: 0.8rem;
+  --space-md: 1.4rem;
+  --space-lg: 2.2rem;
+  --space-xl: 3.2rem;
+
+  /* Grosor del trazo de los iconos y tamano del area tactil de los botones.
+     Liven como variable para que el tema infantil pueda engordarlos sin
+     tener que escribir reglas aparte para cada componente. */
+  --grosor-icono: 2;
+  --area-boton: 3.5rem;
+
+  /* ------------------------------------------------ decoracion, solo infantil
+     Estas seis son las que hacen que el tema infantil se vea de nino y no solo
+     de otro color. En los otros cuatro temas valen "nada" o el valor normal, y
+     ningun componente escribe una regla por tema: todos leen estas variables.
+
+     Se separan en dos grupos. Las primeras cuatro cambian la FORMA de las
+     piezas (bordes, sombras, esquinas, inclinacion). Las dos ultimas cambian
+     el FONDO, y por eso estan aparte: son las unicas que pueden tocar el color
+     de superficie, y hay que medirlas con mas cuidado.
+
+     --deco-imagen y --deco-tamano van en vez de un solo valor porque
+     background-size no se puede escribir dentro de background-image: hacen
+     falta las dos para el punto de la decoracion. En los otros temas la
+     imagen es "none", que con cualquier tamano no dibuja nada. */
+  --borde-tarjeta: 1px solid var(--border);
+  --sombra-tarjeta: 0 2px 8px var(--shadow);
+  --radio-boton: var(--radius);
+  --deco-imagen: none;
+  --deco-tamano: auto;
+  --alto-banda: 0px;
+  --banda: none;
+
+  /* ------------------------------------------------- el icono de la tarjeta
+     El icono NO es una etiqueta arriba de la tarjeta: es el fondo. Se va
+     atras, crece hasta casi el tamano del papel y sangra por la esquina de
+     abajo a la derecha. Los cinco temas lo llevan igual, y lo que cambia de uno
+     a otro es el COLOR, que ya viene solo de --accent.
+
+     Asi esta en los cinco y no solo en el infantil, por eso estos valores son
+     los de :root y no los de un tema. Lo que si cambia por tema es
+     --opacidad-icono, y de eso va el parrafo de abajo. */
+
+  --posicion-icono: absolute;
+  --ancla-icono: auto -1.4rem -1.4rem auto;
+  --tamano-icono: 10rem;
+  --glifo-icono: 10rem;
+  --giro-icono: -5deg;     /* como una pegatina puesta a mano */
+  --fondo-icono: transparent;   /* ya no hay circulo: el icono es el relleno */
+
+  --opacidad-icono: 0.14;
+
+  /* POR QUE LA OPACIDAD ES DISTINTA EN CADA TEMA
+     Porque el icono va DEBAJO del texto, y ahi lo que se ve no es el color de
+     la tarjeta sino la mezcla. En los temas claros el icono es oscuro y
+     oscurece el fondo, lo cual le AYUDA al texto. En los oscuros el icono es
+     claro y ACARA el fondo, y ahi le hace dano: el texto ya es claro y cada
+     claro de menos le quita contraste. Por eso los oscuros necesitan una
+     opacidad menor.
+
+     Y el limite no lo pone el titulo, que siempre sobra, sino --muted, que es
+     el color mas claro de los tres textos y por lo tanto el que se apena
+     primero. Los valores de abajo se eligieron bajando desde 0.30 y tomando
+     LA PRIMERA que deja al mas justo con 0.30 de sobra:
+
+       papel       0.16   --muted hubo que oscurecerlo, ver su bloque
+       pizarron    0.14
+       crepusculo  0.11
+       basketball  0.13   --muted tambien, ver su bloque
+       infantil    0.14
+
+     Si se sube cualquiera de los dos, el texto de apoyo baja de 4.5:1. */
+  --tarjeta-hover-bg: #fdf8ff;   /* papel: toque de acento (3%) sobre blanco */
+}
+
+[data-theme="pizarron"] {
+  --bg: #1f2d26;
+  --surface: #27382e;
+  --text: #e9f0e6;
+  --muted: #b8c9b2;
+  --accent: #d6eebb;
+  --aviso: #ffa33d;   /* pizarron:  5.52 con --surface, 6.39 con --bg */
+  --marca-1: #93c5fd;  /* azul  6.89 con --surface */
+  --marca-2: #4ade80;  /* verde  7.13 con --surface */
+  --marca-3: #f9a8d4;  /* rosa   6.85 con --surface */
+  --ayuda: #4ade80;
+  --acierto: #4ade80;   /* pizarron:  7.13 con --surface, 8.25 con --bg */
+  --border: #4c6a54;
+  --borde-fuerte: #60866a;
+  --focus: #a6c98a;
+  --shadow: rgba(0, 0, 0, 0.35);
+  --sombra-fab: rgba(0, 0, 0, 0.55);
+/* El icono de fondo es claro y aclara la tarjeta, y el texto de este tema ya
+     es claro: por eso la opacidad es MENOR que en los temas claros. */
+   --opacidad-icono: 0.14;
+   --tarjeta-hover-bg: #2d4034;   /* pizarron: surface un 8% mas claro */
+}
+
+[data-theme="crepusculo"] {
+  --bg: #1d1f2b;
+  --surface: #252738;
+  --text: #e6e7f1;
+  --muted: #a6a8be;
+  --accent: #d6cce0;
+  --aviso: #ffa33d;   /* crepusculo:  6.55 con --surface, 7.28 con --bg */
+  --marca-1: #a5b4fc;  /* azul  7.39 con --surface */
+  --marca-2: #4ade80;  /* verde  8.45 con --surface */
+  --marca-3: #f9a8d4;  /* rosa   8.12 con --surface */
+  --ayuda: #4ade80;
+  --acierto: #4ade80;   /* crepusculo:  8.45 con --surface, 9.39 con --bg */
+  --border: #3e4158;
+  --borde-fuerte: #6a6f96;
+  --focus: #c4b6db;
+  --shadow: rgba(0, 0, 0, 0.35);
+  --sombra-fab: rgba(0, 0, 0, 0.55);
+/* El mas bajo de los cinco: el acento de este tema es casi blanco, y aclarado
+     sobre la tarjeta le quita mas contraste al texto. Aun asi es el que mas
+     conviene: 4.84:1 en el texto de apoyo. */
+   --opacidad-icono: 0.11;
+   --tarjeta-hover-bg: #2b2d3e;   /* crepusculo: surface un 8% mas claro */
+}
+
+/* --muted bajo de #6b6b6b a #616161, y --accent de #b55523 a #a8481c.
+
+   --accent: daba 4.51:1 sobre --bg, y ese par es el del texto del hover de las
+   tarjetas: texto --bg sobre relleno --accent. 4.51 esta a un paso de 4.5, asi
+   que cualquier ajuste de color lo rompe. A #a8481c da 5.36:1 y 5.82:1.
+
+   --muted: con el icono de fondo debajo, bajaba a 4.31:1, o sea ya no pasaba.
+   Y antes de la marca de agua tampoco sobra: daba 4.80:1 sobre la tarjeta
+   limpia. A #616161 da 5.21:1 limpia y 4.84:1 con el icono encima. */
+[data-theme="papel"] {
+  --bg: #fdf6e3;
+  --surface: #ffffff;
+  --text: #3e3e3e;
+  --muted: #616161;
+  --accent: #5c4b7a;
+  --aviso: #a03500;   /* papel:  6.99 con --surface, 6.48 con --bg */
+  --marca-1: #1d4ed8;  /* azul  6.70 con --surface */
+  --marca-2: #15803d;  /* verde  5.02 con --surface */
+  --marca-3: #be185d;  /* rosa   6.04 con --surface */
+  --ayuda: #166534;
+  --acierto: #166534;   /* papel:  7.13 con --surface, 6.61 con --bg */
+  --border: #e3ddd0;
+  --borde-fuerte: #a18c61;
+  --focus: #af8941;
+  --shadow: rgba(60, 50, 30, 0.1);
+--sombra-fab: rgba(60, 50, 30, 0.4);
+   --opacidad-icono: 0.16;
+   --tarjeta-hover-bg: #fdf8ff;   /* papel: toque de acento (3%) sobre blanco */
+}
+
+/* --muted bajo de #7a6a58 a #6f5f4e, y --accent de #b55523 a #a8481c.
+
+   --accent: daba 4.51:1 sobre --bg, y ese par es el del texto del hover de las
+   tarjetas: texto --bg sobre relleno --accent. 4.51 esta a un paso de 4.5, asi
+   que cualquier ajuste de color lo rompe. A #a8481c da 5.36:1 y 5.82:1, y sigue
+   siendo el naranja quemado de siempre.
+
+   --muted: con el icono de fondo debajo, bajaba a 4.31:1, o sea ya no pasaba.
+   Y antes de la marca de agua tampoco sobra: daba 5.21:1 sobre la tarjeta
+   limpia. A #6f5f4e da 6.14:1 limpia y 5.07:1 con el icono encima. */
+[data-theme="basketball"] {
+  --bg: #fff4e6;
+  --surface: #ffffff;
+  --text: #3a2e22;
+  --muted: #6f5f4e;
+  --accent: #a8481c;
+  --aviso: #96330a;   /* basketball:  7.57 con --surface, 6.97 con --bg */
+  --marca-1: #1d4ed8;  /* azul  6.70 con --surface */
+  --marca-2: #15803d;  /* verde  5.02 con --surface */
+  --marca-3: #be185d;  /* rosa   6.04 con --surface */
+  --ayuda: #166534;
+  --acierto: #166534;   /* basketball:  7.13 con --surface, 6.56 con --bg */
+  --border: #e6d8c4;
+  --borde-fuerte: #b1874b;
+  --focus: #da7226;
+  --shadow: rgba(80, 50, 20, 0.1);
+--sombra-fab: rgba(80, 50, 20, 0.4);
+   --opacidad-icono: 0.13;
+   --tarjeta-hover-bg: #fff8f5;   /* basketball: toque de acento (3%) sobre blanco */
+}
+
+/* Tema infantil: para ninos de unos 6 a 9 anos.
+
+   Es el unico tema que se aparta de verdad, y esa es la idea: que se vea como
+   un juguete. Los otros cuatro son sobrios, para quien quiere estudiar en
+   serio; este lleva puntos, bordes engordados, botones de pastilla y una banda
+   de rayas. Quien quiera algo mas tranquilo se cambia de tema, y el sitio
+   funciona igual.
+
+   No es solo cambiar colores. A esa edad el problema no es la falta de
+   contraste, que ya esta bien en los otros temas, sino tres cosas concretas:
+
+     1. el TEXTO es pequeno   -> letra mas grande y mas separado
+     2. las cosas son pequenas -> todo mas grande, incluidos los botones
+     3. las formas son rectas -> bordes mas redondos
+
+   Por eso este tema tambien cambia tamano de letra, separacion y radio, y no
+   solo la paleta.
+
+   LA PALETA SE CAMBIO ENTERA, y no por capricho. El azul de antes daba
+   4.52:1 sobre --bg, y ese par es el del texto del hover de las tarjetas, o
+   sea el que mas se nota. Con el fondo nuevo y un azul mas oscuro, todos los
+   pares quedan con holgura de verdad:
+
+     texto sobre --bg          13.44:1   (pide 4.5)
+     texto de apoyo sobre --bg   6.81:1   (pide 4.5)
+     acento sobre --bg          5.51:1   (pide 5.0, para el hover relleno)
+     borde de control           4.25:1   (pide 3.0)
+     anillo de foco             4.65:1   (pide 3.0)
+
+   Y el punto de la decoracion tambien se midio, porque un patron no es un
+   color: donde el punto cae debajo de una palabra, lo que se ve es 11.03:1, no
+   los 13.44:1 del fondo limpio. Sigue estando muy por encima, pero asi se sabe
+   en vez de suponerlo.
+
+   Ademas engorda los iconos (trazo 2.6 en vez de 2) y agranda el area tactil,
+   porque a esa edad el dedo no afina. El cambio de trazo lo hace
+   30_componentes, no 00: aqui van solo los valores. */
+[data-theme="infantil"] {
+  /* Mantequilla en vez de crema: mas calida, y mas parecida a un cuaderno. */
+  --bg: #fff6d9;
+  --surface: #ffffff;
+  --text: #22293a;
+  --muted: #4a5768;
+  --accent: #1268a2;
+  --aviso: #a03500;   /* infantil:  5.93 con --surface, 5.49 con --bg */
+  --marca-1: #4338ca;  /* azul  7.90 con --surface: mas oscuro que el acento, que tambien es azul */
+  --marca-2: #15803d;  /* verde  5.02 con --surface */
+  --marca-3: #be185d;  /* rosa   6.04 con --surface */
+  --ayuda: #166534;
+  --acierto: #166534;   /* infantil:  7.13 con --surface, 6.60 con --bg */
+  --border: #f2dfae;
+  --borde-fuerte: #1f7abd;
+  --focus: #b45309;
+  --shadow: rgba(18, 104, 162, 0.14);
+  --sombra-fab: rgba(18, 104, 162, 0.42);
+
+  /* Lo que hace que se sienta de nino y no solo de color distinto */
+  --font-size-base: 20px;   /* era 18px: la letra grande es lo primero que se nota */
+  --line-height: 1.9;       /* mas aire entre lineas, se lee con mas calma */
+  --radius: 26px;           /* esquinas bien redondeadas, mas que antes */
+  --space-xs: 0.6rem;
+  --space-sm: 1rem;
+  --space-md: 1.8rem;
+  --space-lg: 2.6rem;
+  --space-xl: 3.4rem;
+  --grosor-icono: 2.6;      /* iconos mas gruesos, mas legibles */
+  --area-boton: 3.75rem;    /* 67 px: dedo grande, y muy por encima de los 44 */
+
+  /* --- las formas: de rectas a redondas y pegajosas --- */
+
+  /* Borde de 3 px. Con 1 px, sobre un fondo de color, una tarjeta parece un
+     papel pegado; con 3 px parece una ficha de plastico. */
+  --borde-tarjeta: 3px solid var(--border);
+
+  /* Sombra sin difuminado, corrida: la sombra dura de una calca o una
+     estampita. La de los otros temas se suaviza, y esa es justo la diferencia
+     entre algo serio y algo de juguete. Esta SÍ es solo del infantil: la
+     marca de agua es de los cinco, pero la sombra de calca no. */
+  --sombra-tarjeta: 5px 5px 0 var(--borde-fuerte);
+
+  /* Botones de pastilla. El 999px los deja en capsula, que es la forma que
+     primero reconoce un nino pequeno antes que un rectangulo. */
+  --radio-boton: 999px;
+
+  /* El icono se inclina un poco, como una pegatina puesta a mano. Eso ya es el
+     valor de :root, porque los cinco temas llevan la marca de agua. */
+
+  /* El icono de fondo, su tamano, la esquina y la inclinacion ya NO se
+     escriben aqui: son los de :root, porque los cinco themes llevan la marca
+     de agua. Lo unico propio de este tema es la opacidad.
+
+     Y esa opacidad no se eligio a ojo. Con el icono detras, donde el dibujo cae
+     debajo de una palabra ya no se ve el blanco de la tarjeta: se ve la
+     mezcla. A opacidad 0.20 el texto de apoyo queda en 5.49 pero el titulo
+     baja a 4.44, y ese es el que no puede pasar. A 0.14 el titulo queda en
+     4.86 y el texto de apoyo en 6.01, con los dos con sobra. */
+  --opacidad-icono: 0.14;
+  --tarjeta-hover-bg: #f8fbff;   /* infantil: toque de acento azul (3%) sobre blanco */
+
+  /* --- el fondo: puntos, y una banda de rayas bajo la cabecera --- */
+
+  /* Puntos cada 40 px. Van en el body, y como el body no pinta su fondo a
+     canvas cuando el html no tiene, se esparcen por toda la pagina. Solo se
+     ven en los huecos: la cabecera y las tarjetas llevan --surface encima. */
+  --deco-imagen: radial-gradient(circle, #f4dfa6 4px, transparent 4px);
+  --deco-tamano: 40px 40px;
+
+  /* La banda: rayas diagonales bajo la cabecera, como una guirnalda. Sin
+     esto el tema seria solo "colores mas claros", que es de donde viene la
+     sensacion de tema serio aunque las esquinas sean redondas. */
+  --alto-banda: 12px;
+  --banda: repeating-linear-gradient(
+    45deg,
+    #f0c46a 0 6px,
+    #f9dfa0 6px 12px
+  );
+}

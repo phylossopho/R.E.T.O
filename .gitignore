@@ -1,0 +1,18 @@
+# HTTPS certificates and machine-specific address output.
+/*.pem
+/direccion-del-sitio.txt
+
+# Python bytecode and caches.
+**/__pycache__/
+*.py[cod]
+
+# Local build marker, documentation, and personal reading material.
+/.compilacion
+*.md
+/look-back-*.txt
+
+# Test suites and local review utilities are not part of the deployed platform.
+/test_*.py
+/test_*.js
+/_*.py
+/_*.js

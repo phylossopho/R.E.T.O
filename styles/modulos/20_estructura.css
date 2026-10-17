@@ -1,0 +1,153 @@
+/* =============================================================================
+   R.E.T.O. — 20 ESTRUCTURA
+   -----------------------------------------------------------------------------
+   El esqueleto de todas las paginas: cabecera, cuerpo, pie, navegacion, listas
+   y la regla global de enlaces.
+
+   Va despues de 10 y antes de 30, de modo que cualquier componente puede
+   sobrescribir lo de aqui solo con aparecer despues. El orden de la hoja ya
+   no depende de en que momento se agrego cada cosa.
+   ========================================================================== */
+
+main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--max-ancho);
+  margin: 0 auto;
+  padding: var(--space-lg);
+}
+
+/* La cabecera es UNA SOLA FILA: el titulo a la izquierda y, a su derecha, el
+   significado del acronimo centrado en el espacio que le queda. Antes el
+   acronimo caia debajo del titulo y la portada gastaba dos lineas en algo que
+   cabe en una.
+
+   "nowrap" esta dicho a proposito aunque ya sea el valor inicial, porque lo que
+   importa es la INTENCION: el acronimo no debe bajar de fila cuando falta
+   espacio. Prefiere quebrarse por dentro antes que empujar el titulo.
+
+   En las otras 17 paginas esta regla no se nota: su unico hijo es el h1, que se
+   queda a la izquierda como siempre.
+
+   LA ALTURA SE RECORTO A 3/5, Y HAY DOS MOTIVOS, NO UNO
+   Medido con la letra de 18 px, la cabecera ocupaba 127 px y solo 61 eran el
+   titulo: los otros 66 eran relleno y un interlineado de 1.7 aplicado a un
+   texto de 36 px, que deja un titulo con el doble de aire del que necesita.
+
+   Por eso el recorte toca las dos cosas, y no solo el relleno:
+     - el relleno pasa de --space-lg (39.6 px) a --space-sm (14.4 px);
+     - y el interlineado del h1 baja a 1.3, porque un titulo de una linea no
+       necesita 1.7. Esa regla sola ahorra 14 px y ademas se ve mejor: un
+       encabezado grande y espaciado se lee como un bloque de aire, no como
+       una linea de texto grande.
+   Con las dos cosas: 127 px -> 77 px, que es 3/5 exacto.
+
+   Se usa --space-sm y no un numero fijo porque ese valor tambien lo agranda el
+   tema infantil, que esta pensado para los 6 a 9 anos: alli la cabecera baja
+   de 149 px a 93 px, o sea a la misma proporcion.
+
+   Y --space-sm no es de los que crecen con la pantalla en la escalera de
+   tamano, asi que en una pantalla 4K la cabecera NO se hincha, que era justo
+   lo que pasaba con --space-lg (que ahi vale 3 rem, o sea 63 px por lado).
+
+   "center" y no "baseline": antes se alineaban las lineas base del titulo y
+   del acronimo para que se leyeran como una sola linea. Con el relleno
+   reducido, el titulo es casi toda la altura y esa alineacion ya no hace falta:
+   centrar es lo que deja el texto quieto en medio, que es lo que se pedia. */
+header {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-lg);
+  border-bottom: 1px solid var(--border);
+  /* La guirnalda del tema infantil va como CAPA DE FONDO pegada abajo, y no
+     como un elemento mas. Un <div> o un ::after habria sido una tercera
+     columna del flex, y como el nowrap es a proposito para que titulo y
+     acronimo queden en una sola fila, se habria roto justo eso.
+
+     Con dos capas no hay elemento que estorbe: arriba la banda, abajo el
+     --surface de siempre. En los otros cinco temas --banda es "none" y
+     --alto-banda es 0, y la primera capa no dibuja nada: el encabezado se ve
+     exactamente igual que antes. */
+  background:
+    var(--banda) left bottom / auto var(--alto-banda) no-repeat,
+    var(--surface);
+  box-shadow: 0 2px 10px var(--shadow);
+}
+
+/* El titulo NO se estira. El espacio sobrante es para el acronimo, que es el
+   que tiene que quedar centrado: si el h1 se llevara el ancho disponible, el
+   .significado se quedaria pegado a el y no habria nada que centrar. */
+header h1 {
+  flex: 0 0 auto;
+  /* Solo el titulo de la cabecera. Un h2 de 1.5 rem con 1.7 de interlineado
+     esta bien, pero un h1 de 2 rem no: ver el comentario de arriba. */
+  line-height: 1.3;
+}
+
+/* El pie tambien baja a unos 3/5, y por un motivo parecido pero distinto: aqui
+   lo que mas pesaba no era el relleno sino que el <p> de dentro NUNCA tuvo una
+   regla de margen, y se quedaba con el margen por defecto del navegador (1em
+   arriba y abajo, 17 px). Ese margen nunca fue una decision de diseno: es que
+   nadie escribio la regla. Con el, el pie llegaba a 143 px para mostrar cuatro
+   letras.
+
+   Por eso "footer p" pone el margen en cero de forma explicita, en vez de
+   dejar que dependa de lo que haga el navegador. Asi el alto del pie es el que
+   dice esta regla y no otro, y el relleno queda en --space-md, un escalon por
+   encima del de la cabecera porque aqui no hay un titulo grande que ya ocupe
+   espacio: solo hay una linea chiquita que necesita un poco de aire.
+
+   El flex con align-items y justify-content centran esa linea en vertical y en
+   horizontal. Sin flex, "text-align" solo centraba de lado, y el texto se
+   quedaba pegado arriba. */
+footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md) var(--space-lg);
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.95rem;
+  border-top: 1px solid var(--border);
+}
+
+footer p {
+  margin: 0;
+}
+
+/* Nota: ya no hay reglas para nav. El enlace de subida de nivel era un
+   <nav> en la cabecera y ahora es el boton flotante .fab-volver, que vive en
+   30_componentes porque es un componente, no estructura de pagina. */
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+li {
+  margin-bottom: var(--space-sm);
+}
+
+/* Regla global de enlaces: sin subrayado, y aplica a todos los enlaces,
+   presentes y futuros, porque va en el propio elemento a y no en cada caso.
+   El subrayado por defecto del navegador se anula aqui, no en los selectores
+   de cada pagina, para que anadir un enlace nuevo no requiera acordarse. */
+a {
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* Foco de teclado. El indicador de foco no se puede quitar: es lo unico que
+   le dice a quien navega con Tab donde esta. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+label:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 6px;
+}

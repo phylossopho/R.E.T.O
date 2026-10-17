@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="papel">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mahjong - Mini juegos - R.E.T.O.</title>
+<link rel="preload" href="../../../styles/fuentes/nunito.css" as="style">
+<link rel="stylesheet" href="../../../styles/fuentes/nunito.css">
+<link rel="stylesheet" href="../../../styles/fuentes/lectura/lectura.css">
+<link rel="stylesheet" href="../../../styles/styles.css?v=c85-flexfix">
+<script src="../../../scripts/reto-panel-prefs.js?v=c01-0f3ddb54"></script>
+<script>
+// El tema y el interruptor de animaciones se aplican aqui, en el head, y no al
+// final del body: si se hiciera despues, el navegador pintaria primero el
+// estado por defecto y luego lo cambiaria, y se veria un destello en cada carga.
+(function () {
+  var t = localStorage.getItem('tema');
+  if (t) { document.documentElement.setAttribute('data-theme', t); }
+  var a = localStorage.getItem('animaciones');
+  if (a === 'off' || a === 'on') { document.documentElement.setAttribute('data-anim', a); }
+  try {
+    var forzar = /[?&]anim=1/.test(location.search);
+    if (sessionStorage.getItem('reto_anim_tarjetas') && !forzar) {
+      document.documentElement.setAttribute('data-anim-tarjetas', 'off');
+    } else {
+      sessionStorage.setItem('reto_anim_tarjetas', '1');
+    }
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="pantalla-juego">
+<!--
+  SIN CABECERA NI PIE, A PROPOSITO
+  Es la misma decision del memorama y de Secuencia: en una pantalla de juego,
+  el titulo arriba y el nombre del sitio abajo son franjas que empujan el
+  tablero y no dicen nada mientras se juega.
+
+  EL TITULO NO SE BORRA: SE ESCONDE. Un lector de pantalla lo lee al abrir.
+-->
+<h1 class="oculto-a-la-vista">Mahjong</h1>
+<main>
+<section class="mj">
+
+  <!--
+    EL TABLERO
+    Las fichas las pone reto-mahjong.js, no el HTML: cuantas hay, que llevan
+    escrito, de que color y en que piso depende del nivel y de los ajustes, y
+    escribirlas aqui seria escribirlas dos veces. El cuadrito del modal de
+    ajustes se arma con la misma funcion, asi que lo que se ve ahi es lo que se
+    ve jugando.
+
+    La caja que lo rodea se desplaza cuando las fichas son mas grandes que la
+    pantalla (tamanos fijos), y tiene tabindex para que quien use teclado
+    pueda moverla con las flechas aunque ninguna ficha tenga el foco.
+  -->
+  <div class="mj-caja" id="caja" role="region" aria-label="Tablero de Mahjong" tabindex="0">
+    <div class="mj-tablero" id="tablero" role="group"
+         aria-label="Fichas del juego"></div>
+  </div>
+
+  <!--
+    CUANTAS QUEDAN: SIEMPRE EN EL MISMO SITIO
+    Se puede esconder desde los ajustes, porque a otras personas les pone
+    nerviosas. Su altura esta reservada, asi el tablero no salta.
+  -->
+  <div class="mj-avance" id="avance-caja">
+    <p class="mj-restan" id="restan"></p>
+    <div class="mj-barra" aria-hidden="true">
+      <div class="mj-barra-relleno" id="barra"></div>
+    </div>
+  </div>
+
+  <p class="mj-mensaje" id="mensaje"></p>
+
+  <!--
+    UN BOTON PARA LO QUE TOCA CUANDO NO HAY JUGADAS
+    Esta escondido (hidden) hasta que ya no quedan parejas, y entonces ofrece
+    revolver. Al terminar la partida dice "Jugar otra vez".
+  -->
+  <button type="button" class="boton boton--principal mj-accion" id="accion"
+          data-que="revolver" hidden>Revolver las fichas</button>
+
+  <!--
+    PARA QUIEN NO VE
+    Escondido a la vista, pero SIN "hidden": con hidden el lector de pantalla
+    tampoco lo leeria. Se esconde con el recorte de una linea, que si lo lee.
+  -->
+  <p class="oculto-a-la-vista" id="lector" role="status" aria-live="polite"></p>
+
+</section>
+</main>
+
+<div class="panel-flotante" data-panel>
+  <a class="panel-boton" data-salir href="../mini-juegos.html"
+     aria-label="Volver a los minijuegos" title="Volver a los minijuegos">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8592;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></span>
+  </a>
+  <button type="button" class="panel-boton" data-configurar
+     aria-label="Configurar el juego" title="Configurar el juego">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#9881;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M2 14h4"/><path d="M10 8h4"/><path d="M18 16h4"/></svg></span>
+  </button>
+  <button type="button" class="panel-boton" data-pista
+     aria-label="Pedir una pista" title="Pedir una pista">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#128161;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2z"/></svg></span>
+  </button>
+  <button type="button" class="panel-boton" data-deshacer
+     aria-label="Deshacer la última pareja" title="Deshacer la última pareja">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8630;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></span>
+  </button>
+  <button type="button" class="panel-boton" data-reiniciar
+     aria-label="Empezar una partida nueva" title="Empezar de nuevo">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#128260;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></span>
+  </button>
+  <button type="button" class="panel-boton panel-boton--ayuda" data-ayuda
+     aria-label="Ayuda: cómo se juega" title="Cómo se juega">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">?</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span>
+  </button>
+</div>
+
+<script src="../../../scripts/reto-datos.js?v=c19-c6fe548d"></script>
+<script src="../../../scripts/reto-sonido.js?v=c02-b552a4e7"></script>
+<script src="../../../scripts/reto-fuentes.js?v=c01-86f25e1c"></script>
+<script src="../../../scripts/reto-dialogo.js?v=c08-ae075893"></script>
+<script src="../../../scripts/reto-panel.js?v=c04-f73a0fa9"></script>
+<script src="../../../scripts/reto-mahjong-reglas.js?v=c01-82174d6c"></script>
+<script src="../../../scripts/reto-mahjong.js?v=c01-c0c4d0a4"></script>
+<script src="../../../scripts/reto-debug.js?v=c25-5ac10ea0"></script>
+</body>
+</html>

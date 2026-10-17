@@ -1,0 +1,2195 @@
+/* =============================================================================
+   R.E.T.O. — 30 COMPONENTES
+   -----------------------------------------------------------------------------
+   Piezas que se pueden reutilizar. Cada bloque es independiente y se puede
+   quitar o cambiar sin tocar los demas.
+
+   Convencion para los botones redondos: relleno --accent con icono --bg. Como
+   --accent ya esta ajustado a cada tema, el boton se ve claro en los cuatro
+   sin escribir una regla por tema. Con --surface el boton era blanco sobre
+   crema y el contraste daba 1.00, o sea invisible.
+   ========================================================================== */
+
+/* --- Boton flotante ------------------------------------------------------
+   Reconstruido desde cero. Que se lea como un boton flotante depende de TRES
+   cosas a la vez, y si falta una el resultado es un circulo plano pegado a la
+   esquina:
+
+     1. que flote de verdad   -> position: fixed, no ser un hijo mas del flujo
+     2. que se vea separado  -> sombra de DOS capas (contacto + ambiente)
+     3. que sea reconocible  -> circulo solido, icono centrado, 3.5rem
+
+   La sombra es la parte que mas se olvida y la que mas se nota. Con una sola
+   capa suave el boton se aplana y deja de verse flotando; por eso van dos: una
+   pequeña y pegada que marca el contacto con la pagina, y otra amplia y difusa
+   que marca la altura sobre la que flota.
+
+   Un boton por regla, con su forma, su color y su esquina. Repartido en una
+   clase base mas modificadores habria que confiar en que dos reglas coincidan,
+   y con una sola regla es imposible que le falte una pieza.
+
+   Jerarquia visual: el de configuracion va RELLENO, es la accion principal. El
+   de volver va DISCRETO, con fondo de superficie y borde. Antes los dos eran
+   circulos iguales en las dos esquinas inferiores y no se distingulian hasta
+   pasar el mouse por encima.
+
+   Las dos esquinas son opuestas a proposito, para que nunca se solapen. */
+.boton-config {
+  position: fixed;
+  bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
+  right: calc(var(--space-md) + env(safe-area-inset-right, 0px));
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: var(--area-boton);
+  height: var(--area-boton);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--bg);
+  box-shadow:
+    0 2px 4px var(--sombra-fab),
+    0 8px 24px var(--sombra-fab);
+  text-decoration: none;
+  transition: transform 150ms ease, box-shadow 200ms ease;
+}
+
+.boton-config:hover {
+  transform: scale(1.06);
+  box-shadow:
+    0 3px 6px var(--sombra-fab),
+    0 10px 28px var(--sombra-fab);
+}
+
+.boton-config:active {
+  transform: scale(0.94);
+}
+
+/* Abajo a la izquierda. Mismo tamano que el de configuracion para que las dos
+   esquinas se lean como la misma familia, pero sin relleno: acompaña, no manda. */
+.boton-volver {
+  position: fixed;
+  bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
+  left: calc(var(--space-md) + env(safe-area-inset-left, 0px));
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: var(--area-boton);
+  height: var(--area-boton);
+  padding: 0;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow:
+    0 2px 4px var(--sombra-fab),
+    0 8px 24px var(--sombra-fab);
+  text-decoration: none;
+  transition: transform 150ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+
+/* El hover del discreto NO puede ser un filtro de brillo: oscureceria el
+   blanco de la superficie y pareceria un cambio de color raro. */
+.boton-volver:hover {
+  background: var(--bg);
+  border-color: var(--accent);
+  transform: translateX(-2px);
+  box-shadow:
+    0 3px 6px var(--sombra-fab),
+    0 10px 28px var(--sombra-fab);
+}
+
+.boton-volver:active {
+  transform: scale(0.94);
+}
+
+/* =========================================================================
+   EL PANEL FLOTANTE
+   -------------------------------------------------------------------------
+   Una barra de botones flotando en la parte de abajo, al estilo del dock de un
+   sistema: iconos en fila, al centro, que crecen un poco cuando el raton pasa
+   por encima. Se usa en las pantallas donde hay algo que hacer con el texto que
+   se esta leyendo, y va creciendo: hoy tiene dos botones, mañana tendra mas.
+
+   NO SE ESCONDE: SE TRANSPARENTA
+   Aqui esta la diferencia con un dock de escritorio, y es a proposito. En una
+   pagina web no hay barra de tareas: si esto desaparece, quien esta leyendo
+   pierde la salida y no sabe como volver. Entonces en vez de esconderse se
+   vuelve casi transparente (9%), y vuelve a verse solito en cuanto el raton se
+   acerca o se toca. Nunca desaparece del todo: siempre esta ahi.
+
+   Y ESTO NO OBE DECE AL INTERRUPTOR DE ANIMACIONES
+   El resto de animaciones del sitio si se apagan con el interruptor, pero esta
+   no, porque no es adorno: es el mecanismo que aparta el panel de en medio. Si
+   la regla viviera dentro de [data-anim="on"], con el interruptor apagado el
+   panel se quedaria siempre opaco y tapando el texto, que es justo lo contrario
+   de lo que se pidió.
+
+   Ojo con un detalle: la transicion de opacidad SI la anula el bloque de
+   prefers-reduced-motion cuando el sistema pide menos movimiento (ver
+   10_base.css). Y eso esta bien: el cambio de estado ocurre siempre —el panel
+   se pone transparente—, lo que puede desaparecer es el deslizamiento para
+   llegar a el. El comportamiento no se toca; solo la forma de llegar a el.
+
+   LA CENTRACION SIN TRANSFORM
+   Va centrada con "left: 0; right: 0; margin-inline: auto; width: fit-content" y
+   NO con "left: 50%; transform: translateX(-50%)". Razon: el transform esta
+   ocupado por las animaciones de escala de los botones, y centrar con
+   transform obliga a mezclar las dos cosas en un solo sitio, que es como se
+   rompen los hover al anadir el primer boton nuevo.
+
+   SOLO ICONOS, Y POR QUE NO BAJA DE 2.75 rem
+   Los botones llevan solo el dibujo, sin palabra. Se ve mas limpio y la barra
+   no crece de alto, pero obliga a dos cosas.
+
+   La primera: cada boton necesita su aria-label. Un enlace con un dibujo y sin
+   nombre no existe para quien navega con lector de pantalla, y eso no es un
+   detalle: es un boton que no se puede usar. El nombre va en el <a>, y el SVG
+   y el glifo de reserva van con aria-hidden para no duplicarlo.
+
+   La segunda: el alto NO baja de 2.75 rem, que son 49.5 px con la letra de 18.
+   Antes eran 3.5 rem (63 px), que era el alto de los botones de la esquina. Se
+   bajaron porque la barra quedaba muy alta, pero no mas: 2.75 rem sigue por
+   encima de los 44 px que se piden para el dedo, y por encima de los 24 px que
+   pide WCAG 2.5.8 en su minimo. En el tema infantil, donde la letra base es de
+   20 px, esto da 55 px sin tocar nada, porque el tamano va en rem y el tema
+   cambia el rem.
+
+   Con los textos fuera, el boton es un circulo, igual que los de las esquinas:
+   asi los tres se leen como la misma familia de controles y no como un boton
+   raro metido en una barra. */
+.panel-flotante {
+  position: fixed;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  /* SE PARTE EN DOS FILAS CUANDO NO CABE
+     Con cinco o seis botones la barra cabe de sobra. En el editor hay cinco
+     mas, y ahi son once: en una pantalla de 900 px caben en una fila (once de
+     49.5 mas los huecos rondan los 583 px), pero en un celular de 360 px no
+     caben ni de cerca.
+
+     "wrap" con "justify-content: center" deja que bajen a una segunda fila
+     centrados, en vez de cortarlos o dejar que la barra se salga de la
+     pantalla. Y "row-gap" es lo que separa las dos filas: sin el, los botones
+     de abajo quedan pegados a los de arriba y no se ve donde acaba una fila y
+     empieza la otra.
+
+     El "gap" de a los lados se queda en 3 px, que es lo que usan los separadores
+     y la pastilla; la separacion vertical es un poco mayor porque ahi no hay
+     separador que la marque. */
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 3px;
+  row-gap: var(--space-xs);
+  padding: 3px;
+  box-sizing: border-box;
+  /* El tamano del boton vive aqui, en una variable, y no escrito en .panel-boton
+     a proposito: asi cambiar de tamano es cambiar UN numero, y no hay que
+     repetirlo en el boton, en el icono y en el separador.
+
+     "mediano" es lo que ya se venia usando, para que el valor por defecto deje
+     las pantallas igual que antes de que existieran estos ajustes. */
+  --panel-boton: 2.75rem;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow:
+    0 2px 4px var(--sombra-fab),
+    0 8px 24px var(--sombra-fab);
+  /* "opacity" y no "background": opacidad baja TODO el panel de una vez, sin
+     tener que volver transparente cada color por separado. Y con opacity el
+     area de toque sigue siendo igual de grande, que es lo que importa. */
+  opacity: 1;
+  /* LA TRANSPARENCIA NO ES IGUAL EN LOS DOS SENTIDOS
+     Al dormirse tarda 1000 ms, al despertarse 180. Y no es capricho: son dos
+     tiempos distintos para dos cosas distintas.
+
+     Dormirse es un cambio de estado, y ahi el lento ayuda: el panel se va
+     poniendo tenue a la vista y quien estaba leyendo lo ve pasar, en vez de
+     aparecer de golpe. Es un solo cambio por cada rato quieto, asi que un
+     segundo de desvanecido no cansa a nadie.
+
+     Despertarse es lo contrario: uno mueve el raton o toca, y si el panel
+     tardara un segundo en aparecer, se sentiria lento y como que no responde.
+     Ahi va rapido, y por eso va en la regla de arriba y no en la de abajo. */
+  transition: opacity 180ms ease, top 200ms ease, bottom 200ms ease,
+              left 200ms ease, right 200ms ease;
+}
+
+/* -------------------------------------------------------------------------
+   DONDE VA EL PANEL
+
+   La posicion se elige en Configuracion y llega aqui como un atributo en el
+   <html>, que pone el script del head de las cuatro paginas que tienen panel
+   (scripts/reto-panel-prefs.js). Va en un atributo y no en un estilo en linea
+   porque tiene que estar antes de pintar: si se aplicara despues, el panel se
+   veria un instante en la posicion vieja y luego saltaria de esquina, que es
+   justo lo que se nota como fallo.
+
+   Abajo y arriba son barras horizontales pegadas al borde. Izquierda y derecha
+   son columnas pegadas al costado, y por eso cambian dos cosas: van centradas
+   con "top: 50%" y "transform", y el separador entre botones se voltea
+   (abajo del todo de este bloque).
+
+   El transform del panel y el de los botones NO se pisan: uno esta en el panel y
+   el otro en los hijos. Por eso el panel puede quedar centrado sin romper el
+   zoom de los botones. */
+html[data-panel-pos="abajo"] .panel-flotante {
+  bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
+  left: 0;
+  right: 0;
+  width: fit-content;
+  max-width: calc(100% - 2 * var(--space-md));
+  margin-inline: auto;
+  flex-direction: row;
+}
+
+html[data-panel-pos="arriba"] .panel-flotante {
+  top: calc(var(--space-md) + env(safe-area-inset-top, 0px));
+  left: 0;
+  right: 0;
+  width: fit-content;
+  max-width: calc(100% - 2 * var(--space-md));
+  margin-inline: auto;
+  flex-direction: row;
+}
+
+html[data-panel-pos="izquierda"] .panel-flotante,
+html[data-panel-pos="derecha"] .panel-flotante {
+  flex-direction: column;
+  top: 50%;
+  transform: translateY(-50%);
+  height: fit-content;
+  max-height: calc(100% - 2 * var(--space-md));
+}
+
+html[data-panel-pos="izquierda"] .panel-flotante {
+  left: calc(var(--space-md) + env(safe-area-inset-left, 0px));
+}
+
+html[data-panel-pos="derecha"] .panel-flotante {
+  right: calc(var(--space-md) + env(safe-area-inset-right, 0px));
+}
+
+/* LOS BOTONES DE ESCRITURA DEL EDITOR
+   Son como los demas del panel: circulo del mismo tamano, misma letra. No llevan
+   color propio porque ninguno de los cinco es peligroso ni especial: son
+   acciones de a diario, y si tuvieran un color propio la barra se veria como
+   si alguno fuera mas importante que los demas, y no lo es. */
+.panel-boton--texto {
+  color: var(--accent);
+}
+
+.panel-boton--texto[disabled] {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.panel-boton--texto[disabled]:hover {
+  background: transparent;
+  transform: none;
+}
+
+/* EL SEPARADOR SE VOLTEA EN LAS COLUMNAS
+   El separador de abajo esta puesto para una fila (una rayita vertical en el
+   hueco). En una columna tiene que ser una rayita horizontal, o queda
+   atravesada en medio de dos circulos. */
+html[data-panel-pos="izquierda"] .panel-boton + .panel-boton::before,
+html[data-panel-pos="derecha"] .panel-boton + .panel-boton::before {
+  top: -2px;
+  bottom: auto;
+  left: 22%;
+  right: 22%;
+  width: auto;
+  height: 1px;
+}
+
+/* -------------------------------------------------------------------------
+   QUE TAN GRANDE ES
+
+   El tamano va en una variable del panel, --panel-boton, y el boton la usa para
+   sus dos medidas. Asi el tamano se cambia en UN solo lugar y no hay que
+   repetirlo en el boton, en el icono y en el separador.
+
+   "pequeno" es 2.5 rem, o sea 45 px con la letra de 18. Es el mas chico que se
+   puede poner sin romper la regla de los 44 px para el dedo (WCAG 2.5.5, la de
+   nivel AAA, que es la que se esta respetando aqui). Con la letra de 20 del
+   tema infantil, 2.5 rem dan 50 px, asi que ahi el mas chico ya esta mas holgado.
+
+   Y "mediano" es lo que ya se estaba usando, para que el valor por defecto
+   deje las pantallas exactamente como estaban. */
+html[data-panel-tam="pequeno"] .panel-flotante { --panel-boton: 2.5rem; }
+html[data-panel-tam="mediano"] .panel-flotante { --panel-boton: 2.75rem; }
+html[data-panel-tam="grande"] .panel-flotante { --panel-boton: 3.25rem; }
+
+.panel-flotante[data-al-descanso="1"] {
+  opacity: var(--panel-op, 0.09);
+  /* El desvanecido largo va AQUI y no en la regla de arriba, porque esta es la
+     que aplica cuando el panel esta dormido. CSS usa la transicion del estado
+     al que va, no del que viene: por eso, cuando se quita el atributo para
+     despertarse, manda otra vez la rapida de arriba. */
+  transition: opacity 1000ms ease, top 200ms ease, bottom 200ms ease,
+              left 200ms ease, right 200ms ease;
+}
+
+/* Estas dos van DESPUES de la de arriba a proposito, y no por casualidad.
+   Las dos tienen la misma especificidad (una clase y un pseudo-clase), asi que
+   gana la que se escribe despues. Si alguien las mueve de sitio, el panel se
+   queda transparente aunque el raton este encima, y parece roto. */
+.panel-flotante:hover,
+.panel-flotante:focus-within {
+  opacity: 1;
+}
+
+/* Lo mismo, pero desde el lado de quien no usa raton: con el dedo no hay hover,
+   asi que la unica forma de despertarlo es tocarlo. "focus-within" cubre al
+   que navega con Tab. */
+.panel-flotante[data-al-descanso="1"]:hover,
+.panel-flotante[data-al-descanso="1"]:focus-within {
+  opacity: 1;
+}
+
+/* Un boton del panel. Sin texto: solo el dibujo, como los de las esquinas.
+   Es un circulo del mismo tamano para todos, para que la barra tenga siempre la
+   misma altura por mas botones que se le agreguen. */
+.panel-boton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: var(--panel-boton, 2.75rem);
+  height: var(--panel-boton, 2.75rem);
+  padding: 0;
+  box-sizing: border-box;
+  border-radius: 50%;
+  color: var(--accent);
+  text-decoration: none;
+  /* ESTOS DOS SON UN ARREGLO DE UN BUG, NO UN ADORNO
+     El boton de eliminar es un <button> y los otros dos son <a>. El navegador
+     les pone COSAS DISTINTAS por defecto: a un <a> no le pone nada, pero a un
+     <button> si: un fondo gris (el "buttonface" del navegador) y una letra que
+     no es la del sitio.
+
+     Como .panel-boton no decia nada de fondo, el boton de eliminar se veia con un
+     rectangulo gris atras, quieto, sin hover y sin que se supiera por que. Los
+     tres botones parecian iguales en el codigo y solo uno se veia distinto en
+     pantalla: exactamente el sintoma que hace pensar que el problema es de
+     diseno cuando en realidad es que falta una linea.
+     "background: transparent" se lo quita, y "font: inherit" hace que use la
+     letra del sitio. Los dos botones de enlace no lo necesitan, pero se
+     escriben aqui para que las tres bases sean la misma y el proximo boton que
+     se agregue salga bien sin acordarse de esto. */
+  background: transparent;
+  font: inherit;
+  /* Sin borde propio: el borde es el del panel. Un borde aqui duplicaria la
+     linea y el boton se veria como una caja dentro de otra caja. */
+  border: 1px solid transparent;
+  /* "relative" desde el principio, y no solo al pasar el raton, porque el
+     separador de al lado es un pseudoelemento que se posiciona respecto a este
+     boton. Si la posicion se añadiera en el hover, la rayita saltaria de sitio
+     en cuanto se pasara el raton. */
+  position: relative;
+  transition: transform 150ms ease,
+              background-color 200ms ease, color 200ms ease;
+}
+
+/* EL ZOOM, Y POR QUE LOS VECINOS SE ABREN
+   Al pasar el raton el boton crece un 25% y los de los lados se mueven para
+   hacerle sitio. Ese gesto es el del dock de escritorio, y no es adorno: en una
+   fila de circulos iguales, el que esta bajo el cursor tiene que distinguirse
+   del resto, y crecer es la forma mas inmediata de decirlo sin mover el raton.
+
+   POR QUE "margin" Y NO SOLO "scale"
+   Un transform NO ocupa sitio: el boton crecia de verdad pero se pondria
+   encima de sus vecinos y se verian solapados. Para que los de al lado se abran
+   hay que cambiar algo que de verdad ocupa espacio, y lo mas barato es el
+   margen: se anima igual de bien que el transform y solo recalcula esta barrita,
+   que mide 180 px. La pagina entera no se recalcula, asi que no se nota tiron.
+
+   LA COMBINACION QUE SI FUNCIONA
+   Se probo primero haciendo crecer el BOTON (transform: scale) y abriendo el
+   hueco con margen. Las dos cosas juntas dan dos defectos que se ven a la vez:
+
+     - el margen de arriba y de abajo hace que la PASTILLA crezca 20 px cada vez
+       que el raton entra, y por eso temblaba al pasar de un boton a otro. No es
+       una animacion rara, es un cambio de tamano de la caja, y eso se nota
+       siempre, tenga animaciones o no;
+     - y el circulo del boton, que con el 40% mide 69 px, se salia de la
+       pastilla de 55 px por arriba y por debajo.
+
+   Asi que la caja del boton NO cambia de tamano nunca. Lo que crece es el ICONO,
+   que va dentro y tiene espacio de sobra: mide 24.3 px dentro de un circulo de
+   49.5, y al 1.6 queda en 38.9, todavia con 5 px de aire a cada lado. El
+   circulo no se mueve, el fondo del hover no se sale, y la pastilla no tiembla
+   porque no hay nada que cambiar de tamano.
+
+   Y con eso el zoom es mas notorio que el que habia, no menos: al 1.6 el icono
+   casi llena su circulo, que es justo la sensacion de "este es el boton que
+   tengo debajo".
+
+   LOS VECINOS SE ABREN, SIN OCUPAR SITIO
+   Se mueven con transform: translateX, no con margen. Un margen ocupa sitio de
+   verdad y por eso hacia crecer la pastilla; un transform mueve el dibujo sin
+   tocar la caja, asi que la barra no cambia de tamano NI UN PIXEL. El efecto es
+   el mismo, y el temblor desaparece.
+
+   El vecino de la derecha se mueve sin ninguna ayuda: es el siguiente hermano
+   (".panel-boton:hover + .panel-boton"). El de la izquierda necesita :has(), y
+   :has() todavia no esta en todos los navegadores del piso, asi que va dentro
+   de un @supports. Donde no se soport, la pastilla sigue funcionando igual y
+   solo se mueve el vecino de la derecha: es un efecto de mas, no un
+   requisito. Ver el mismo patron en las tarjetas de la portada. */
+.panel-boton:hover {
+  background: var(--bg);
+  color: var(--accent);
+  position: relative;
+  z-index: 1;
+}
+
+/* El zoom va aqui, en el icono, y no en el boton. Ver arriba el por que. */
+.panel-boton-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  /* Proporcion del boton, no un tamano fijo: asi el dibujo crece con el tamano
+     que elija la persona en Configuracion, sin tener que escribir una regla
+     para cada tamano. */
+  width: calc(var(--panel-boton, 2.75rem) * 0.49);
+  height: calc(var(--panel-boton, 2.75rem) * 0.49);
+  transition: transform 150ms ease;
+}
+
+.panel-boton:hover .panel-boton-icono,
+.panel-boton:focus-visible .panel-boton-icono {
+  transform: scale(1.6);
+}
+
+.panel-boton:active {
+  transform: scale(0.94);
+}
+
+/* El vecino de la derecha se aparta 10 px. Sin margen: con transform, para que
+   la pastilla no cambie de tamano. */
+.panel-boton:hover + .panel-boton {
+  transform: translateX(10px);
+}
+
+@supports selector(:has(*)) {
+  .panel-boton:has(+ .panel-boton:hover) {
+    transform: translateX(-10px);
+  }
+}
+
+/* EL ICONO DE ELIMINAR: EL UNICO QUE SE PINTA DE AVISO
+   El fondo es el de los otros dos, y no cambia hasta que el raton pasa encima.
+   Solo el ICONO lleva el color de aviso, y solo el icono: al pasar el raton se
+   enciende el fondo con ese mismo color, que es el gesto de "esto borra".
+
+   El color sale de --aviso, que esta medido en los cinco temas. Y el hover
+   invierte los dos: fondo de aviso, icono del color del fondo. Ese caso es el
+   que hay que mirar con mas atencion, porque es el estado en el que la persona
+   esta decidiendo, y es el que se olvida medir. */
+.panel-boton--aviso {
+  color: var(--aviso);
+}
+
+.panel-boton--aviso:hover {
+  background: var(--aviso);
+  color: var(--bg);
+}
+
+/* EL BOTON DE AYUDA: VERDE
+   Es el unico del panel que NO ejecuta nada: solo explica. Por eso lleva su
+   propio color en vez del --accent del resto. Con el color de los demas se
+   perderia entre ellos, y entonces el "?" no diria "esto es otro tipo de
+   boton", que es justo lo que tiene que decir.
+
+   El verde ademas no se confunde con el naranja de aviso ni con el rojo de
+   eliminar, asi que los tres se distinguen de un vistazo y sin depender de la
+   forma del dibujo.
+
+   Solo el icono lleva el color; el fondo sigue siendo el de los demas y se
+   enciende con este mismo verde al pasar el raton, igual que hace el de
+   eliminar. */
+.panel-boton--ayuda {
+  color: var(--ayuda);
+}
+
+.panel-boton--ayuda:hover {
+  background: var(--ayuda);
+  color: var(--bg);
+}
+
+/* Y CUANDO LAS ANIMACIONES ESTAN APAGADAS
+   Sin transicion, el hover no deslaza nada: el fondo se enciende de golpe y ya.
+   El color se conserva, porque no es movimiento. Ver el mismo razonamiento en
+   50_animaciones, donde esta el resto de los hovers apagados. */
+[data-anim="off"] .panel-boton--aviso:hover,
+[data-anim="off"] .panel-boton--ayuda:hover,
+html:not([data-anim="on"]) .panel-boton--aviso:hover,
+html:not([data-anim="on"]) .panel-boton--ayuda:hover {
+  color: var(--bg);
+}
+
+/* LOS SEPARADORES
+   Una rayita muy tenue entre boton y boton. Con dos botones no haria falta nada,
+   pero la barra va a crecer, y sin una linea divisoria los circulos juntos se
+   leen como un solo borron.
+
+   A 0.25 de opacidad sobre --borde-fuerte, que es el color ya medido en los cinco
+   temas. Deliberadamente muy tenues: la rayita dice "estos son botones
+   distintos", no "esto es importante". Si se ve mas que el icono, al reves esta.
+
+   Van con un pseudoelemento y no con un borde porque el boton es un circulo, y un
+   borde lateral en un circulo queda descentrado y se nota. El pseudoelemento se
+   dibuja en el hueco, que es donde la rayita tiene sentido. */
+.panel-boton + .panel-boton::before {
+  content: "";
+  position: absolute;
+  top: 22%;
+  bottom: 22%;
+  left: -4.5px;
+  width: 1px;
+  background: var(--borde-fuerte);
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+/* El dibujo se pasa un poco de su caja para que el trazo se vea igual de grueso
+   que el de los botones de la esquina, sin tocar el tamano de la caja del icono
+   (que tambien es el del glifo de reserva). */
+.panel-boton-icono svg {
+  width: 115%;
+  height: 115%;
+}
+
+/* =========================================================================
+   LA BIBLIOTECA CON HERRAMIENTAS: el punto de color, la seleccion y la busqueda
+   -------------------------------------------------------------------------
+   A partir de aqui van las piezas de la lista de documentos, que ya no es solo
+   una rejilla de tarjetas: ahora se pueden marcar de color, elegir varias y
+   buscar. Todas se apoyan en el mismo esqueleto, para que agregar una cosa mas
+   no sea escribirla desde cero.
+
+   EL PUNTO DE COLOR DE LA MARCA
+   Es un circulito en la esquina de arriba a la tarjeta, no un fondo de color
+   entero. El fondo se probo y se descarta por una razon que se nota al instante:
+   con veinte documentos marcados, veinte tarjetas de colores distintos, y lo
+   que deja de leerse es el TEXTO. El texto es lo que importa; el color es solo
+   una nota al margen.
+
+   Ademas, un fondo de color obliga a los cinco temas a garantizar contraste en
+   texto sobre color de fondo, y el punto no: si no se distingue, se agranda.
+   Con el punto, el unico requisito es que se vea contra la tarjeta, y eso ya
+   esta medido (los numeros estan junto a --marca-1, --marca-2 y --marca-3).
+
+   Y lleva su nombre en el title, por lo de los tres colores y el daltonismo que
+   esta escrito en 00_tokens: la persona aprende "el rosa" y no un tono. */
+.tarjeta {
+  position: relative;   /* el punto se coloca respecto a la tarjeta */
+}
+
+.tarjeta-marca {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  /* El borde es del color de la tarjeta, para que el punto se recorte sobre un
+     fondo de color y se lea como una ficha pegada encima, no como un borron. */
+  border: 1px solid var(--surface);
+  pointer-events: none;
+}
+
+.tarjeta-marca[data-marca="1"] { background: var(--marca-1); }
+.tarjeta-marca[data-marca="2"] { background: var(--marca-2); }
+.tarjeta-marca[data-marca="3"] { background: var(--marca-3); }
+
+/* LOS BOTONES QUE DEPENDEN DE QUE HAYA ALGO ELEGIDO
+   "Marcar" y "Eliminar" solo hacen algo si hay documentos elegidos, pero NO se
+   apagan: se ven y se animan igual que los demas, siempre.
+
+   Se probo apagarlos (menos opacidad, y sin encenderse al pasar el raton
+   mientras no hubiera nada elegido) y se descarta por dos razones:
+
+     - Un boton que se ve apagado en una barra y encendido en otra, siendo el
+       MISMO boton con el MISMO dibujo, hace que quien la use dude de si esta
+       viendo bien la pagina. Y el caso era real: el de eliminar esta en Revision
+       siempre encendido, y en la biblioteca apagado hasta que se elegia algo.
+
+     - Apagado no quiere decir "no lo toques", y ahi no hay ningun aviso de por
+       que no hace nada. Solo esta mas claro.
+
+   Y no hace falta que avise de otra manera: los dos abren el dialogo con un
+   "Elige primero algo.", que explica en una linea lo que pasa. Eso es mejor que
+   un boton muerto, porque el boton responde y explica en vez de hacerse el
+   muerto. */
+.panel-flotante[data-seleccion="0"] [data-marcar-lista],
+.panel-flotante[data-seleccion="0"] [data-borrar-lista] {
+  /* Regla a proposito y vacia. Se deja para que quede escrito que aqui no se
+     apaga nada, y para que el atributo data-seleccion siga teniendo un sitio
+     donde curiosear. Borrarla entera seria mas limpio. */
+}
+
+/* MODO SELECCIONAR
+   Cuando esta activo, las tarjetas ya no se abren: se marcan. Por eso el
+   cursor cambia y el borde se hace visible, para que se entienda que lo que se
+   toca ahora es una casilla y no un enlace. */
+.tarjeta--eligible { cursor: pointer; }
+.lista--seleccion .tarjeta--eligible {
+  border-color: var(--accent);
+}
+.lista--seleccion .tarjeta--elegida {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* LA CASILLA DE SELECCION
+   Sale en la esquina de la tarjeta SOLO en modo seleccionar, y no replaces la
+   marca de color: son dos cosas distintas (una es para agrupar ahora, la otra
+   es para clasificar siempre) y una se pisa a la otra. Por eso la casilla va
+   abajo a la izquierda, donde no hay nada. */
+.tarjeta-elegida {
+  position: absolute;
+  bottom: 7px;
+  left: 7px;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  border: 2px solid var(--borde-fuerte);
+  background: var(--surface);
+}
+
+.tarjeta--elegida .tarjeta-elegida {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.tarjeta-elegida::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: solid var(--bg);
+  border-width: 0 2px 2px 0;
+  transform: rotate(42deg);
+}
+
+/* =========================================================================
+   EL CAMPO DE BUSQUEDA
+   -------------------------------------------------------------------------
+   Un boton flotante en la esquina superior derecha, debajo del header, que al
+   apretarlo despliega el campo hacia la IZQUIERDA. No se abre encima de las
+   tarjetas ni empuja la lista: la lista no se mueve, que es lo importante,
+   porque si se moviera habria que volver a buscarla.
+
+   Se hace con un contenedor que crece de ancho, y no con el campo apareciendo y
+   desapareciendo. Un campo que aparece de golpe obliga a perseguirlo con el
+   raton; uno que se despliega se alcanza desde donde ya estaba el cursor.
+
+   A diferencia de la transparencia del panel, ESTA animacion SI depende del
+   interruptor: es decoracion, no informacion, y con las animaciones apagadas se
+   abre de golpe. Se desactiva en 50_animaciones. */
+.buscador {
+  position: fixed;
+  top: calc(var(--space-lg) + var(--space-md));
+  right: calc(var(--space-md) + env(safe-area-inset-right, 0px));
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.buscador-campo {
+  width: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  /* Sin esto el campo se ve al instante al abrir y el texto de dentro "salta".
+     Con opacity 0 y transicion, el campo ya esta ahi y solo se esta mostrando. */
+  opacity: 0;
+  transition: width 200ms ease, opacity 150ms ease, padding 200ms ease;
+  box-sizing: border-box;
+}
+
+.buscador[data-abierto="1"] .buscador-campo {
+  width: 15rem;
+  max-width: calc(100vw - 2 * (var(--space-md) + var(--area-boton) + 2 * var(--space-sm)));
+  padding: var(--space-xs) var(--space-sm);
+  border-color: var(--borde-fuerte);
+  background: var(--surface);
+  opacity: 1;
+}
+
+.buscador[data-abierto="1"] .buscador-campo:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* El boton de la lupa, al final del renglon (a la derecha del campo), como el
+   de las esquinas: circulo del mismo tamano para que se lea como la misma
+   familia. Va DENTRO del contenedor y no suelto, porque si fuera suelto con
+   position: fixed se pondria encima del campo, que tambien esta arreglado a la
+   misma esquina. */
+.buscador-boton {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: var(--area-boton);
+  height: var(--area-boton);
+  padding: 0;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow:
+    0 2px 4px var(--sombra-fab),
+    0 8px 24px var(--sombra-fab);
+  cursor: pointer;
+  transition: transform 150ms ease, background 200ms ease, border-color 200ms ease;
+}
+
+.buscador-boton:hover {
+  background: var(--bg);
+  border-color: var(--accent);
+  transform: scale(1.06);
+}
+
+.buscador-boton svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.tarjeta--elegida .tarjeta-elegida::after {
+  display: block;
+}
+
+/* La palanca de los tres colores dentro del dialogo de marcar. Cada una lleva
+   su punto Y su nombre: el nombre es lo que hace que la persona aprenda "el
+   rosa" y no un tono, que es como se resuelve lo del daltonismo que esta
+   escrito en 00_tokens. */
+.marca-opciones {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.marca-opcion {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: var(--area-boton);
+  padding: 0 var(--space-md);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-boton);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.marca-opcion:hover {
+  border-color: var(--accent);
+  transform: scale(1.04);
+}
+
+.marca-punto {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  border: 1px solid var(--surface);
+  flex: 0 0 auto;
+}
+
+.marca-punto[data-marca="1"] { background: var(--marca-1); }
+.marca-punto[data-marca="2"] { background: var(--marca-2); }
+.marca-punto[data-marca="3"] { background: var(--marca-3); }
+
+/* El "quitar la marca" va aparte y mas apagado, porque es la opcion de dejar
+   las cosas como estaban, no una de las tres categorias. */
+.marca-opcion--quitar {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/* =========================================================================
+   LOS AJUSTES DE LOS PANELES
+   -------------------------------------------------------------------------
+   Los tres grupos de opciones: donde va el panel, que tan grande, y que tan
+   transparente. Los botones van con "radio" de verdad, como el tema, y con
+   texto al lado, porque "arriba" y "abajo" son palabras y un dibujo de cuatro
+   rayitas no los distingue a quien no los tiene delante.
+
+   Los campos de rangos (transparencia y espera) SI llevan su numero al lado,
+   porque en un rango no se ve en que parte esta la perilla sin una cifra. Y la
+   cifra va en un <output>, que es el elemento que existe para eso. */
+.opciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-lg);
+  padding: 0;
+  list-style: none;
+}
+
+.opcion {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-height: var(--area-boton);
+  padding: var(--space-xs) var(--space-md);
+  box-sizing: border-box;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-boton);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.opcion:hover {
+  border-color: var(--accent);
+  background: var(--bg);
+}
+
+.opcion input {
+  /* El radio de verdad se esconde, pero NO con display:none: si se esconde asi
+     no se puede tabular hasta el, y quien navega con teclado no podria cambiar
+     nada de esta pagina. */
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+}
+
+.opcion:has(input:checked) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+}
+
+.opcion:has(input:focus-visible) {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* EL CAMPO DE RANGO
+   Se ve como una pista con una perilla. El "-webkit-slider-thumb" y el
+   "-moz-range-thumb" van juntos porque Chrome y Firefox los pintan distinto, y
+   si falta alguno la perilla sale chueca o invisible. */
+.rango {
+  display: block;
+  width: 100%;
+  max-width: 22rem;
+  height: var(--area-boton);
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+.rango-lectura {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: calc(-1 * var(--space-sm)) 0 var(--space-lg);
+}
+
+.rango-valor {
+  min-width: 8rem;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.rango:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* La ayuda de los paneles va en un bloque propio, y no pegada al primer ajuste:
+   los tres ajustes se leen de corrido, y una explicacion larga en medio los
+   parte en tres lecturas. */
+.ayuda-paneles {
+  margin: 0 0 var(--space-lg);
+}
+
+/* =========================================================================
+   LO OCULTO A LA VISTA PERO NO AL LECTOR DE PANTALLA
+   -------------------------------------------------------------------------
+   Para cuando algo tiene que estar en la pagina porque el lector de pantalla lo
+   necesita (un titulo, un texto de contexto), pero no debe verse ni ocupa sitio.
+
+   El truco es NO usar "hidden", por dos razones que ya han costado un rato:
+   con "hidden" el lector de pantalla tampoco lo lee, que es justo lo contrario de
+   lo que se quiere; y la regla global de 10_base "gana" a cualquier display que
+   la clase ponga, asi que un "display: flex" de otra parte lo volveria a
+   mostrar. Por eso se recorta a una linea y se esconde con "clip", que los
+   lectores de pantalla respetan y la vista no ve.
+
+   Se usa en el titulo de las pantallas de juego, que no llevan cabecera pero no
+   por eso pueden quedarse sin nombre. */
+.oculto-a-la-vista {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* =========================================================================
+   EL DIALOGO (el modal de aviso y de confirmacion)
+   -------------------------------------------------------------------------
+   Se usa para preguntar algo antes de hacerlo: "¿de verdad quieres eliminarlo?".
+   Es un <dialog> de verdad, no un div con position: fixed, y esa eleccion
+   ahorra unas 60 lineas de JavaScript y evita tres errores que son los
+   clasicos de un modal hecho a mano:
+
+     - que el fondo siga siendo pulsable con el mouse (con <dialog> el fondo
+       queda inerte, no se puede hacer clic en el);
+     - que se pueda tabular hasta el contenido de atras (con <dialog> el teclado
+       se queda dentro del dialogo, solo);
+     - que Escape no cierre (con <dialog> lo cierra siempre, y es lo que se
+       quiere en un aviso de este tipo).
+
+   showModal() pone el foco dentro y, al cerrar, lo devuelve a donde estaba. Todo
+   eso viene hecho y bien hecho en el navegador.
+
+   EL ICONO DE FONDO, Y POR QUE NECESITA UN ENVOLTORIO
+   El aviso lleva un triangulo grande detras del texto, con la misma tecnica que
+   las tarjetas: posicionado, con --opacidad-icono y girado. Es la misma marca de
+   agua del resto del sitio.
+
+   PERO NO VA DIRECTO EN EL DIALOGO, Y ESO ES LO QUE ARRASTRABA LA BARRA DE
+   SCROLL. Un elemento con "position: absolute" se coloca respecto al ANTEPASADO
+   POSICIONADO mas cercano, y el dialogo no lo es: el navegador lo pone en la
+   "capa superior" con su propia posicion, pero esa posicion la define el
+   navegador, no el CSS de la pagina. Sin antepasado posicionado, el icono se
+   colocaba respecto a la pagina entera, y con "right: -1.4rem" se salia por la
+   derecha: de ahi la barrita horizontal que aparecia de debajo.
+
+   Y la solucion NO puede ser ponerle "position: relative" al dialogo, que es lo
+   obvio. El navegador posiciona el modal con "position: fixed" en su propia hoja
+   de estilos, y las reglas de la pagina SIEMPRE le ganan a las del navegador, por
+   mas especificidad que tengan. Cambiarlo a "relative" le quitaria el
+   centrado y el modal se pegaria a una esquina. Es un arreglo que parece
+   facil y rompe el modal entero.
+
+   Lo que si funciona es darle al icono un antepasado posicionado PROPIO, que es
+   este envoltorio: va en el flujo normal, con "height: 0" para no ocupar nada,
+   y el icono se coloca respecto a el. Asi el icono vive dentro del dialogo, y
+   como el dialogo tiene de relleno 2.2 rem a cada lado, el icono queda con
+   espacio de sobra hacia dentro y no hay nada que pueda salirse.
+
+   Por eso el icono mide 8 rem y no --tamano-icono (que es de las tarjetas, 10
+   rem): tiene que caber dentro de un dialogo, que es mas bajo que una tarjeta,
+   y todavia con --opacidad-icono al 0.14 no se ve tan fuerte. */
+.dialogo-fondo {
+  position: relative;
+  height: 0;
+  pointer-events: none;
+}
+
+.dialogo-icono {
+  position: absolute;
+  top: -1.4rem;
+  right: -1.4rem;
+  width: 8rem;
+  height: 8rem;
+  color: var(--accent);
+  opacity: var(--opacidad-icono);
+  transform: rotate(var(--giro-icono));
+  pointer-events: none;
+}
+.dialogo {
+  padding: var(--space-lg);
+  max-width: 30rem;
+  width: calc(100% - 2 * var(--space-lg));
+  box-sizing: border-box;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 10px 30px var(--shadow);
+}
+
+/* El fondo se oscurece, no se vuelve blanco: la pagina se ve debajo, pero
+   apagada, para que quede claro que el dialogo es lo de encima. */
+.dialogo::backdrop {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.dialogo-icono svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.dialogo-titulo {
+  position: relative;
+  margin: 0 0 var(--space-sm);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.dialogo-texto {
+  position: relative;
+  margin: 0 0 var(--space-lg);
+  color: var(--text);
+  /* "pre-line" para que los saltos de linea del texto se vean. Sin esto, el
+     navegador los junta en un solo renglon largo y una ayuda escrita en varias
+     lineas se vuelve un muro de texto que no se puede leer. Y no se usa
+     "pre-wrap" a proposito: "pre" dejaria el texto pegado al borde derecho en
+     un celular, y "pre-wrap" parte palabras a media palabra. "pre-line" solo
+     respeta los saltos que escribio quien redacto la ayuda. */
+  white-space: pre-line;
+}
+
+/* EL BOTON FLOTANTE DE CANCELAR DEL MODAL
+   Va en la esquina inferior derecha, con la MISMA forma y el MISMO color de
+   aviso que el boton de eliminar, para que se lean como la misma familia de
+   controles: circulo, borde marcado, sombra de flotante, y al pasar el raton se
+   enciende el fondo con el color.
+
+   Y lleva [hidden] en vez de "display: none" porque la regla global de
+   10_base.css lo pone a "display: none !important". Sin eso, el "hidden" del
+   boton no serviria de nada, porque esta misma regla le pone "display: flex". */
+.dialogo-cancelar {
+  /* NO tiene posicion fija. La coloca el script, pegada a la esquina del
+     DIALOGO y un poco salida, con un margen de 12 px. Fijarla a la esquina de
+     la pantalla no servia: en una pantalla grande el boton queda lejisimos del
+     modal y ya no se ve que pertenece a el. Y no se puede poner
+     "position: absolute" porque el dialogo no es el ancestro posicionado (ver
+     el comentario de mas arriba del bloque), asi que se mediria contra la
+     pagina entera. Por eso la mide el script con getBoundingClientRect y pone
+     estos dos numeros. */
+  position: fixed;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: var(--area-boton);
+  height: var(--area-boton);
+  padding: 0;
+  border: 1px solid var(--aviso);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--aviso);
+  box-shadow:
+    0 2px 4px var(--sombra-fab),
+    0 8px 24px var(--sombra-fab);
+  cursor: pointer;
+  transition: transform 150ms ease, background 200ms ease, color 200ms ease;
+}
+
+.dialogo-cancelar:hover {
+  background: var(--aviso);
+  color: var(--bg);
+  transform: scale(1.06);
+}
+
+.dialogo-cancelar:active {
+  transform: scale(0.94);
+}
+
+.dialogo-cancelar:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.dialogo-cancelar svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+/* La NOTA del dialogo: letra chica y color tranquilo, para lo que se debe saber
+   pero no es lo principal. Va en 0.9 rem y no mas pequeno, porque por debajo de
+   eso quien tiene la vista corta tiene que forzar la vista para leerla, que es
+   justo lo contrario de lo que se quiere. */
+.dialogo-nota {
+  position: relative;
+  margin: calc(-1 * var(--space-md)) 0 var(--space-lg);
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* La lista del dialogo, para los avisos donde se elige UNO de varios: el
+   indice de un libro, por ejemplo, que puede tener quince capitulos.
+
+   Va con un alto maximo y con scroll, porque un indice de quince renglones en un
+   modal sin limite se sale de la pantalla en un celular y ya no se ve ni el
+   titulo ni el boton de cerrar. El limite esta en rem, no en pixeles, para que
+   en el tema infantil (letra base de 20 px) el alto crezca con la letra y nunca
+   quede mas corto que el contenido. */
+.dialogo-lista {
+  position: relative;
+  max-height: 16rem;
+  overflow-y: auto;
+  margin: 0 0 var(--space-md);
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  /* El fondo se aparta un poco del del dialogo, para que la lista se lea como
+     una lista y no como mas texto seguido. */
+  background: var(--bg);
+}
+
+.dialogo-item {
+  display: block;
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dialogo-item:hover {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.dialogo-item:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+}
+
+/* El renglon de en medio, para que se lean como apartados y no como una pared
+   de renglones iguales. Es el mismo separador del panel de control. */
+.dialogo-item + .dialogo-item {
+  border-top: 1px solid var(--borde-fuerte);
+  border-top-color: var(--border);
+}
+
+/* Los dos botones abajo, CENTRADOS y mas separados.
+   Antes estaban pegados al borde derecho, con el hueco minimo. Centrados se leen
+   como los dos caminos que hay, y no como "el de la derecha es el de verdad".
+   El hueco sube a --space-md para que ningun dedo los confunda: en un modal
+   todos los botones estan en la misma zona, y dos botones pegados a 7 px son
+   todavia un blanco pequeno para un dedo.
+
+   El orden NO cambia: "No, mejor no" a la izquierda y "Si, eliminar" a la
+   derecha. El dedo va de derecha a izquierda y se detiene primero en el de la
+   derecha, asi que ahi va el que NO hay que tocar. Y el foco arranca en "No"
+   (lo pone el script), por si se contesta solo con el teclado. */
+.dialogo-acciones {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-md);
+}
+
+/* El boton de BORRAR es igual que los otros dos: misma forma, mismo color, sin
+   nada que lo delate. Y no es un descuido: es lo contrario de lo que se probo.
+
+   Se probo primero con un circulo rojo, y el resultado fue el malo: un boton
+   rojo al lado de dos grises no dice "cuidado", dice "presiona aqui". El color
+   llama la atencion, el ojo se va derecha a el y el toque llega solo. Ademas el
+   rojo es el peor sitio para avisar: quien no distingue bien el rojo del verde
+   (daltonismo, el tipo mas comun) no ve la diferencia, y quien si lo distingue
+   todavia lo presiona.
+
+   La advertencia va en el MODAL, que es donde la persona ya decidio que va a
+   hacer algo. Ahi si es el momento de preguntar, y ahi si lleva el icono de
+   aviso. Un boton de borrar rojo mientras se lee un texto solo consume la vista
+   y no evita nada.
+
+   Con este diseno el aviso queda donde tiene sentido estar: la persona ya
+   decidio que va a hacer algo, y ahi se le pregunta. El boton solo lleva el
+   color en el ICONO, y el fondo se enciende con ese mismo color al pasar el
+   raton, que es el gesto de "estoy aqui y esto borra".
+
+   Los separadores entre botones se explican mas arriba, junto a su regla. */
+.boton-config svg,
+.boton-volver svg {
+  display: block;
+  width: 1.75rem;
+  height: 1.75rem;
+  pointer-events: none;
+}
+
+/* Grosor del trazo de TODOS los iconos del sitio, en un solo lugar.
+   El tema infantil lo engorda a 2.6 porque a esa edad un trazo de 2 sobre un
+   icono pequeno se ve bien solo si el nino ya sabe que es un icono. */
+svg path,
+svg circle,
+svg rect,
+svg line,
+svg polyline,
+svg polygon {
+  stroke-width: var(--grosor-icono);
+}
+
+/* Anillo de foco visible al tabular. Sin esto, quien navega con teclado no
+   sabe donde esta. */
+.boton-config:focus-visible,
+.boton-volver:focus-visible,
+.panel-boton:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+/* --- Respaldo de los iconos ---------------------------------------------
+   Los SVG van en linea, asi que en teoria no pueden fallar al cargar como
+   pasaria con un <img src="icono.svg">. El respaldo existe para cuando el SVG
+   se pierda al editar el archivo, o cuando alguien lo mueva a un archivo
+   externo y ese archivo no se encuentre.
+   La regla :not(:has(svg)) no necesita JavaScript: si no hay ningun SVG dentro
+   del elemento, se muestra el glifo de texto. Si el navegador no soporta
+   :has(), el SVG sigue presente y no se rompe nada.
+
+   OJO: el respaldo DEBE llevar tamano propio. Un SVG sin width ni height se
+   dibuja al 100% del ancho disponible, y un simple texto sin tamano fijo
+   haria lo mismo: se estiraria de lado a lado de la pantalla.
+
+   Y CADA CLASE NUEVA TIENE QUE AGREGARSE AQUI. Cuando se creo el boton de la
+   lupa (.buscador-boton) se olvido añadirlo a estas tres reglas, y el glifo de
+   reserva se quedo VISIBLE al lado del dibujo, que es justo lo que estas reglas
+   existen para que no pase. Un contenedor de icono que no esta en esta lista
+   muestra los dos: el glifo y el dibujo. */
+.boton-config .reserva,
+.boton-volver .reserva,
+.panel-boton .reserva,
+.buscador-boton .reserva,
+.dialogo-cancelar .reserva,
+.tarjeta-icono .reserva {
+  display: none;
+  line-height: 1;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.boton-config:not(:has(svg)) .reserva,
+.boton-volver:not(:has(svg)) .reserva,
+.panel-boton:not(:has(svg)) .reserva,
+.buscador-boton:not(:has(svg)) .reserva,
+.dialogo-cancelar:not(:has(svg)) .reserva,
+.tarjeta-icono:not(:has(svg)) .reserva {
+  display: block;
+}
+
+.boton-config:not(:has(svg)) .reserva,
+.boton-volver:not(:has(svg)) .reserva,
+.panel-boton:not(:has(svg)) .reserva,
+.buscador-boton:not(:has(svg)) .reserva,
+.dialogo-cancelar:not(:has(svg)) .reserva {
+  width: 1.75rem;
+  height: 1.75rem;
+  line-height: 1.75rem;
+  overflow: hidden;
+}
+
+/* --- Rejilla de tarjetas ---------------------------------------------------
+   auto-fill acomoda las columnas al ancho disponible, sin reglas por tamano.
+   El ancho minimo de 14rem es lo que decide cuantas columnas salen: a 1024 px
+   entran 3 tarjetas de 252 px. Con 15rem solo entraban 2, de 396 px, que se
+   ven demasiado anchas en una pantalla de escritorio.
+
+   El min(14rem, 100%) del segundo valor es un seguro: si el contenedor es mas
+   estrecho que 14rem, la pista toma el ancho del contenedor en lugar de los
+   252 px fijos. Sin esto, en una pantalla de 280 px la tarjeta no cabe y la
+   pagina adquiere scroll horizontal. Con esto es imposible desbordarse a
+   cualquier ancho. */
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(14rem, 100%), 1fr));
+  gap: var(--space-md);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rejilla > li {
+  margin: 0;
+  display: flex;
+}
+
+/* --- Tarjetas -------------------------------------------------------------
+   La superficie de la tarjeta escompartida por los dos usos: las de navegacion
+   (un <a>) y las de ajuste (un <label> con un radio). Asi el borde, la sombra,
+   el relleno y el estado al pasar el mouse estan escritos una sola vez, y las
+   dos familias no pueden verse distintas por accidente.
+   Los modificadores .tarjeta-nav y .tarjeta-tema anaden lo que les es propio. */
+
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  /* Los dos primeras reglas van con --border y --shadow; el tema infantil los
+     cambia por un borde de 3 px y una sombra corrida sin difuminado, que es lo
+     que hace que una tarjeta parezca una ficha pegada en vez de un papel. Por
+     eso el borde y la sombra son variables y no valores fijos: asi el resto de
+     los temas no se enteran. */
+  /* Los dos <li> de la rejilla son flex, asi que sin esto la tarjeta se
+     encoge al ancho de su texto en vez de llenar la columna de la rejilla:
+     "Pizarron" quedaria mas angosta que "Basketball", y el espacio sobrante se
+     veria como un hueco entre columnas. */
+  width: 100%;
+  padding: var(--space-md);
+  border: var(--borde-tarjeta);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+  box-shadow: var(--sombra-tarjeta);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+
+  /* Para que el icono pueda salirse de la caja en el tema infantil y quedar
+     como fondo de la tarjeta. En los otros cuatro el icono nunca se sale, asi
+     que estas dos reglas no hacen nada visible: overflow solo recorta cuando
+     algo se sale, y no sale nada. */
+  position: relative;
+  overflow: hidden;
+}
+
+.tarjeta-titulo {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.tarjeta-texto {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+/* Tarjeta de navegacion: es un <a>, asi que el area pulsable es la tarjeta
+   entera y no solo el titulo. Con el dedo es la diferencia entre acertar y no
+   acertar, y evita el error de anidar un enlace dentro de otro.
+   El width: 100% no va aqui sino en .tarjeta, que es compartida.
+
+   EL HOVER ES SUTIL: un ligero escalado (zoom), un borde de acento,
+   y un cambio de fondo muy tenue (--tarjeta-hover-bg, definido por tema).
+   Antes el hover rellenaba toda la tarjeta de --accent cambiando todo el color
+   del texto, que era muy llamativo. Ahora solo escala un 4%, marca el borde,
+   y tiñe el fondo levemente, para que se note que se puede tocar
+   sin competir con el contenido. */
+a.tarjeta-nav:hover {
+  background: var(--tarjeta-hover-bg);
+  color: var(--text);
+  border-color: var(--accent);
+  box-shadow: 0 8px 22px var(--shadow);
+  text-decoration: none;
+}
+
+a.tarjeta-nav:hover .tarjeta-titulo,
+a.tarjeta-nav:hover .tarjeta-texto,
+a.tarjeta-nav:hover .ficha-datos,
+a.tarjeta-nav:hover .significado {
+  color: var(--text);
+}
+
+/* El icono NO lleva regla propia para el hover, y antes si llevaba una. Cuando
+   --fondo-icono se metio, el valor de reposo paso a ser --fondo-icono, que en
+   cuatro temas es --bg: exactamente lo mismo que ponia la regla del hover. O
+   sea, la regla ya no hacia nada. Ademas en el infantil habria sido dana: el
+   hover rellena la tarjeta de --accent, y un circulo de --bg del tamano de la
+   caja habria sido una mancha clara de 10 rem en medio de la tarjeta.
+
+   Sin ella el reposo ya se ve solo: fondo --bg, dibujo --accent. Sobre la
+   tarjeta rellena de --accent, un circulo --bg con el dibujo --accent se lee
+   como un recorte, que es justo el efecto que se buscaba. */
+
+a.tarjeta-nav:active {
+  transform: scale(1.02);
+}
+
+a.tarjeta-nav:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+/* Icono de la tarjeta: aqui esta el cambio de las tarjetas de fondo.
+
+   El icono NO es una etiqueta parada arriba. Va DETRAS de la letra, grande,
+   sangrando por la esquina de abajo a la derecha, como una marca de agua. Los
+   cinco temas lo llevan igual; lo que cambia de uno a otro es el color, que ya
+   viene solo de --accent, y la opacidad, que esta medida por tema.
+
+   Al salirse de la fila, la tarjeta ademas encoge: el alto que ocupaba la
+   etiqueta lo ocupa ahora la letra sola.
+
+   El texto va con z-index para quedar ARRIBA del icono. Sin esto el dibujo se
+   pintaria despues, porque en el HTML va antes del titulo, y la letra quedaria
+   debajo de la tinta. */
+.tarjeta-titulo,
+.tarjeta-texto {
+  position: relative;
+  z-index: 1;
+}
+
+.tarjeta-icono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: var(--posicion-icono);
+  inset: var(--ancla-icono);
+  width: var(--tamano-icono);
+  height: var(--tamano-icono);
+  margin-bottom: var(--space-xs);
+  border-radius: var(--radius);
+  background: var(--fondo-icono);
+  color: var(--text);
+  opacity: var(--opacidad-icono);
+  transform: rotate(var(--giro-icono));
+}
+
+.tarjeta-icono svg {
+  display: block;
+  /* --glifo-icono y no un tamano fijo, para que en el infantil el dibujo crezca
+     con la caja sin tener que escribir una regla aparte. */
+  width: var(--glifo-icono);
+  height: var(--glifo-icono);
+}
+
+/* El emoji de reserva lleva el mismo tamano que el dibujo, por si algun dia
+   una tarjeta viene sin SVG. Va aparte del grupo de arriba porque ese grupo
+   incluye tambien los botones flotantes, que se quedarian con un emoji
+   gigante. */
+.tarjeta-icono .reserva {
+  font-size: var(--glifo-icono);
+}
+
+/* Tarjeta de ajuste: es un <label> que envuelve a su <input type="radio">.
+   El input queda dentro del label, asi que el clic en cualquier parte de la
+   tarjeta selecciona la opcion, y las flechas del teclado siguen moviendose
+   entre opciones porque el comportamiento es el nativo del radio. */
+label.tarjeta-tema {
+  cursor: pointer;
+  /* Menos relleno horizontal que una tarjeta de navegacion: con cuatro en una
+     fila la tarjeta mide cerca de 190 px y 1.4rem a cada lado se comia una
+     parte importante del ancho disponible para el texto. */
+  padding: var(--space-md) var(--space-sm);
+}
+
+/* El icono de fondo va mas grande aqui que en las tarjetas de navegacion, y es
+   una regla de COMPONENTE, no de tema: la tarjeta de tema es mucho mas baja
+   (la muestra de color y el nombre, nada mas) que una de navegacion, asi que a
+   10 rem solo se veria una franja del dibujo.
+
+   Y ahi el contraste no se mide contra el blanco de la tarjeta, sino contra la
+label.tarjeta-tema .tarjeta-icono {
+  width: 13rem;
+  height: 13rem;
+}
+
+label.tarjeta-tema .tarjeta-icono .reserva {
+  font-size: 13rem;
+}
+
+label.tarjeta-tema:hover {
+  border-color: var(--accent);
+  transform: scale(1.02);
+}
+
+label.tarjeta-tema:active {
+  transform: scale(1);
+}
+
+/* Foco del teclado: focus-within se dispara cuando el foco entra al radio que
+   esta dentro del label, y dibuja el anillo sobre la tarjeta entera. */
+label.tarjeta-tema:focus-within {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+/* Opcion elegida. El anillo se suma al radio, que ya de por si se ve marcado:
+   el color nunca es la unica senal. */
+label.tarjeta-tema:has(input:checked) {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent), 0 4px 12px var(--shadow);
+}
+
+/* 1rem en vez de 1.1rem: con cuatro tarjetas en fila el ancho es el que manda, y
+   a 1.1rem el nombre de 10 caracteres se partia. Con 1rem entra en una linea
+   hasta a 1024 px, que es donde las tarjetas son mas angostas. */
+label.tarjeta-tema .opcion-nombre {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+label.tarjeta-tema input {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex: none;
+}
+
+/* Muestra del tema: un miniature de como se vera la pagina con ese tema.
+
+   El truco es no escribir ningun color aqui: el <span> lleva data-theme con el
+   nombre del tema, de modo que las variables --bg, --surface, --text y --accent
+   toman los valores de ESE tema aunque la pagina este en otro. Por eso al
+   cambiar los colores de un tema, su muestra cambia sola y no hay dos listas de
+   colores que mantener al dia.
+
+   Todo es flexible a proposito: el panel se queda con el espacio que sobra y lo
+   reparte entre la linea y el punto, de modo que la misma muestra sirve en una
+   tarjeta de 130 px (cuatro en una fila) y en una de 400 px. */
+.muestra {
+  display: block;
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: var(--radius);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  min-height: 3rem;
+}
+
+.muestra-panel {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 1.7rem;
+  padding: 0 0.45rem;
+  border-radius: 5px;
+  background: var(--surface);
+  min-width: 0;
+}
+
+.muestra-linea {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 0.32rem;
+  border-radius: 2px;
+  background: var(--text);
+}
+
+.muestra-punto {
+  flex: none;
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* --- Formulario de ajustes -----------------------------------------------
+   fieldset y legend porque agrupan un conjunto de opciones y el lector de
+   pantalla anuncia el titulo del grupo. */
+fieldset {
+  margin: 0;
+  padding: var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+legend {
+  padding: 0 var(--space-xs);
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ayuda {
+  margin: 0 0 var(--space-md);
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+/* --- Interruptor de animaciones -------------------------------------------
+   Es un <input type="checkbox"> de verdad, estilizado. No un interruptor hecho
+   con un <div>: ese necesitaria role="switch", y aparte el manejo del teclado y
+   del foco, todo a mano. El checkbox nativo ya lo trae hecho, ya lo anuncian
+   los lectores de pantalla y ya funciona con Tab y Espacio.
+   El input NO se oculta con display:none porque entonces dejaria de ser
+   enfocable con el teclado. */
+.interruptor {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) 0;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.interruptor input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* La caja pintada. Cuando el input esta marcado, el circulo se desplaza. */
+.interruptor-caja {
+  position: relative;
+  flex: none;
+  width: var(--area-boton);
+  height: 1.7rem;
+  border: 2px solid var(--borde-fuerte);
+  border-radius: 999px;
+  background: var(--bg);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.interruptor-caja::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0.15rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 50%;
+  background: var(--muted);
+  transform: translateY(-50%);
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.interruptor input:checked + .interruptor-caja {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.interruptor input:checked + .interruptor-caja::after {
+  transform: translate(1.2rem, -50%);
+  background: var(--bg);
+}
+
+.interruptor input:focus-visible + .interruptor-caja {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.interruptor:has(input:disabled) {
+  cursor: not-allowed;
+}
+
+.interruptor:has(input:disabled) .interruptor-texto,
+.interruptor:has(input:disabled) .interruptor-caja {
+  opacity: 0.55;
+}
+
+/* --- Significado del acronimo, a la derecha del titulo ---------------------
+   Deliberadamente pequeno y delgado: acompaña al titulo, no compite con el.
+
+   "flex: 1" es lo que lo CENTRA. El h1 queda con su ancho natural
+   (flex: 0 0 auto, en 20_estructura) y este elemento se queda con todo el
+   espacio que sobra; con text-align: center el texto se centra DENTRO de ese
+   espacio, que es lo pedido: centrado en su propia mitad de la cabecera, no en
+   la pagina entera.
+
+   El margen de arriba se quito porque ya no hacia falta: con la cabecera en una
+   sola fila y alineada por la linea base, la posicion vertical la resuelve el
+   navegador. Dejarlo ademas empujaba el texto hacia abajo. */
+.significado {
+  flex: 1 1 auto;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-weight: 300;
+  letter-spacing: 0.06em;
+  text-align: center;
+}
+
+.significado b {
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+}
+
+/* El panel de ajustes se acota para que no se vuelva una franja de punta a
+   punta en un monitor grande. Con 4 columnas, el tope tiene que dar tarjetas
+   de al menos 230 px: a 52rem quedaban en 191 px y el nombre mas largo
+   ("Crepusculo", 10 caracteres) se partia en dos lineas. A 64rem caben holgadas
+   y el panel sigue viniendose arriba en pantallas anchas. */
+.ajustes {
+  max-width: 64rem;
+}
+
+/* Rejilla de los temas: no hereda el minmax de la navegacion, porque sus
+   numeros son distintos (4 opciones, y el objetivo es que entren en UNA fila).
+   En el movil es una columna; la escalera de 40_adaptativo la sube a 2 y luego
+   a 4. Se usa minmax(0, 1fr) y no 1fr a secas, porque 1fr lleva un minimo
+   automatico igual al ancho del contenido y eso impide que la tarjeta encoja
+   por debajo de su texto.
+
+   La separacion es menor que en la rejilla de navegacion: con cuatro tarjetas
+   de 190 px una separacion de 1.4rem se ve desproporcionada y además roba ancho
+   al texto, que es el recurso escaso aqui. */
+.rejilla-tema {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-sm);
+}
+
+/* --- Botones de accion --------------------------------------------------
+   Altura minima de 2.75rem, por encima de los 44 px recomendados para el
+   dedo. Se mantienen como <button> de verdad, no como enlaces disfrazados,
+   para que el teclado y los lectores de pantalla los traten como acciones. */
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-height: var(--area-boton);
+  padding: var(--space-sm) var(--space-md);
+  /* --radio-boton es --radius en los otros temas y 999px en el infantil, que
+     deja el boton en forma de pastilla: es la forma que un nino pequeno
+     reconoce antes que un rectangulo con esquinas. */
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-boton);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, filter 0.2s ease;
+}
+
+.boton:hover {
+  background: var(--bg);
+  border-color: var(--accent);
+}
+
+.boton[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* El principal lleva el color de acento, que ya esta ajustado para destacar
+   sobre el fondo en los cinco temas. */
+.boton--principal {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+}
+
+.boton--principal:hover {
+  background: var(--accent);
+  color: var(--bg);
+  filter: brightness(0.88);
+}
+
+.fila-botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+/* Cada accion es el boton con su frase debajo. La frase existe porque
+   confiar solo en la palabra "Exportar" es justo lo que hace perder a alguien:
+   la frase dice que pasa, en palabras currents, sin jerga. */
+.accion {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  flex: 1 1 14rem;
+}
+
+.accion-ayuda {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+/* --- Aviso de resultado de una accion ------------------------------------
+   El <p> lleva aria-live en el HTML, asi que un lector de pantalla anuncia el
+   resultado sin que haga falta mover el foco. */
+.datos-estado {
+  margin: var(--space-sm) 0 0;
+  min-height: 1.5em;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.datos-estado.es-ok,
+.datos-estado.es-error {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.datos-estado.es-error {
+  text-decoration: underline;
+}
+
+/* --- Seccion "Tus datos" --------------------------------------------------
+   Separate del bloque de preferencias a proposito: el tema es algo desechable
+   de unos bytes, y esto es el historial de aprendizaje, que es lo que de
+   verdad vale. Mezclarlos haria que alguien creyera que con el tema ya tiene
+   su copia. */
+.datos {
+  margin-top: var(--space-xl);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border);
+}
+
+.datos h2 {
+  margin-top: 0;
+}
+
+/* --- Editor de textos y libros ---------------------------------------------
+   La caja donde se pega o se abre el archivo .txt.
+
+   MONOESPACIADA A PROPOSITO, aunque lo que se escribe sea prosa. El marcado
+   exige que [N1] empiece en la primera columna, y en una fuente de ancho
+   variable no se puede ver a ojo donde acaba el espacio de la izquierda: es
+   justo el error que el analizador reporta. Con la fuente monoespaciada las
+   columnas se ven, que es lo que hace util la caja. */
+
+code {
+  padding: 0.05em 0.35em;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
+  font-size: 0.9em;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.editor textarea {
+  display: block;
+  width: 100%;
+  min-height: 18rem;
+  padding: var(--space-md);
+  /* El borde es --borde-fuerte y no --border porque esto es un control: se
+     toca, se escribe adentro, y su contorno es parte de la senal de que se
+     puede usar. */
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  /* Que se pueda agrandar a mano: con una caja de 18 rem, escribir un libro
+     largo es eterno. resize bloquea el arrastre en la esquina para que no se
+     pueda dejar en cero. */
+  resize: vertical;
+  /* EL CURSOR DE ESCRITURA
+     Por defecto el cursor es negro (o blanco en los temas oscuros) y del mismo
+     grosor que siempre, y sobre un fondo oscuro con letra clara se pierde: se
+     ve donde esta el texto, pero no se ve donde se esta escribiendo.
+
+     "caret-color" lo pinta con el color de acento del tema, que contrasta con
+     el fondo Y con la letra, y es la unica parte de esto que el navegador
+     deja cambiar. El grosor NO: ningun navegador expone el ancho del cursor en
+     CSS, y el del sistema se cambia en la configuracion del sistema
+     operativo, no en la pagina. Y una raya dibujada debajo del cursor tampoco
+     es posible de forma confiable: habria que medir en que pixel esta, y eso
+     hay que hacerlo replicando el texto en un elemento invisible, que se
+     descuadra en cuanto el texto se envuelve o se desplaza.
+
+     Con el color se resuelve lo que mas estorba (no ver donde se escribe) sin
+     inventarse una raya que puede quedar en el lugar equivocado. */
+  caret-color: var(--accent);
+}
+
+.editor textarea:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.editor-label {
+  display: block;
+  margin: var(--space-md) 0 var(--space-xs);
+  font-weight: 700;
+}
+
+/* El campo del nombre. Mismo borde fuerte que la caja de texto, por lo mismo:
+   los dos son controles donde se escribe. */
+.editor-campo {
+  display: block;
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.editor-campo:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* La barra con "Marcar esta idea" va PEGADA arriba de la caja de texto, porque
+   la marca se inserta donde este el cursor y tiene que ser ahi donde se
+   escribe, no dos pantallas mas arriba. */
+.editor-barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: var(--space-xs) 0;
+  padding: var(--space-sm);
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: var(--surface);
+}
+
+.editor-barra .accion-ayuda {
+  flex: 1 1 18rem;
+  margin: 0;
+}
+
+/* Version chica del boton, para la barra. min-height se queda en 2.75rem: es
+   el area que el dedo necesita, y "chico" aqui significa menos relleno
+   horizontal, no menos alto. */
+.boton--chico {
+  padding: var(--space-xs) var(--space-sm);
+  font-size: 0.95rem;
+}
+
+/* Con la barra pegada, la caja de texto deja de ser una isla: sus esquinas
+   de arriba se.enderezan para no quedar dos radios encima del otro. */
+.editor-barra + .editor textarea {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  min-height: 16rem;
+}
+
+/* --- Vista previa ----------------------------------------------------------
+   Lo que se ve del lado derecho: el tipo que se detecto y el arbol. */
+.vista {
+  margin-top: var(--space-xl);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border);
+}
+
+.vista h2 {
+  margin-top: 0;
+}
+
+/* El tipo detectado. No es decoracion: es la respuesta a la pregunta que se
+   hace quien importa un archivo ("¿esto ya es un libro o es un texto?"), y
+   por eso esta en texto grande y no en letra chica. */
+.tipo {
+  display: inline-block;
+  margin: 0 0 var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 999px;
+  background: var(--surface);
+  font-weight: 700;
+}
+
+.vista-cuenta {
+  margin: 0 0 var(--space-lg);
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+/* El arbol usa encabezados de verdad (h2 a h5) en vez de <div> con tamano
+   distinto para cada nivel. Se gana la estructura en el menu de titulos del
+   lector de pantalla, que es justo lo que sirve para saltar de capitulo a
+   capitulo en un libro largo. */
+.vista-arbol h2,
+.vista-arbol h3,
+.vista-arbol h4,
+.vista-arbol h5 {
+  margin-top: var(--space-lg);
+  margin-bottom: var(--space-xs);
+  line-height: 1.3;
+}
+
+.vista-arbol h2 { font-size: 1.5rem; }
+.vista-arbol h3 { font-size: 1.25rem; }
+.vista-arbol h4 { font-size: 1.1rem; }
+.vista-arbol h5 { font-size: 1rem; }
+
+.vista-arbol p {
+  margin: 0 0 var(--space-sm);
+  max-width: 60ch;
+}
+
+/* --- Fichas de la biblioteca ----------------------------------------------
+   Una tarjeta por texto o libro guardado. La tarjeta es un <a> con
+   class="tarjeta tarjeta-nav tarjeta-densa", o sea que reaprovecha el mismo
+   componente de la portada: si un dia se cambia el aspecto de las tarjetas,
+   estas cambian con ellas. Y por ser un <a>, toda la tarjeta se toca, no solo
+   el titulo. */
+.ficha-datos {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+/* Tarjeta Densa, para cuando hay decenas.
+   Menos relleno, letra mas pequena y sin icono: con treinta textos, el icono es
+   decoracion repetida treinta veces que roba el sitio del nombre, que es lo
+   unico que sirve para elegir. Y la rejilla va mas apretada para que entren mas
+   por fila.
+
+   EL MINIMO DE COLUMNA ES LO QUE DECIDE CUANTAS CABEN
+   repeat(auto-fill, ...) reparte solo lo que hay, pero cada pista tiene un
+   ancho minimo del que no baja: con el minimo en 10.5rem, en el ancho maximo del
+   sitio (900 px en una laptop) entraban cuatro columnas y sobraba sitio a los
+   lados, que es justo lo que hace ver la lista como que ocupa demasiado. Bajado
+   a 8.5rem entran unas seis en el mismo espacio.
+
+   El minimo tiene dos techos que no se pueden cruzar, y por eso no se baja mas:
+   el ancho del texto, para que un nombre no se parta en tres lineas, y el alto
+   que pide la tarjeta con sus dos renglones, que anda en 80 px muy por encima
+   de los 44 px que pide WCAG 2.5.8 para el dedo. */
+
+.rejilla-densa {
+  grid-template-columns: repeat(auto-fill, minmax(min(8.5rem, 100%), 1fr));
+  gap: var(--space-sm);
+}
+
+.tarjeta-densa {
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+}
+
+.tarjeta-densa .tarjeta-titulo {
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+
+.tarjeta-densa .ficha-datos {
+  font-size: 0.8rem;
+}
+
+/* La tarjeta de "vacio" es un <article>, no un <a>, asi que no lleva el giro del
+   hover. */
+.tarjeta-vacia {
+  grid-column: 1 / -1;
+  max-width: 34rem;
+}
+
+/* --- Pagina de lectura -----------------------------------------------------
+   El cuerpo del texto se acota a 68 caracteres por linea. A 4K una linea de
+   texto mide 150 caracteres o mas, y el ojo pierde el hilo al llegar al
+   margen: hay que volver atras con la vista para saber donde se estaba. Con
+   este tope no hace falta. */
+.leer-cuerpo {
+  max-width: 68ch;
+}
+
+.leer-cuerpo p {
+  margin: 0 0 var(--space-md);
+  line-height: 1.7;
+}
+
+/* El nombre del nivel va ENCIMA del titulo, en letra chica, y los dos van en el
+   mismo elemento: el h2 lleva la clase. El tamano de cada nivel se fija aqui en
+   vez de dejar el del h2..h5 de la base, porque aca los titulos tienen que
+   distinguirse entre si dentro del mismo texto y no solo por el menu del
+   lector de pantalla. */
+.leer-nivel {
+  display: block;
+  margin: var(--space-xl) 0 var(--space-xs);
+  line-height: 1.3;
+}
+
+.leer-nivel-1 { font-size: 1.7rem; }
+.leer-nivel-2 { font-size: 1.35rem; }
+.leer-nivel-3 { font-size: 1.15rem; }
+.leer-nivel-4 { font-size: 1rem; }
+
+.leer-nivel-nombre {
+  display: block;
+  margin-bottom: 0.15rem;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.leer-pie {
+  margin-top: var(--space-xl);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border);
+}
+   Una lista y no un parrafo: son varios, y quien los revisa necesita poder
+   contarlos y recorrerlos con Tab.
+
+   El color NO es la unica senal. Cada problema lleva la palabra ERROR o AVISO
+   escrita, y ademas un signo, porque hay quien no distingue el rojo del gris. */
+.problemas {
+  margin: var(--space-sm) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.problema {
+  display: flex;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-xs);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.problema.es-error {
+  border-left-color: var(--accent);
+  font-weight: 700;
+}
+
+.problema-marca {
+  flex: none;
+  font-weight: 800;
+}
+
+.problema-linea {
+  flex: none;
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 0.9rem;
+}
+
+.problema-texto {
+  margin: 0;
+}
+
+.problema-titulo {
+  margin: 0 0 var(--space-xs);
+  font-weight: 700;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+

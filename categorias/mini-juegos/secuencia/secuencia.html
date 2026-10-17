@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="papel">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Secuencia - Mini juegos - R.E.T.O.</title>
+<link rel="preload" href="../../../styles/fuentes/nunito.css" as="style">
+<link rel="stylesheet" href="../../../styles/fuentes/nunito.css">
+<link rel="stylesheet" href="../../../styles/fuentes/lectura/lectura.css">
+<link rel="stylesheet" href="../../../styles/styles.css?v=c85-flexfix">
+<script src="../../../scripts/reto-panel-prefs.js?v=c01-0f3ddb54"></script>
+<script>
+// El tema y el interruptor de animaciones se aplican aqui, en el head, y no al
+// final del body: si se hiciera despues, el navegador pintaria primero el
+// estado por defecto y luego lo cambiaria, y se veria un destello en cada carga.
+(function () {
+  var t = localStorage.getItem('tema');
+  if (t) { document.documentElement.setAttribute('data-theme', t); }
+  var a = localStorage.getItem('animaciones');
+  if (a === 'off' || a === 'on') { document.documentElement.setAttribute('data-anim', a); }
+  try {
+    var forzar = /[?&]anim=1/.test(location.search);
+    if (sessionStorage.getItem('reto_anim_tarjetas') && !forzar) {
+      document.documentElement.setAttribute('data-anim-tarjetas', 'off');
+    } else {
+      sessionStorage.setItem('reto_anim_tarjetas', '1');
+    }
+  } catch (e) {}
+})();
+</script>
+</head>
+<body class="pantalla-juego">
+<!--
+  SIN CABECERA NI PIE, A PROPOSITO
+  Es la misma decision del memorama: en una pantalla de juego, el titulo arriba
+  y el nombre del sitio abajo son franjas que empujan el tablero y no dicen
+  nada mientras se juega.
+
+  EL TITULO NO SE BORRA: SE ESCONDE. Un lector de pantalla lo lee al abrir.
+-->
+<h1 class="oculto-a-la-vista">Secuencia</h1>
+<main>
+<section class="sec">
+
+  <!--
+    EL TABLERO
+    Los botones los pone reto-secuencia.js, no el HTML: cuantos hay, que llevan
+    escrito, de que color y con que forma depende de los ajustes, y escribirlos
+    aqui seria escribirlos dos veces. El cuadrito del modal de ajustes se arma
+    con la misma funcion, asi que lo que se ve ahi es lo que se ve jugando.
+  -->
+  <div class="sec-tablero" id="tablero" data-botones="4" role="group"
+       aria-label="Botones del juego"></div>
+
+  <!--
+    EL AVANCE: SIEMPRE EN EL MISMO SITIO
+    "Paso 2 de 5" es de las cosas que mas ayudan a llegar al final de una
+    tarea. Se puede esconder desde los ajustes, porque a otras personas les
+    pone nerviosas. Va debajo del tablero, y su altura esta reservada: asi el
+    tablero no salta cuando cambia el texto.
+  -->
+  <div class="sec-avance" id="avance-caja">
+    <p class="sec-ronda" id="ronda"></p>
+    <p class="sec-cuenta" id="cuentas"></p>
+    <div class="sec-barra" aria-hidden="true">
+      <div class="sec-barra-relleno" id="barra"></div>
+    </div>
+  </div>
+
+  <!--
+    EL BOTON DE LA PARTIDA: UN SOLO SITIO, UN SOLO BOTON
+    Dice siempre en que momento se esta: "Empezar", "Mirando...", "Tu turno",
+    "Seguir"... Asi la persona nunca tiene que adivinar que toca, y nada
+    aparece ni desaparece de golpe. Cuando no se puede apretar NO esta
+    "disabled": lleva aria-disabled, que se queda en el recorrido del teclado.
+    Con "disabled" el foco se perderia justo al apretar "Empezar".
+  -->
+  <button type="button" class="boton boton--principal sec-accion" id="accion"
+          aria-disabled="true">Un momento…</button>
+
+  <p class="sec-mensaje" id="mensaje" data-tipo=""></p>
+
+  <!--
+    PARA QUIEN NO VE
+    Escondido a la vista, pero SIN "hidden": con hidden el lector de pantalla
+    tampoco lo leeria. Se esconde con el recorte de una linea, que si lo lee.
+  -->
+  <p class="oculto-a-la-vista" id="lector" role="status" aria-live="polite"></p>
+
+</section>
+</main>
+
+<div class="panel-flotante" data-panel>
+  <a class="panel-boton" data-salir href="../mini-juegos.html"
+     aria-label="Volver a los minijuegos" title="Volver a los minijuegos">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8592;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></span>
+  </a>
+  <button type="button" class="panel-boton" data-configurar
+     aria-label="Configurar el juego" title="Configurar el juego">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#9881;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M2 14h4"/><path d="M10 8h4"/><path d="M18 16h4"/></svg></span>
+  </button>
+  <button type="button" class="panel-boton" data-repetir
+     aria-label="Ver la secuencia otra vez" title="Ver la secuencia otra vez">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#128065;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></span>
+  </button>
+  <button type="button" class="panel-boton" data-reiniciar
+     aria-label="Empezar una partida nueva" title="Empezar de nuevo">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#128260;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></span>
+  </button>
+  <button type="button" class="panel-boton panel-boton--ayuda" data-ayuda
+     aria-label="Ayuda: cómo se juega" title="Cómo se juega">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">?</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span>
+  </button>
+</div>
+
+<script src="../../../scripts/reto-datos.js?v=c19-c6fe548d"></script>
+<script src="../../../scripts/reto-sonido.js?v=c02-b552a4e7"></script>
+<script src="../../../scripts/reto-fuentes.js?v=c01-86f25e1c"></script>
+<script src="../../../scripts/reto-dialogo.js?v=c08-ae075893"></script>
+<script src="../../../scripts/reto-panel.js?v=c04-f73a0fa9"></script>
+<script src="../../../scripts/reto-secuencia.js?v=c01-799a64e1"></script>
+<script src="../../../scripts/reto-debug.js?v=c25-5ac10ea0"></script>
+</body>
+</html>

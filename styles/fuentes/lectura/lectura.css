@@ -1,0 +1,102 @@
+/* Fuentes para la pantalla de lectura, autoalojadas.
+
+   Son cinco, y todas tienen licencia SIL Open Font License 1.1 (mira
+   LICENCIAS.txt en esta misma carpeta). Nunito, la del sitio, ya esta en
+   ../nunito.css y no se repite aqui.
+
+   Autoalojadas y no enlazadas a Google: el sitio tiene que funcionar sin
+   internet, y no depender de un tercero en un sitio para ninos.
+
+   SOLO EL ALFABETO LATINO ("latin"): trae todo el espanol (vocales con acento,
+   u con dieresis, n con tilde y los signos de apertura de pregunta y de
+   exclamacion). Dejar fuera los demas alfabetos es lo que hace que cada
+   archivo pese entre 6 y 120 KB en vez de cientos.
+
+   DOS PESOS POR FUENTE, normal (400) y negrita (700). La negrita se usa en los
+   titulos de un libro. Sin el archivo de 700 el navegador "inventa" una
+   negrita engordando la normal, y se ve mal.
+
+   Un @font-face NO descarga nada por estar aqui: el navegador baja el archivo
+   solo cuando alguna letra de la pagina lo usa. Por eso es barato tener cinco.
+
+   PARA AGREGAR UNA MAS: ver LEEME.txt. */
+
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('atkinson-hyperlegible-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('atkinson-hyperlegible-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Lexend';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('lexend-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Lexend';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('lexend-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'OpenDyslexic';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('opendyslexic-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'OpenDyslexic';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('opendyslexic-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Merriweather';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('merriweather-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Merriweather';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('merriweather-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Orbitron';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('orbitron-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Orbitron';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('orbitron-700.woff2') format('woff2');
+}

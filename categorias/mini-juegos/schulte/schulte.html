@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="papel">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schulte - Mini juegos - R.E.T.O.</title>
+<link rel="preload" href="../../../styles/fuentes/nunito.css" as="style">
+<link rel="stylesheet" href="../../../styles/fuentes/nunito.css">
+<link rel="stylesheet" href="../../../styles/styles.css?v=c85-flexfix">
+<script>
+// El tema y el interruptor de animaciones se aplican aqui, en el head, y no al
+// final del body: si se hiciera despues, el navegador pintaria primero el
+// estado por defecto y luego lo cambiaria, y se veria un destello en cada carga.
+(function () {
+  var t = localStorage.getItem('tema');
+  if (t) { document.documentElement.setAttribute('data-theme', t); }
+  // Las animaciones tienen tres estados, y el atributo es el que manda:
+  //   "on"   la persona las prendio, y gana su eleccion sobre el sistema
+  //   "off"  las apago, y se quedan apagadas siempre
+  //   nada   todavia no ha decidido, y decide el sistema operativo
+  // Por eso el "on" se escribe explicitamente: sin el, las reglas del sistema
+  // lo volvia a apagar y el interruptor no serviria para nada.
+  var a = localStorage.getItem('animaciones');
+  if (a === 'off' || a === 'on') { document.documentElement.setAttribute('data-anim', a); }
+
+  // Las tarjetas se animan solo la primera vez de cada sesion. CSS no tiene
+  // memoria, asi que el aviso se deja aqui, en el head, antes de pintar: si se
+  // hiciera al final del body, las tarjetas alcanzarian a animarse y despues se
+  // congelarian, que se ve como un salto.
+  //
+  // Con try/catch porque en algunos modos de privacidad el almacenamiento
+  // lanza al escribir. Si eso pasa, el atributo no se pone, la animacion se
+  // repite y no se rompe nada: es como estaba antes.
+  try {
+    // ?anim=1 fuerza la entrada de las tarjetas aunque esta sesion ya las haya
+    // visto. Sin esto no habria forma de comprobar que la animacion funciona:
+    // solo se veria una vez al abrir el navegador, y no se sabria si a la
+    // segunda ya no aparece por decision o porque dejo de funcionar.
+    var forzar = /[?&]anim=1/.test(location.search);
+    if (sessionStorage.getItem('reto_anim_tarjetas') && !forzar) {
+      document.documentElement.setAttribute('data-anim-tarjetas', 'off');
+    } else {
+      sessionStorage.setItem('reto_anim_tarjetas', '1');
+    }
+  } catch (e) {}
+})();
+</script>
+<script src="../../../scripts/reto-panel-prefs.js?v=c01-0f3ddb54"></script>
+</head>
+<body>
+<h1 class="oculto-a-la-vista">Schulte</h1>
+<main>
+
+  <!--
+    LA TABLA DE SCHULTE
+    ------------------------------------------------------------------------
+    Un <div class="schulte-tablero"> con los botones de las casillas. Los
+    botones los pone reto-schulte.js, no el HTML: el tablero lo arma el servidor
+    (logica/schulte.py) y depende del tamaño y de los símbolos que se elijan,
+    así que escribirlos aquí sería escribirlos dos veces.
+
+    Las clases del tablero son las mismas que usa el cuadrito del modal de
+    ajustes. Por eso el cuadrito enseña lo que se ve jugando, sin ser una
+    copia: es la misma cosa en los dos sitios.
+
+    LO QUE NO ESTÁ EN ESTE HTML, Y POR QUÉ
+    - El cronómetro: lo pone el script, porque se esconde con el interruptor y
+      no se puede saber desde el HTML si va o no va.
+    - El punto central: es una capa que va POR ENCIMA del tablero (detrás de
+      los números, con el contorno que los separa) y su tamaño es un ajuste.
+    - El botón de casillas ya acertadas: cada casilla va cambiando de estado.
+  -->
+  <div class="schulte">
+    <div class="schulte-tablero" id="tablero" data-tamano="3x3" data-punto="1"
+         role="group" aria-label="Tablero de la tabla de Schulte"></div>
+
+    <!--
+      LA BARRA DE PROGRESO
+      No es adorno. Decirle a alguien con TDAH "vas por el 12 de 25" es de las
+      cosas que más ayuda a llegar al final de una tarea, más que cualquier
+      animación. Va SIEMPRE visible: lo que se puede apagar es el reloj.
+
+      El "lector" es lo que se anuncia al terminar cada casilla, y lo que
+      lee quien no ve la pantalla. No se ve nunca.
+    -->
+    <div class="schulte-avance">
+      <p class="schulte-cuenta" id="cuentas">0 de 9</p>
+      <p class="schulte-reloj" id="reloj" hidden>0.00</p>
+      <div class="schulte-barra" aria-hidden="true">
+        <div class="schulte-barra-relleno" id="avance"></div>
+      </div>
+    </div>
+
+    <p class="schulte-mensaje" id="mensaje" data-tipo=""></p>
+    <p class="oculto-a-la-vista" id="lector" role="status" aria-live="polite"></p>
+  </div>
+
+</main>
+<div class="panel-flotante" data-panel>
+  <a class="panel-boton" data-salir href="../mini-juegos.html"
+     aria-label="Volver a Mini juegos" title="Volver a Mini juegos">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8592;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></span>
+  </a>
+  <a class="panel-boton" href="../../../index.html"
+     aria-label="Ir a la portada" title="Ir a la portada">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8962;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 3l9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/><path d="M10 21v-6h4v6"/></svg></span>
+  </a>
+
+  <!--
+    LAS CUATRO ACCIONES DEL JUEGO
+    El panel es el mismo en todas las pantallas: volver, y luego lo que el
+    juego ofrece. Aquí son configurar, reiniciar y la ayuda.
+
+    La ayuda es el botón VERDE (--ayuda), y no es casualidad: es el único del
+    panel que no ejecuta nada, solo explica. Con el color de los demás se
+    perdería entre ellos.
+  -->
+  <button type="button" class="panel-boton" data-configurar
+          aria-label="Configurar el juego" title="Configurar el juego">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#9881;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></span>
+  </button>
+  <button type="button" class="panel-boton" data-reiniciar
+          aria-label="Empezar otra tabla" title="Empezar otra tabla">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8635;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></span>
+  </button>
+  <button type="button" class="panel-boton panel-boton--ayuda" data-ayuda
+          aria-label="Cómo se juega" title="Cómo se juega">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">?</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span>
+  </button>
+</div>
+<footer hidden>
+<p>R.E.T.O.</p>
+</footer>
+<script src="../../../scripts/reto-datos.js?v=c19-c6fe548d"></script>
+<script src="../../../scripts/reto-sonido.js?v=c02-b552a4e7"></script>
+<script src="../../../scripts/reto-dialogo.js?v=c08-ae075893"></script>
+<script src="../../../scripts/reto-panel.js?v=c04-f73a0fa9"></script>
+<script src="../../../scripts/reto-schulte.js?v=c04-932e48d4"></script>
+<script src="../../../scripts/reto-debug.js?v=c25-5ac10ea0"></script>
+</body>
+</html>

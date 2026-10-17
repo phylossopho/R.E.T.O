@@ -1,0 +1,97 @@
+[N1] Reto de Divisiones Divertidas (Para 6° de Primaria)
+[MATERIA] Matemáticas
+[DESCRIPCION] 10 problemas de división estilo libro de texto escolar, con números de hasta 4 cifras y decimales.
+
+[N2] Matemáticas Divertidas
+[N3] Problemas de la Escuela
+
+[DINAMICA] Para la fiesta del salón, compramos {dividendo} caramelos en total y queremos repartirlos en bolsitas con {divisor} caramelos cada una. ¿Cuántas bolsitas completas podemos armar? Redondea a dos decimales.
+[VAR] dividendo: 1200.00, 4500.00, 1.00, 2
+[VAR] divisor: 12.00, 35.00, 1.00, 2
+[FORMULA] round(dividendo / divisor, 2)
+[DISTRACTOR] round(dividendo / divisor + 1.0, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor - 1.0, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor * 1.1, 2) | concepto
+[EXPLICA] Cuando repartes una cantidad total en partes iguales, tienes que hacer una división.
+
+[DINAMICA] El maestro compró {dividendo} pesos en material de arte para repartirlo por igual entre los {divisor} equipos del salón de sexto grado. ¿Cuánto debe pagar cada equipo? Redondea a dos decimales.
+[VAR] dividendo: 1500.50, 6800.00, 1.50, 2
+[VAR] divisor: 10.00, 25.00, 1.00, 2
+[FORMULA] round(dividendo / divisor, 2)
+[DISTRACTOR] round(dividendo / divisor + 5.0, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor - 5.0, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor * 0.5, 2) | concepto
+[EXPLICA] Divide el costo total entre el número de equipos para saber la parte de cada uno.
+
+[DINAMICA] En la biblioteca de la escuela recibieron {dividendo} libros nuevos y tienen que acomodarlos en {divisor} estantes nuevos, poniendo la misma cantidad en cada uno. ¿Cuántos libros van por estante? Redondea a dos decimales.
+[VAR] dividendo: 2400.00, 8900.00, 2.00, 2
+[VAR] divisor: 15.00, 40.00, 1.00, 2
+[FORMULA] round(dividendo / divisor, 2)
+[DISTRACTOR] round(dividendo / divisor + 2.0, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor - 2.0, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor + 10.0, 2) | calculo
+[EXPLICA] Acomodar en partes iguales significa dividir el total de libros entre el número de estantes.
+
+[DINAMICA] Para la clase de educación física, el profesor compró {dividendo} metros de listón azul para medir las pistas y los cortó en {divisor} trozos iguales. ¿Cuánto mide cada trozo? Redondea a dos decimales.
+[VAR] dividendo: 1150.25, 5300.75, 0.75, 2
+[VAR] divisor: 12.50, 48.50, 0.50, 2
+[FORMULA] round(dividendo / divisor, 2)
+[DISTRACTOR] round(dividendo / divisor + 0.5, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor - 0.5, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor * 2.0, 2) | concepto
+[EXPLICA] Cortar en partes iguales es sinónimo de dividir la longitud total entre el número de trozos.
+
+[DINAMICA] En una granja escolar, las gallinas pusieron {dividendo} huevos en un mes, y se empacaron en {divisor} cajitas especiales. ¿Cuántos huevos van en cada cajita? Redondea a dos decimales.
+[VAR] dividendo: 1400.00, 3600.00, 1.00, 2
+[VAR] divisor: 12.00, 30.00, 1.00, 2
+[FORMULA] round(dividendo / divisor, 2)
+[DISTRACTOR] round(dividendo / divisor + 1.0, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor - 1.0, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor + 5.0, 2) | calculo
+[EXPLICA] Divide el total de huevos entre el número de cajas para hacer paquetes iguales.
+
+[N3] Aventuras Matemáticas
+[DINAMICA] Durante el paseo escolar en autobús, recorrimos {dividendo} kilómetros en {divisor} horas de viaje. ¿Cuál fue nuestra velocidad promedio? Redondea a dos decimales.
+[VAR] dividendo: 1800.00, 7200.00, 2.00, 2
+[VAR] divisor: 15.00, 60.00, 1.00, 2
+[FORMULA] round(dividendo / divisor, 2)
+[DISTRACTOR] round(dividendo / divisor + 3.0, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor - 3.0, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor * 1.2, 2) | concepto
+[EXPLICA] Para saber la velocidad, divides la distancia recorrida entre el tiempo que tardó el autobús.
+
+[DINAMICA] En la clase de cocina, compramos {dividendo} gramos de harina y queremos dividirlos exactamente en {divisor} moldes para panqués. ¿Cuántos gramos van en cada molde? Redondea a dos decimales.
+[VAR] dividendo: 2200.50, 9500.00, 1.25, 2
+[VAR] divisor: 14.00, 50.00, 1.00, 2
+[FORMULA] round(dividendo / divisor, 2)
+[DISTRACTOR] round(dividendo / divisor + 2.5, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor - 2.5, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor + 10.0, 2) | calculo
+[EXPLICA] Divide el peso total de los ingredientes entre el número de moldes para que queden iguales.
+
+[DINAMICA] El club de ecología juntó {dividendo} botellas de plástico para reciclar y las guardaron en {divisor} costales grandes. ¿Cuántas botellas caben en cada costal en promedio? Redondea a dos decimales.
+[VAR] dividendo: 3100.00, 8800.00, 2.00, 2
+[VAR] divisor: 16.00, 44.00, 1.00, 2
+[FORMULA] round(dividendo / divisor, 2)
+[DISTRACTOR] round(dividendo / divisor + 4.0, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor - 4.0, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor * 0.8, 2) | concepto
+[EXPLICA] Repartir equitativamente es dividir el total de objetos entre los contenedores.
+
+[DINAMICA] Para la obra de teatro de fin de cursos, se gastaron {dividendo} pesos en la compra de telas, pagando en partes iguales entre los {divisor} actores principales. ¿Cuánto puso cada actor? Redondea a dos decimales.
+[VAR] dividendo: 1900.20, 6400.80, 1.10, 2
+[VAR] divisor: 10.00, 32.00, 1.00, 2
+[FORMULA] round(dividendo / divisor, 2)
+[DISTRACTOR] round(dividendo / divisor + 1.5, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor - 1.5, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor + 10.0, 2) | calculo
+[EXPLICA] Divide el costo total de los materiales entre el número de personas que pagan.
+
+[DINAMICA] En el huerto escolar cosecharon {dividendo} papas y las empacaron en {divisor} redes para regalar a la comunidad. ¿Cuántas papas van en cada red? Redondea a dos decimales.
+[VAR] dividendo: 2100.00, 7500.00, 1.00, 2
+[VAR] divisor: 15.00, 50.00, 1.00, 2
+[FORMULA] round(dividendo / divisor, 2)
+[DISTRACTOR] round(dividendo / divisor + 2.0, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor - 2.0, 2) | calculo
+[DISTRACTOR] round(dividendo / divisor + 6.0, 2) | calculo
+[EXPLICA] Divide el total de la cosecha entre el número de redes para obtener el reparto justo.

@@ -1,0 +1,2219 @@
+/* =========================================================================
+   R.E.T.O. - Los juegos
+   -------------------------------------------------------------------------
+   Este es el modulo de los juegos, y es el UNICO que es de un solo tema: aca
+   no va lo que se usa en todo el sitio, sino lo de las pantallas donde se
+   juega. Por ahora solo el memorama; el Schulte y lo que siga entran aqui
+   tambien, que es justo lo que se quiere: que los juegos esten juntos y no
+   repartidos por los modulos de componentes.
+
+   Va el ULTIMO de los seis, y no por casualidad. Los juegos traen tablero,
+   cartas y figuring de numeros, y siempre hay alguno que choca con un
+   componente (una carta se parece a una tarjeta, un tablero a una rejilla).
+   Que este modulo de mas adelante significa que un juego puede ajustar lo que
+   necesita sin tener que pelearse con un "!important" en el camino.
+
+   ---------------------------------------------------------------------
+   LO IMPORTANTE DE UN MEMORAMA, Y SON TRES COSAS
+   ---------------------------------------------------------------------
+   Un memorama parece facil, y casi todo lo que se le hace de mas arruina
+   exactamente lo que deberia enseñar. Las tres reglas de aqui estan pensadas
+   para eso, y las tres vienen de mirar como se juega de verdad.
+
+   1. LA CARTA NO SE ENCOGE. El tablero crece, la carta no.
+      Con seis columnas, en una pantalla de 280 px, cada carta queda en 35 px, y
+      por debajo de 44 el dedo ya no acierta. Con tres tamanos (3x4, 4x4, 4x5) el
+      mas apretado queda justo en 44 en la pantalla mas angosta que se
+      soporta, y los otros dos muy holgados. Por eso no hay tablero que
+      "entre" en cualquier lado: si no cabe bien, no se encoge, se baja con
+      scroll.
+
+   2. LO QUE HAY QUE RECORDAR TIENE QUE PODER RECORDARSE.
+      Este es el punto de fondo, y no es un detalle de colores. Si dos simbolos
+      se parecen, el juego deja de medir la memoria y empieza a medir la vista:
+      el nino con baja vision, o con el brillo bajo, o con el aparato viejo
+      que no tiene un dibujito, juega mas dificil que todos los demas y nadie
+      lo nota. Por eso:
+        - el conjunto de FORMAS se dibuja con CSS, se ve IGUAL en cualquier
+          aparato, no depende de ningun tipo de letra, y cada forma tiene una
+          silueta distinta;
+        - los simbolos de texto y de emoji van en el color de texto del tema,
+          que ya esta medido contra la superficie en los cinco temas, con lo
+          que el contraste nunca se pierde al cambiar de tema.
+      Y por eso el juego deja elegir el conjunto, que no es un adorno: es que
+      no hay un conjunto que sirva para todos.
+
+   3. NADA SE APURA.
+      No hay reloj, no hay cuenta regresiva, y el numero de intentos no se
+      celebra: se informa. Enseñar a leer no es una carrera, y un juego que
+      premia la rapidez le ensena a la persona equivocada que lo importante es
+      ir rapido. Lo que se celebra es haberlo terminado.
+
+   ---------------------------------------------------------------------
+   LOS COLORES
+   ---------------------------------------------------------------------
+   Ninguno nuevo. Todo sale de los cinco temas, y eso no es pereza: es que cada
+   color nuevo hay que medirlo en los cinco temas contra la superficie Y contra
+   la mezcla con la marca de agua, y son quince numeros. Usando los del tema no
+   hay nada que medir y el juego se ve igual en todos los temas desde el
+   primer dia.
+   ========================================================================= */
+
+.memo {
+  --memo-hueco: var(--space-xs);
+  /* Sin tope propio: el que decide el tamano es el tablero, con su formula de
+     altura. Y SIN "max-width: 100%", porque en una caja que ya se encoge al
+     contenido, ese 100% es un 100% de nada. El ancho se lo da el main, que ya
+     no tiene tope, y el centrado en horizontal sale de "margin-inline: auto",
+     que centra sin encoger. */
+  margin-inline: auto;
+  width: 100%;
+}
+
+/* --- los botones de tamaño y de conjunto.
+
+   Antes vivían en una barra arriba del tablero. Ahora están en el modal de
+   configurar, así que esta regla ya no es de "la barra": es de "los botones del
+   modal".
+
+   Y CADA UNO LLEVA UN DIBUJITO, no solo el nombre. Es la diferencia entre   elegir a ciegas y elegir viendo:
+     - el de TABLERO pinta la rejilla chiquita, con el numero de filas y columnas
+       de verdad, para que se vea de una vez cuántos personajes hay;
+     - el de DIBUJITOS pinta una carta con un simbolo de ejemplo, para ver
+       cómo se ven las cartas de verdad con ese conjunto y no tener que
+       imaginarlo.
+   Los dos ejemplos salen de Python (ver logica/memorama.py, campo "muestra"), no
+   estan escritos aqui, para que no se les olvide alguno. */
+.memo-opcion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  /* "min-width: 0" ES LO QUE EVITA QUE LA FILA SE SALGA DEL RECUADRO. Por
+     defecto los hijos de una rejilla traen "min-width: auto", que quiere decir
+     "no te encogas nunca, aunque te falte sitio". Con eso un boton se queda con
+     el ancho de su palabra aunque el hueco sea menor, y en vez de apretarse se
+     sale de la caja. Poniendo 0 se le permite encogerse. */
+  min-width: 0;
+  max-width: 100%;
+  min-height: var(--area-boton);
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: var(--radio-boton);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.memo-opcion small {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 400;
+}
+
+.memo-opcion[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+}
+
+.memo-opcion[aria-pressed="true"] small {
+  color: var(--bg);
+  opacity: 0.85;
+}
+
+.memo-opcion:hover {
+  border-color: var(--accent);
+}
+
+.memo-opcion:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* --- el TABLERO
+   El ancho maximo se pone aqui y no en el JavaScript: es una medida del
+   tablero, y el tablero es de donde sale. Con "margin-inline: auto" se centra
+   solo, sin que nadie tenga que calcular nada. */
+/* --- el TABLERO SE ACOMODA A LA PANTALLA
+
+   Tres topes, y los tres hacen falta:
+
+     - el ancho disponible: con "100%" la rejilla nunca se sale de lado;
+     - un maximo en rem, para que en una pantalla enorme las cartas no sean del
+       tamano de un cartel y haya que llevar la vista de un borde al otro;
+     - y un tope POR LA ALTURA, que es el que faltaba. Un tablero de 4x5 en un
+       celular angosto y bajo se salia por abajo, y quien lo ve no puede jugar:
+       no hay forma de llegar a la ultima fila.
+
+     Ese ultimo tope se calcula con la PROPORCION del tablero: el ancho que cabe
+   en una altura dada es la altura multiplicada por columnas entre filas. Un 3x4
+     es mas bajo que ancho (0.75), un 4x4 es cuadrado (1), y un 4x5 es mas alto
+     que ancho (0.8). Con eso el tablero entra COMPLETO en los tres casos, sin
+     importar que tan angosta o baja sea la pantalla.
+
+     Y HAY QUE RESTAR LOS HUECOS, con el termino "--memo-perdida". Lo que se
+     calcula arriba son las proporciones de las CELDAS, pero el tablero lleva
+     huecos entre ellas, y eso lo hace un poquito mas alto de lo previsto: unos
+     dos pixeles. Con solo la proporcion, el tablero se salia de la pantalla por
+     dos pixeles, que es justo lo que hace que se vea el borde de abajo. Con el
+     termino de la perdida, entra exacto.
+
+     Se le restan 10 rem de la altura: lo que se reserva para la barra de botones
+     de abajo, el mensaje y los margenes.
+
+     EL TOPE DE ANCHO NO APRIETA CASI NUNCA, Y ES A PROPOSITO
+   Antes el ancho estaba topado en 38 rem, pensando en que las cartas no se
+   hicieran de tamano de cartel. El resultado fue el contrario de lo que se
+   queria: en una pantalla de 1440 px el tablero se quedaba en 684 px, o sea
+   menos de la mitad, y se veia PEQUENO y arrinconado a un lado. El tope de
+   altura (el de abajo) ya evita que un tablero alto se salga, asi que el ancho
+   puede ser el que haya.
+
+   Por eso el tope de ancho se sube a 60 rem, que es mas que cualquier pantalla
+   en la que quepan cartas manejables, y en la practica casi nunca llega: el que
+    manda es el de altura. El tablero CRECE con la pantalla y se detiene solo
+    cuando ya no cabe de alto.
+
+     LO QUE SE RESERVA ABAJO ESTA MEDIDO, NO INVENTADO. La barra ocupa 91 px con
+     la letra de 18, y se resume asi:
+        relleno de la barra x2        14,4
+        el boton (2.75 rem)           49,5
+        el borde de la barra           2,0
+        la separacion del borde       25,2
+                                    ------
+                                    91,1 px   =  5,1 rem
+     Mas un aire de sobra, queda en 5.5 rem.
+
+     ANTES SE RESERVABAN 10 rem (180 px), casi el doble. Esos 81 px de mas se
+     los comia el tablero sin que se notara: la cuenta estaba bien, el CSS se
+     aplicaba bien (el diagnostico decia 574 px, que era el tope que la cuenta
+     daba), y aun asi se veia chico. Por eso el informe decia que lo limitaba
+     era "el ALTO de la pantalla": lo era, pero por un numero que estaba mal. */
+.memo-tablero {
+  /* Un solo numero, y es el unico que hay que cambiar si la barra crece. */
+  --memo-reserva: 5.5rem;
+  display: grid;
+  gap: var(--memo-hueco);
+  margin-inline: auto;
+  width: 100%;
+  max-width: 60rem;
+  max-width: min(60rem, calc((100vh - var(--memo-reserva)) * var(--memo-proporcion, 1)
+                             - var(--memo-hueco) * var(--memo-perdida, 0)));
+}
+
+.memo-tablero[data-tamano="3x4"] {
+  grid-template-columns: repeat(3, 1fr);
+  --memo-proporcion: 0.75;
+  --memo-perdida: 0.25;
+}
+.memo-tablero[data-tamano="4x4"] {
+  grid-template-columns: repeat(4, 1fr);
+  --memo-proporcion: 1;
+  --memo-perdida: 0;
+}
+.memo-tablero[data-tamano="4x5"] {
+  grid-template-columns: repeat(4, 1fr);
+  --memo-proporcion: 0.8;
+  --memo-perdida: 0.2;
+}
+
+/* "dvh" es la altura REAL de la pantalla cuando las barras del navegador se
+   esconden al bajar, que es justo lo que pasa en un celular mirando un juego.
+   "vh" no miente, pero con las barras escondidas se queda con la altura mas
+   chica y el tablero se ve mas pequeno de lo que cabe. Se usa solo si el
+   navegador lo entiende; si no, se queda el de arriba. */
+@supports (height: 100dvh) {
+  .memo-tablero {
+    max-width: min(60rem, calc((100dvh - var(--memo-reserva)) * var(--memo-proporcion, 1)
+                             - var(--memo-hueco) * var(--memo-perdida, 0)));
+  }
+  body.pantalla-juego {
+    min-height: 100dvh;
+  }
+}
+
+/* EL TABLERO CENTRADO EN LA PANTALLA
+   El body del sitio ya es una columna de flex y el main crece con "flex: 1", o
+   sea que main YA ocupa toda la altura sobrante. Lo que faltaba era que lo que
+   tiene DENTRO se centrara en esa altura, en vez de quedarse pegado arriba.
+
+   Se hace con una clase SOLO de las pantallas de juego (la trae el body de cada
+   una). Si se pusiera en "main" a secas, cambiaria las otras veintidos paginas,
+   y en una pagina con texto largo eso la dejaria pegada a la mitad de la
+   pantalla en vez de empezar arriba. Aqui solo se centra un tablero, que es lo
+   unico que tiene esa forma. */
+body.pantalla-juego main {
+  display: flex;
+  flex-direction: column;
+  /* CENTRADO EN VERTICAL, Y SOLO EN VERTICAL.
+
+     Esto es un flex en COLUMNA: el eje vertical es el principal y el horizontal
+     es el cruzado. "justify-content" manda en el principal, o sea el vertical, y
+     es lo que centra el tablero en la pantalla.
+
+     Y DELIBERADAMENTE NO HAY "align-items: center". Como el eje cruzado aqui es
+     el HORIZONTAL,|center| hace que la caja se encoja al tamano de su contenido
+     en vez de ocupar el ancho. Con eso el tablero se quedaba encerrado en 22 px
+     de ancho, y su "width: 100%" no servia de nada porque el 100% se media contra
+     una caja ya estrangulada. Ese fue el motivo real de que el tablero no
+     creciera NADA, por mas que su propio limite estuviera bien calculado y
+     --memo-reserva bien medido.
+
+     Para centrar en horizontal se usa "margin-inline: auto" en .memo, que centra
+     sin encoger. Aqui solo se centra en vertical. */
+  justify-content: center;
+  max-width: none;
+  padding: var(--space-md);
+}
+
+/* --- la CARTA
+   "aspect-ratio: 1" la hace cuadrada sin calcular nada, y aguanta aunque se
+   cambie el tamaño de letra del sitio.
+
+   Lo que hay ADENTRO se voltea con una rotacion de 180 grados, y la cara de
+   atras se esconde con "backface-visibility: hidden". Sin eso se verian las dos
+   caras a la vez en el momento del giro, que es el error clasico de los
+   memoramas de CSS. */
+.memo-carta {
+  position: relative;
+  aspect-ratio: 1;
+  min-width: 44px;          /* el suelo del dedo, nunca se cruza */
+  min-height: 44px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  perspective: 700px;
+  -webkit-tap-highlight-color: transparent;
+  /* La carta es un "contenedor": el simbolo de adentro se mide contra ELLA y no
+     contra la pantalla, que es lo que hace que se vea igual de grande en un
+     tablero de 12 cartas que en uno de 20. Sin esto, el simbolo seria del mismo
+     tamano siempre y en las cartas grandes quedaria un punto chiquito. */
+  container-type: inline-size;
+}
+
+.memo-carta-interior {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.4s ease;
+}
+
+.memo-carta[aria-describedby$="-tapas"] .memo-carta-interior,
+.memo-carta[data-vuelta="1"] .memo-carta-interior,
+.memo-carta[data-encontrada="1"] .memo-carta-interior {
+  transform: rotateY(180deg);
+}
+
+.memo-cara {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  /* El radio de la carta es MAS ALTO que el del sitio. Con el radio general (12
+     px) una carta de 50 px se ve como un cuadrito con las esquinas apenas
+     redondeadas, y con el doble se lee como una carta de juego. Ademas el radio
+     grande hace que la sombra se vea bien: con esquinas muy vivas, la sombra
+     recortada se nota por los lados y ensucia el tablero. */
+  border-radius: calc(var(--radius) * 1.25);
+  /* El simbolo se escribe con un tamano normal, y ENCIMA se le pone uno que se
+     mide contra la carta. Si el navegador no entiende las unidades de
+     contenedor (cqw), se queda con el de abajo en vez de quedarse sin tamano
+     ninguno, que es lo que pasaria si las dos-lineas estuvieran en una sola
+     regla y el navegador descartara la entera al no entender cqw. */
+  font-size: 2rem;
+  font-size: clamp(1.5rem, 55cqw, 4.5rem);
+  line-height: 1;
+  overflow: hidden;
+}
+
+/* LA CARTA TAPA. Todas son IGUALES a proposito: si se distinguieran, el juego
+   seria de buscar las rayitas distintas y no de recordar.
+
+   EL ASPECTO: SOMBRA SUAVE, NO BORDE. Antes era un rectangulo plano con una
+   raya al rededor, que se ve como un boton, no como una carta. Ahora lleva una
+   sombra en dos capas (una pegada y otra mas abierta) y un brillo arriba, que
+   es lo que hace que algo parezca una carta puesta sobre la mesa y no un
+   cuadrito pintado. */
+.memo-carta-atras {
+  background: var(--accent);
+  border: 0;
+  color: var(--bg);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.18),
+    0 4px 10px rgba(0, 0, 0, 0.14);
+  /* El brillo de arriba, sutil. En una tarjeta lisa el plano se ve sucio y en
+     este taparon las cartas brillan como si tuvieran barniz. */
+  background-image: linear-gradient(160deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0) 55%);
+}
+
+.memo-carta-atras::after {
+  content: "";
+  width: 42%;
+  height: 42%;
+  border-radius: 50%;
+  border: 2px solid var(--bg);
+  opacity: 0.6;
+}
+
+/* LA CARTA DESCUBIERTA. Fondo y simbolo salen del tema, y el simbolo va en el
+   color de TEXTO, que ya esta medido contra la superficie en los cinco temas.
+   Por eso cambiar de tema no rompe el contraste: no hay ningun color nuevo que
+   se pueda quedar corto. */
+.memo-carta-frente {
+  background: var(--surface);
+  border: 2px solid var(--borde-fuerte);
+  color: var(--text);
+  transform: rotateY(180deg);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.16),
+    0 8px 18px rgba(0, 0, 0, 0.12);
+}
+
+/* AL PASAR EL RATON POR ENCIMA
+   ZOOM Y COLOR, NADA DE LEVANTAR.
+
+   Antes la carta se subia tres pixeles. Se veia bien en una pantalla grande,
+   pero en un celular el "raton" es el dedo: un dedo que se mueve tres pixeles
+   arriba se siente como que la carta se le escapa, y en un juego de
+   concentracion eso es justo lo que no se quiere.
+
+   Ahora son dos cambios juntos, y los dos mudos:
+     - se agranda un poco (escala), que se lee como "esta se puede tocar";
+     - y se pone un poquito mas clara.
+   Los dos notan sin que nada se mueva de sitio.
+
+   LA CLARA SE PONE CON UN RECTANGULO BLANCO POR ENCIMA, y no con "filter":
+   un filtro crea su propio contexto de dibujo y aplana el 3D, con lo cual la
+   carta deja de girar de pronto. Esa es una trampa de la que hay que acordarse.
+
+   Y SOLO la que no esta encontrada: una carta ya emparejada no se toca, y no
+   debe dar señales de que se puede. */
+.memo-carta:not([data-encontrada="1"]):hover {
+  transform: scale(1.05);
+  z-index: 2;
+}
+
+.memo-carta:not([data-encontrada="1"]):hover .memo-carta-atras {
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.18),
+    0 4px 10px rgba(0, 0, 0, 0.14),
+    inset 0 0 0 100px rgba(255, 255, 255, 0.16);
+}
+
+/* El tiempo de esta transicion va en la carta, no en la regla del hover: si
+   estuviera en el :hover, el cambio de "sin hover" a "con hover" seria
+   instantaneo y solo se veria lento el regreso, que es justo al reves. */
+.memo-carta {
+  transition: transform 160ms ease, box-shadow 200ms ease;
+}
+
+/* --- LA PAREJA ENCONTRADA
+   Antes de esto, la pareja se marcaba cambiando el fondo a "var(--bg)" y el
+   borde a "var(--accent)", y resultaba que NO se notaba nada: en el tema papel,
+   --surface es #ffffff y --bg es #fdf6e3, que a simple vista son el mismo
+   papel. Y con el tema crepusculo, igual: dos grises muy parecidos. Encima, por
+   el fallo de la sincronizacion, solo se marcaba la mitad de las parejas. Dos
+   cosas juntas hacian que el tablero no mostrara nada.
+
+   Ahora la pareja se marca por TRES SEÑALES a la vez, y ninguna es solo color:
+     - un borde del color de acento, grueso, que se ve desde lejos;
+     - una palomita en la esquina, que es FORMA y no color: quien no distingue
+       bien los colores la ve igual, que es el mismo motivo por el que las
+       marcas de la biblioteca llevan su punto de color con nombre;
+     - y el simbolo se atenua, para que la vista vaya a las que faltan.
+
+   Se pinto la palomita con un caracter, y no con un dibujo, porque el
+   proyecto ya usa el mismo caracter en el boton de "marcar idea" de la
+   biblioteca, asi que si un aparato no lo dibujara, alli tampoco se veria y no
+   seria un caso raro de una sola pantalla. */
+.memo-carta[data-encontrada="1"] {
+  cursor: default;
+}
+
+.memo-carta[data-encontrada="1"] .memo-carta-frente {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.memo-carta[data-encontrada="1"] .memo-cara {
+  opacity: 0.55;
+}
+
+.memo-carta[data-encontrada="1"] .memo-carta-frente::after {
+  content: "\2713";
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 0.7rem;
+  line-height: 1;
+  font-weight: 700;
+  opacity: 1;   /* la palomita no se atenua: es la señal de que ya está */
+}
+
+.memo-carta:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--radio);
+}
+
+/* El festin de cuando se encuentra una pareja. Corto, y solo al encontrar: si
+   se hiciera al voltear cada carta seria ruido. */
+.memo-carta[data-pareja="1"] .memo-carta-interior {
+  animation: memo-festejo 0.45s ease;
+}
+
+@keyframes memo-festejo {
+  0% { transform: rotateY(180deg) scale(1); }
+  45% { transform: rotateY(180deg) scale(1.08); }
+  100% { transform: rotateY(180deg) scale(1); }
+}
+
+/* --- LAS DOCE FORMAS
+   Se dibujan con CSS y no con un tipo de letra ni con un dibujito. Es la razon
+   por la que este conjunto es el mas seguro: se ve EXACTAMENTE igual en una
+   computadora de la escuela, en un celular y en una tableta, sin depender de
+   que el aparato tenga algo instalado. Y al ser figuras, la silueta de cada
+   una es distinta, que es justo lo que hace falta para poder distinguirlas.
+
+   TODAS USAN clip-path O border-radius. Nada de imagenes, nada de
+   "clip-path: path()" y nada de sombras que se Window recorten: esas dos
+   ultimas cosas no se comportan igual en todos los navegadores del piso, y
+   aqui una forma que sale mal es una carta que nadie puede emparejar.
+
+   Ademas, el color se hereda (currentColor), que es el color de texto del
+   tema y ya medido. Por eso cambiar de tema no rompe nada. */
+.memo-forma {
+  width: 1em;
+  height: 1em;
+  background: currentColor;
+  flex: 0 0 auto;
+}
+
+.memo-forma-circulo { border-radius: 50%; }
+.memo-forma-cuadrado { border-radius: 0.1em; }
+/* Un rectangulo alto: misma familia de bordes que el cuadrado pero con otra
+   silueta, que es lo que lo hace distinguible. */
+.memo-forma-rectangulo { border-radius: 0.1em; width: 0.72em; }
+.memo-forma-ovalo { border-radius: 50% / 32%; width: 1.2em; }
+.memo-forma-rombo { transform: rotate(45deg); border-radius: 0.06em; }
+.memo-forma-hexagono { clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); }
+.memo-forma-triangulo { clip-path: polygon(50% 0%, 100% 100%, 0% 100%); }
+.memo-forma-estrella {
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+.memo-forma-cruz {
+  clip-path: polygon(38% 0%, 62% 0%, 62% 38%, 100% 38%, 100% 62%, 62% 62%, 62% 100%, 38% 100%, 38% 62%, 0% 62%, 0% 38%, 38% 38%);
+}
+.memo-forma-gota { border-radius: 50% 50% 50% 0; transform: rotate(-45deg); }
+.memo-forma-flecha {
+  clip-path: polygon(50% 0%, 100% 45%, 68% 45%, 68% 100%, 32% 100%, 32% 45%, 0% 45%);
+}
+/* La media luna se hace con BORDES, no recortando: un borde de dos esquinas
+  ondas es una media luna y no necesita nada raro. Es la unica que no se ve
+   como una figura rellena, y por eso se nota aparte. */
+.memo-forma-luna {
+  border-radius: 100% 100% 0 0 / 100% 100% 0 0;
+  background: transparent;
+  border: 0.22em solid currentColor;
+}
+
+/* --- EL MENSAJE DE ABAJO
+   Es donde se avisa lo que pasó. Con margen fijo abajo para que el tablero no
+   suba y baje cada vez que el texto es mas largo o mas corto: el tablero
+   quieto es lo que permite apuntar sin volver a buscarlo. */
+.memo-mensaje {
+  min-height: 3.2em;
+  margin: var(--space-md) 0 0;
+  text-align: center;
+  font-weight: 700;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* SIN TEXTO, NO OCUPA NADA. Mientras se juega el mensaje esta vacio (los avisos
+   de pareja y de fallo ya no se escriben en pantalla), y si el hueco se
+   reservara igual estarian empujando el tablero hacia arriba para no mostrar
+   nada. Con ":empty" el hueco solo aparece cuando hay algo que decir. */
+.memo-mensaje:empty {
+  display: none;
+}
+
+.memo-mensaje[data-tipo="bien"] { color: var(--text); }
+
+/* El aviso para quien no ve, que se lee en voz alta, ya NO usa una clase propia
+   del juego: usa .oculto-a-la-vista de 30_componentes.css, que hace
+   exactamente lo mismo y sirve para cualquier cosa del sitio. Estar la misma
+   regla en dos archivos es como un dia se desincronizan y una deja de
+   esconder y la otra no. */
+
+.memo-oculto {
+  display: none;
+}
+
+/* --- SIN MOVIMIENTO: el giro de la carta es justo el tipo de animacion que
+   molesta a quien tiene una alteracion vestibular, y sin el la carta se destapa
+   de golpe, que es perfectamente claro.
+
+   Y AQUI ESTABA UN FALLO QUE SE NOTO EN UNA COMPUTADORA SINO EN EL CELULAR.
+   Esta regla estaba escrita sin el "html:not([data-anim=""on""])" que llevan las
+   demas del sitio, y eso hacia que el giro de la carta se apagara SIEMPRE que
+   el sistema pidiera menos movimiento, aunque la persona hubiera prendido las
+   animaciones aqui adentro a proposito.
+
+   O sea: en la computadora, con el efecto de animaciones de Windows apagado,
+   la carta daba la vuelta de golpe; en el celular, donde el sistema no lo pide,
+   la carta si giraba. Mismo sitio, misma pagina, misma eleccion en el sitio, y
+   resultado distinto. Se arreglo con el mismo patron que usa 10_base.css y
+   50_animaciones.css: si aqui se prendieron las animaciones, se respetan. */
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-anim="on"]) .memo-carta-interior { transition: none; }
+  html:not([data-anim="on"]) .memo-carta[data-pareja="1"] .memo-carta-interior { animation: none; }
+  html:not([data-anim="on"]) .memo-carta:hover { transform: none; }
+}
+
+/* --- EL MODAL DE CONFIGURAR EL JUEGO
+   Los ajustes y las cuentas viven aqui adentro, no en la pagina. La pagina es
+   el tablero y nada mas: quien esta jugando no necesita ver un "0" de intentos
+   mientras juega, porque el numero no le sirve hasta que acaba. */
+.memo-config {
+  text-align: center;
+  /* ESTA CAJA ES UN "CONTENEDOR" DE MEDIDAS. Con esto, el @container de mas
+     abajo pregunta "de cuanto ancho ESTA CAJA" y no "de cuanto ancho la
+     ventana". La diferencia es la que importa: este dialogo tiene 540 px fijos
+     mientras la ventana puede medir 2000, y con la cuenta sobre la ventana la
+     fila de cuatro salia de tamano grande con la ventana angosta. */
+  container-type: inline-size;
+}
+
+.memo-config-grupo {
+  margin-bottom: var(--space-lg);
+  text-align: left;
+}
+
+.memo-config-ayuda {
+  margin: var(--space-xs) 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* LAS OPCIONES EN FILAS
+   Tablero: una fila de tres. Dibujitos: una fila de cuatro. Con "grid" y no con
+   "flex" para que las columnas sean IGUALES de anchas: con flex, el boton de
+   "4×4" (mas corto) deja hueco y los botones quedan torcidos.
+
+   En una pantalla muy angosta, cuatro columnas aprietan demasiado y el dibujo
+   de cada boton se encoge hasta no verse. Ahi bajan a dos por fila: es mejor
+   un boton apretado que un boton ilegible. */
+.memo-fila {
+  display: grid;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+}
+
+.memo-fila--3 { grid-template-columns: repeat(3, 1fr); }
+.memo-fila--4 { grid-template-columns: repeat(4, 1fr); }
+
+/* CUATRO EN LINEA NO CABEN NI UN POCO, Y ESTA MEDIDO.
+   El dialogo da 540 px, menos el relleno de los dos lados (39.6 px cada uno):
+   quedan 460.8 px. Y un boton con el nombre mas largo, "Números", necesita
+   unos 120 px con su relleno. Cuatro en linea piden 501.6 px. Faltan 40.
+
+   Por eso, en vez de apretarlos hasta que el texto se corte, esta fila pasa a
+   DOS columnas. Y lo decide el ANCHO DE LA CAJA, no el de la ventana, que es
+   lo que estaba mal: con la ventana ancha pero el dialogo angosto, la cuenta
+   daba un numero y el ancho real otro. */
+@container (max-width: 33rem) {
+  .memo-fila--4 { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Y el dialogo de los dibujitos es mas ancho que los demas. Los modales de
+   texto se quedan en 30 rem porque un parrafo largo se lee mejor en una caja
+   angosta; este tiene botones, y con 30 rem las cuatro opciones no caben ni
+   angostas. Con 44 rem caben de sobra y solo se parten a dos columnas cuando la
+   pantalla de verdad es chica. */
+.dialogo.memo-config { max-width: 44rem; }
+
+/* EL DIBUJITO DEL TABLERO: la rejilla chiquita
+   Se pinta con un punto por casilla, del tamaño que hace que salgan las filas y
+   columnas correctas. El ancho y el alto del circulo se calculan para que
+   siempre salgan los mismos numeros, con la caja de 1.5 rem del boton. */
+.memo-rejilla {
+  width: 1.5rem;
+  height: 1.5rem;
+  color: currentColor;
+  background-image: radial-gradient(currentColor 30%, transparent 32%);
+}
+
+.memo-rejilla[data-cols="3"] { background-size: 0.5rem 0.375rem; }
+.memo-rejilla[data-cols="4"] { background-size: 0.375rem 0.375rem; }
+.memo-rejilla[data-cols="5"] { background-size: 0.3rem 0.3rem; }
+
+/* EL DIBUJITO DE LOS DIBUJITOS: una carta chiquita con un simbolo de ejemplo
+   Es la MISMA carta del juego, en miniatura: mismo fondo, mismo borde, misma
+   sombra y el simbolo con la misma forma. Si aqui se viera distinto a como se
+   ven las cartas de verdad, el boton estaria mintiendo. */
+.memo-muestra {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: calc(var(--radio) * 0.7);
+  background: var(--surface);
+  border: 1px solid var(--borde-fuerte);
+  font-size: 0.95rem;
+  line-height: 1;
+  overflow: hidden;
+}
+
+/* En el boton elegido, la carta chiquita se pone del color del boton para que
+   no se pierda contra el fondo. */
+.memo-opcion[aria-pressed="true"] .memo-muestra {
+  background: rgba(255, 255, 255, 0.22);
+  border-color: var(--bg);
+  color: var(--bg);
+}
+
+/* -------------------------------------------------------------------------
+   .SCHULTE — SOLO LO QUE NO ES AJUSTE
+
+   Aquí NO se declara `--schulte-fondo`, `--schulte-texto`, `--schulte-letra`
+   ni `--schulte-fuente` con un valor por defecto, y es a propósito.
+
+   Esas cuatro las pone el juego en `<html>` cuando la persona las cambia, y el
+   tablero y el cuadrito del modal las heredan. **Pero si aquí también se
+   declara un valor por defecto, ese gana**: una variable declarada en el
+   elemento tapa la que viene heredada, siempre, sin importar de dónde venga.
+
+   Y eso era exactamente lo que pasaba: los colores, la letra y la fuente se
+   cambiaban en el modal, se escribían en `<html>`, y el tablero seguía igual,
+   porque `.schulte` los tapaba con su propio valor. Por eso el preview solo
+   respondía al contenido y al punto: los dos únicos que no se declaran aquí.
+
+   El valor por defecto va **en el sitio donde se usa**, con su alternativa:
+   `var(--schulte-fondo, var(--surface))`. Ese es el orden correcto: primero lo
+   que escribió la persona, y solo si no hay nada, el del tema. */
+.schulte {
+  /* El hueco entre casillas y el ancho del halo son medidas del tablero, no
+     ajustes de la persona: aquí sí viven, porque nadie los cambia. */
+  --schulte-hueco: var(--space-xs);
+  --schulte-halo: 1px;
+  /* El tamaño del cuadro del modal se multiplica por esto, para que la letra
+     grande no se salga del dialogo. El tablero de la pantalla lo deja en 1. */
+  --schulte-largo: 1;
+  margin-inline: auto;
+  width: 100%;
+  font-family: var(--schulte-fuente, var(--font));
+}
+
+.schulte-tablero {
+  /* El límite lo pone la ALTURA, que es lo que hace que nunca haya que
+     desplazar la página para ver la última fila. */
+  --schulte-reserva: 6.5rem;
+  --schulte-proporcion: 1;
+  --schulte-perdida: 0;
+  position: relative;
+  display: grid;
+  gap: var(--schulte-hueco);
+  width: 100%;
+  max-width: min(60rem, calc((100vh - var(--schulte-reserva)) * var(--schulte-proporcion) - var(--schulte-hueco) * var(--schulte-perdida)));
+  margin-inline: auto;
+}
+
+@supports (height: 100dvh) {
+  .schulte-tablero {
+    max-width: min(60rem, calc((100dvh - var(--schulte-reserva)) * var(--schulte-proporcion) - var(--schulte-hueco) * var(--schulte-perdida)));
+  }
+}
+
+.schulte-tablero[data-tamano="3x3"] { grid-template-columns: repeat(3, 1fr); }
+.schulte-tablero[data-tamano="4x4"] { grid-template-columns: repeat(4, 1fr); }
+.schulte-tablero[data-tamano="5x5"] { grid-template-columns: repeat(5, 1fr); }
+
+/* -------------------------------------------------------------------------
+   LA CASILLA
+   Un <button>, para que funcione con el dedo, con el ratón y con el teclado sin
+   que haya que hacer nada especial. El objetivo nunca baja de 44 px: por
+   debajo de eso, la mitad de los toques se van a la casilla de al lado, que es
+   la peor forma de equivocarse en este juego.
+   ------------------------------------------------------------------------- */
+.schulte-celda {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  min-width: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  font-family: inherit;
+  font-size: calc(var(--schulte-largo) * var(--schulte-letra, 1.5) * 1rem);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--schulte-texto, var(--text));
+  background: var(--schulte-fondo, var(--surface));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  /* CIFRAS DE IGUAL ANCHO. Sin esto el 1 parece más chico que el 8, y el 7 se
+     confunde con el 1. Es el ajuste más pequeño y el que más ayuda a quien
+     busca de un vistazo. */
+  font-variant-numeric: tabular-nums;
+  /* EL CONTORNO. Cuatro sombras en cruz, del color del fondo: borran el punto
+     que va detrás y dejan la cifra limpia. */
+  text-shadow:
+    calc(-1 * var(--schulte-halo)) calc(-1 * var(--schulte-halo)) 0 var(--schulte-fondo),
+    var(--schulte-halo) calc(-1 * var(--schulte-halo)) 0 var(--schulte-fondo),
+    calc(-1 * var(--schulte-halo)) var(--schulte-halo) 0 var(--schulte-fondo),
+    var(--schulte-halo) var(--schulte-halo) 0 var(--schulte-fondo, var(--surface));
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.18s ease, color 0.18s ease,
+              border-color 0.18s ease, opacity 0.32s ease,
+              transform 0.18s ease;
+}
+
+.schulte-celda:hover:not([data-estado="hecha"]) {
+  border-color: var(--borde-fuerte);
+}
+
+/* AL ACERTAR: el verde del tema. Se pinta la casilla entera y no solo el
+   número, porque el número desaparece y lo que queda es el hueco, y un hueco
+   verde se lee mejor que un hueco vacío. */
+.schulte-celda[data-estado="hecha"] {
+  color: var(--acierto, var(--ayuda));
+  background: color-mix(in srgb, var(--acierto, var(--ayuda)) 12%, var(--schulte-fondo, var(--surface)));
+  border-color: var(--acierto, var(--ayuda));
+  text-shadow: none;
+}
+
+/* EL DESVANECIDO. La casilla se vacía: el número se vuelve INVISIBLE y la
+   casilla se queda como una sombra apenas marcada. No solo se pone pálida,
+   porque una casilla pálida con el número arriba parece una casilla normal y no
+   se nota que se encontró: en el juego hay que VER como se va vaciando la
+   tabla, que es la mitad del ejercicio.
+
+   Por eso el color del número pasa a transparente en vez de ponerse más claro.
+   Con el ajuste apagado, la casilla se queda con su marca y su número, que es
+   lo de la tabla de papel. */
+.schulte-celda[data-estado="hecha"][data-desvanecer="1"] {
+  color: transparent;
+  opacity: 0.55;
+  transform: scale(0.7);
+  cursor: default;
+}
+
+/* CUANDO NO SE DESVANECE, la casilla se queda: la tabla entera sigue ahí, como
+   en la de papel. Para quien encuentra más cómodo contar con el tablero
+   completo. */
+.schulte-celda[data-estado="hecha"]:not([data-desvanecer="1"]) {
+  opacity: 1;
+  cursor: default;
+}
+
+/* -------------------------------------------------------------------------
+   EL PUNTO CENTRAL
+   Va DETRÁS (z-index 0, y las casillas van en 1). Es un punto, no un botón,
+   y no se ve con el lector de pantalla. Sin el "pointer-events: none" bloquearía
+   la casilla de debajo sin avisar.
+   ------------------------------------------------------------------------- */
+.schulte-punto {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* El tamaño es un ajuste del juego: tiene que poder agrandarse para verse
+     desde lejos o con la vista cansada. */
+  width: calc(var(--schulte-punto-largo, 1) * 1.6rem);
+  height: calc(var(--schulte-punto-largo, 1) * 1.6rem);
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  border-radius: 50%;
+  background: var(--acierto, var(--ayuda));
+  opacity: 0.55;
+  pointer-events: none;
+  /* El punto también lleva el contorno del fondo, por si el número que tiene
+     debajo se ha movido justo de sitio. */
+  text-shadow: none;
+  box-shadow: 0 0 0 1px var(--schulte-fondo, var(--surface));
+}
+
+/* Sin punto: quien lo apague (o prefiera la tabla limpia) juega sin ancla. */
+.schulte-tablero[data-punto="0"] .schulte-punto { display: none; }
+
+/* -------------------------------------------------------------------------
+   LA BARRA DE PROGRESO
+   No es adorno: es lo que le dice a alguien con TDAH que ya está casi, que es
+   una de las cosas que más ayuda a llegar al final de una tarea. Va SIEMPRE
+   visible, y el reloj es lo que se puede apagar.
+   ------------------------------------------------------------------------- */
+.schulte-avance {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  max-width: min(60rem, calc(100vh - 6.5rem));
+  margin: var(--space-sm) auto 0;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.schulte-barra {
+  grid-column: 1 / -1;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.schulte-barra-relleno {
+  height: 100%;
+  width: 0%;
+  background: var(--acierto, var(--ayuda));
+  transition: width 0.2s ease;
+}
+
+.schulte-cuenta { font-variant-numeric: tabular-nums; }
+
+.schulte-reloj {
+  font-variant-numeric: tabular-nums;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.schulte-reloj[hidden] { display: none; }
+
+/* -------------------------------------------------------------------------
+   EL MODAL DE AJUSTES
+
+   EL CUADRITO VA PRIMERO, y eso es una decisión de acomodo, no un detalle: es
+   lo que se está mirando mientras se cambia algo. Si los ajustes fueran primero,
+   habría que leerlos y después bajar a ver el efecto, y eso rompe el ir-y-ver
+   que es justo lo que hace útil al preview.
+
+   El cuadrito no toma su ancho de la altura de la ventana (el dialogo puede ser
+   más alto que lo que queda), sino de un tope fijo: así nunca se sale. */
+.schulte-config {
+  text-align: center;
+}
+
+.schulte-cuadrito {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 var(--space-lg);
+}
+
+.schulte-cuadrito .schulte {
+  width: auto;
+  max-width: 100%;
+}
+
+.schulte-cuadrito .schulte-tablero {
+  --schulte-reserva: 0rem;
+  max-width: min(17rem, 100%);
+}
+
+/* EL MENÚ DE UN SONIDO. Un <select> ocupa el ancho del diálogo y no se sale
+   nunca, y además se elige con el teclado. Con tres botones de nombre largo
+   ("Charm", "Suave") en un celular angosto, el bloque se salía del diálogo.
+
+   Se le da un ancho máximo para que no quede una barra de tres metros de ancho
+   con tres palabras: un menú se lee igual de bien corto, y el diálogo queda
+   más estrecho. */
+.ajustes-sonido {
+  margin: 0 0 var(--space-md);
+}
+
+.ajustes-sonido > .editor-label {
+  margin: 0 0 var(--space-xs);
+}
+
+.ajustes-sonido > .editor-campo {
+  display: block;
+  width: 100%;
+  max-width: 22rem;
+}
+/* La fuente ocupa lo que sobra y el botón de instalar se queda con su tamaño:
+   si los dos estiran, el botón queda gigante y el dialogo más ancho de lo
+   necesario. */
+.ajustes-fuente-fila {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-sm);
+  align-items: center;
+  margin: 0 0 var(--space-md);
+}
+
+.ajustes-fuente-fila .editor-campo { min-width: 0; }
+
+@media (max-width: 30rem) {
+  .ajustes-fuente-fila { grid-template-columns: 1fr; }
+}
+
+/* -------------------------------------------------------------------------
+   EL MENSAJE
+   Vacío mientras se juega, para que no ocupe sitio. Cuando dice algo (por
+   ejemplo, que ya no queda tiempo), ocupa su alto y no salta el tablero.
+   ------------------------------------------------------------------------- */
+.schulte-mensaje {
+  min-height: 2.6em;
+  margin: var(--space-sm) 0 0;
+  text-align: center;
+  color: var(--muted);
+}
+
+.schulte-mensaje:empty { display: none; }
+
+/* -------------------------------------------------------------------------
+   LOS RESULTADOS
+   Lo que se ve al terminar. Las cuentas van en una rejilla y el detalle debajo,
+   para que en una pantalla angosta no se corten.
+   ------------------------------------------------------------------------- */
+.schulte-resultados {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: var(--space-sm);
+  margin: var(--space-sm) 0 0;
+}
+
+.schulte-cifra {
+  padding: var(--space-sm);
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.schulte-cifra-valor {
+  display: block;
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.schulte-cifra-nombre {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.schulte-tendencia {
+  margin: var(--space-sm) 0 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* -------------------------------------------------------------------------
+   EL FOCO Y LAS ANIMACIONES
+   El foco se ve, siempre: quien juega con el teclado tiene que saber dónde
+   está. Y si el sitio tiene las animaciones apagadas, aquí también.
+   ------------------------------------------------------------------------- */
+.schulte-celda:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+html[data-anim="off"] .schulte-celda,
+html[data-anim="off"] .schulte-barra-relleno {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .schulte-celda,
+  .schulte-barra-relleno { transition: none; }
+}
+
+@media (prefers-contrast: more) {
+  .schulte-celda {
+    border-width: 2px;
+    --schulte-halo: 2px;
+  }
+}
+
+/* -------------------------------------------------------------------------
+   LO QUE SE VE EN UN PUNTO, Y QUE SE SIGA VIENDO
+   Que la casilla tenga 44 px es el mínimo, no el objetivo. En el 5x5 de un
+   celular angosto el ancho manda y las casillas quedan al límite, así que se
+   les deja un aire por debajo del número para que no se peguen al borde de la
+   rejilla.
+   ------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------
+   LO QUE SE VE EN UN PUNTO, Y QUE SE SIGA VIENDO
+
+   Que la casilla tenga 44 px es el mínimo, no el objetivo. En un celular
+   angosto el ancho manda y las casillas quedan al límite, así que el hueco
+   entre ellas se aprieta un poco para que quepan mejor.
+
+   Y aquí NO se toca `--schulte-letra`. Había dos reglas que la cambiaban según
+   el tamaño de la pantalla, y eran **dos trampas**:
+
+   La primera: eran `@container` y no había ningún contenedor declarado, así que
+   **no hacían nada** — ni en un celular ni en un monitor.
+
+   La segunda, y la importante: aunque hubieran hecho algo, habrían
+   **tapado la letra que elige la persona**. Una variable declarada en el
+   elemento gana siempre a la que viene heredada. El tamaño de la letra es un
+   ajuste, y un ajuste que el sitio te cambia solo según la pantalla no es un
+   ajuste: es una sorpresa.
+
+   El único tope responsive que se queda es el del hueco, que es una medida
+   del tablero y no una elección de la persona. */
+@media (max-width: 22rem) {
+  .schulte { --schulte-hueco: 2px; }
+}
+
+/* =========================================================================
+   .SEC — SECUENCIA (memoria secuencial)
+
+   Igual que Schulte: aqui NO se declara con valor por defecto ninguna de las
+   variables que pone el juego en <html> (--sec-pantalla, --sec-pantalla-texto,
+   --sec-fuente, --sec-simbolo-rel, --sec-texto-escala). Una variable
+   declarada en un elemento TAPA la que llega heredada, y el ajuste se guardaria
+   sin verse. El valor por defecto va EN EL SITIO DONDE SE USA:
+   var(--sec-fuente, var(--font)).
+
+   Lo que el juego escribe en <html> como ATRIBUTOS, y este bloque lee:
+     data-sec-tam       pequeno | mediano | grande   (ancho del tablero)
+     data-sec-sep       normal | amplia              (espacio entre botones)
+     data-sec-espaciado normal | amplio              (letras y lineas)
+     data-sec-borde     on | off                     (contorno grueso)
+     data-sec-luz       completo | aro | suave       (como se enciende)
+     data-sec-mov       on | off                     (que el boton crezca)
+
+   LA LUZ, Y POR QUE ES SEGURA
+   Un boton se enciende UNA vez por paso y el juego nunca va mas deprisa que
+   un ciclo de 900 ms (ver logica/secuencia.py), muy por debajo de los tres
+   destellos por segundo que la norma WCAG 2.3.1 marca como limite. Los
+   cambios de brillo son pequenos (nunca de blanco a negro) y la luz mas
+   tranquila ("suave") solo dibuja un aro, sin cambiar ningun brillo.
+   ========================================================================= */
+.sec {
+  --sec-hueco: var(--space-sm);
+  --sec-columnas: 2;
+  --sec-ancho: 32rem;
+  --sec-reserva: 17rem;
+  --sec-proporcion: 1;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 60rem;
+  margin-inline: auto;
+  padding: var(--space-md);
+  font-family: var(--sec-fuente, var(--font));
+  font-size: calc(var(--sec-texto-escala, 1) * 1rem);
+  color: var(--sec-pantalla-texto, var(--text));
+  background: var(--sec-pantalla, transparent);
+  border-radius: var(--radius);
+}
+
+html[data-sec-espaciado="amplio"] .sec {
+  letter-spacing: 0.12em;
+  word-spacing: 0.2em;
+  line-height: 1.8;
+}
+
+html[data-sec-tam="pequeno"] .sec { --sec-ancho: 22rem; }
+html[data-sec-tam="mediano"] .sec { --sec-ancho: 32rem; }
+html[data-sec-tam="grande"]  .sec { --sec-ancho: 44rem; }
+html[data-sec-sep="amplia"]  .sec { --sec-hueco: var(--space-lg); }
+
+/* EL TABLERO
+   Contenedor de medidas: asi la letra y el dibujo de cada boton se calculan
+   con el ancho del tablero (cqw) y no con el de la pantalla. Sin esto, el
+   mismo "36 %" seria enorme en un tablero de 22 rem y pequeno en uno de 44.
+   El limite lo pone tambien la ALTURA, para que nunca haya que bajar la pagina
+   para ver la ultima fila ni el boton de la partida. */
+.sec-tablero {
+  container-type: inline-size;
+  display: grid;
+  grid-template-columns: repeat(var(--sec-columnas), minmax(0, 1fr));
+  gap: var(--sec-hueco);
+  width: 100%;
+  max-width: min(var(--sec-ancho), calc((100vh - var(--sec-reserva)) * var(--sec-proporcion)));
+  margin-inline: auto;
+}
+
+@supports (height: 100dvh) {
+  .sec-tablero {
+    max-width: min(var(--sec-ancho), calc((100dvh - var(--sec-reserva)) * var(--sec-proporcion)));
+  }
+}
+
+.sec-tablero[data-botones="4"] { --sec-columnas: 2; --sec-proporcion: 1; }
+.sec-tablero[data-botones="6"] { --sec-columnas: 3; --sec-proporcion: 1.5; }
+.sec-tablero[data-botones="9"] { --sec-columnas: 3; --sec-proporcion: 1; }
+
+/* Con muy poca altura (un celular de lado) el tablero se achica antes de
+   quedarse en nada: 12 rem es lo minimo en que un boton sigue siendo tocable. */
+@media (max-height: 30rem) {
+  .sec { --sec-reserva: 9rem; }
+}
+
+/* -------------------------------------------------------------------------
+   EL BOTON DEL JUEGO
+   Un <button>: funciona con dedo, raton y teclado sin hacer nada especial. El
+   objetivo nunca baja de 44 px (con el tablero mas chico, 22 rem en 3 columnas
+   ya dan botones de casi 6 rem).
+   El color de fondo (--sec-c) y el del simbolo (--sec-t) los pone el juego en
+   cada boton; si no hay (paleta "Un solo color"), mandan el tema.
+   ------------------------------------------------------------------------- */
+.sec-boton {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4%;
+  box-sizing: border-box;
+  aspect-ratio: 1;
+  min-width: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  font-family: inherit;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--sec-t, var(--text));
+  background: var(--sec-c, var(--surface));
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease;
+}
+
+html[data-sec-borde="on"] .sec-boton {
+  border-width: 4px;
+  border-color: var(--text);
+}
+
+/* El simbolo. Con etiqueta Y forma, la forma va arriba y la etiqueta abajo.
+   Con una sola de las dos, esa ocupa el boton. */
+.sec-forma {
+  display: block;
+  width: 38%;
+  height: 38%;
+}
+
+.sec-forma svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.sec-tablero[data-etiqueta="0"] .sec-forma { width: 56%; height: 56%; }
+
+.sec-etiqueta {
+  display: block;
+  /* Un tamano de reserva en rem para los navegadores sin unidades de
+     contenedor; el de abajo lo reemplaza donde si las entienden. */
+  font-size: calc(var(--sec-simbolo-rel, 0.36) * 6rem);
+  font-variant-numeric: tabular-nums;
+}
+
+.sec-tablero[data-forma="0"] .sec-etiqueta {
+  font-size: calc(var(--sec-simbolo-rel, 0.36) * 10rem);
+}
+
+@supports (width: 1cqw) {
+  .sec-etiqueta {
+    font-size: calc(var(--sec-simbolo-rel, 0.36) * 100cqw / var(--sec-columnas) * 0.62);
+  }
+  .sec-tablero[data-forma="0"] .sec-etiqueta {
+    font-size: calc(var(--sec-simbolo-rel, 0.36) * 100cqw / var(--sec-columnas) * 1.1);
+  }
+}
+
+/* -------------------------------------------------------------------------
+   COMO SE ENCIENDE UN BOTON  (data-luz="1" lo pone el juego)
+   El aro es doble (un anillo del color del fondo y otro del color del texto)
+   para que se vea sobre CUALQUIER color de boton y de fondo, y no dependa de
+   un color: es la pista que queda cuando los colores no se distinguen.
+   ------------------------------------------------------------------------- */
+.sec-boton[data-luz="1"] {
+  z-index: 2;
+  box-shadow: 0 0 0 3px var(--bg), 0 0 0 7px var(--text);
+}
+
+html[data-sec-luz="completo"] .sec-boton[data-luz="1"] {
+  filter: brightness(1.22) saturate(1.1);
+}
+
+/* El crecimiento solo si el movimiento esta prendido en el juego, Y el sitio
+   no tiene las animaciones apagadas, Y el sistema no pide menos movimiento. */
+html[data-sec-mov="on"][data-sec-luz="completo"] .sec-boton[data-luz="1"],
+html[data-sec-mov="on"][data-sec-luz="aro"] .sec-boton[data-luz="1"] {
+  transform: scale(1.06);
+}
+
+html[data-sec-luz="suave"] .sec-boton[data-luz="1"] {
+  box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--text);
+}
+
+html[data-sec-mov="off"] .sec-boton,
+html[data-anim="off"] .sec-boton {
+  transition: none;
+}
+
+html[data-anim="off"] .sec-boton[data-luz="1"] {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-anim="on"]) .sec-boton { transition: none; }
+  html:not([data-anim="on"]) .sec-boton[data-luz="1"] { transform: none; }
+}
+
+.sec-boton:hover:not([data-luz="1"]) {
+  border-color: var(--accent);
+}
+
+.sec-boton:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+@media (prefers-contrast: more) {
+  .sec-boton { border-width: 4px; border-color: var(--text); }
+}
+
+@media (forced-colors: active) {
+  .sec-boton { border-color: ButtonText; }
+  .sec-boton[data-luz="1"] { outline: 4px solid Highlight; outline-offset: 2px; }
+}
+
+/* -------------------------------------------------------------------------
+   EL AVANCE, EL BOTON DE LA PARTIDA Y EL MENSAJE
+   El avance reserva su altura: aunque el texto cambie ("Mirando", "Tu
+   turno"), el tablero no salta. Con [hidden] el avance se va entero (ver
+   la regla global de [hidden] en 10_base.css).
+   ------------------------------------------------------------------------- */
+.sec-avance {
+  display: grid;
+  gap: var(--space-xs);
+  width: 100%;
+  max-width: var(--sec-ancho);
+  min-height: 4.2em;
+  margin: var(--space-md) auto 0;
+  text-align: center;
+}
+
+.sec-ronda { margin: 0; font-weight: 700; }
+.sec-cuenta { margin: 0; font-variant-numeric: tabular-nums; min-height: 1.3em; }
+
+.sec-barra {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 22%, transparent);
+}
+
+.sec-barra-relleno {
+  width: 0%;
+  height: 100%;
+  background: currentColor;
+  transition: width 0.2s ease;
+}
+
+html[data-anim="off"] .sec-barra-relleno { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-anim="on"]) .sec-barra-relleno { transition: none; }
+}
+
+.sec-accion {
+  display: block;
+  min-width: 11rem;
+  min-height: 48px;
+  margin: var(--space-md) auto 0;
+  font-size: inherit;
+}
+
+/* Cuando no se puede apretar, se ve apagado pero se sigue LEYENDO (4.5:1): el
+   texto del boton es lo que dice en que momento se esta. */
+.sec-accion[aria-disabled="true"] {
+  cursor: default;
+  background: transparent;
+  border-style: dashed;
+}
+
+.sec-mensaje {
+  min-height: 2.6em;
+  margin: var(--space-sm) 0 0;
+  text-align: center;
+  white-space: pre-line;
+}
+
+.sec-mensaje:empty { display: none; }
+
+/* -------------------------------------------------------------------------
+   EL MODAL DE AJUSTES
+   El cuadrito va PEGADO ARRIBA mientras se baja por los ajustes: es lo que se
+   esta mirando, y si hubiera que subir para verlo se perderia el ir-y-ver.
+   ------------------------------------------------------------------------- */
+.sec-config {
+  max-width: 36rem;
+  max-height: 92vh;
+  overflow-y: auto;
+  text-align: left;
+}
+
+@supports (height: 100dvh) {
+  .sec-config { max-height: 92dvh; }
+}
+
+.sec-config .dialogo-titulo { text-align: center; }
+
+.sec-cuadrito {
+  position: sticky;
+  top: calc(-1 * var(--space-lg));
+  z-index: 3;
+  margin: 0 calc(-1 * var(--space-lg)) var(--space-lg);
+  padding: var(--space-sm) var(--space-lg);
+  text-align: center;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.sec-cuadrito-caja .sec { padding: 0; background: transparent; }
+.sec-cuadrito-caja .sec-tablero { --sec-ancho: 9rem; max-width: 9rem; }
+.sec-cuadrito .ayuda { margin: var(--space-xs) 0 0; }
+
+.sec-perfiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: var(--space-sm);
+}
+
+.sec-perfil {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  height: 100%;
+  text-align: left;
+  font: inherit;
+  background: transparent;
+}
+
+.sec-perfil .ayuda { margin: 0; font-size: 0.85rem; }
+
+.sec-muestras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin: var(--space-sm) 0;
+}
+
+.sec-muestra {
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 2px solid var(--borde-fuerte);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.sec-personal {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-md);
+}
+
+.sec-personal[hidden] { display: none; }
+
+
+/* =========================================================================
+   .MJ — MAHJONG (solitario de fichas en pisos)
+
+   Igual que Schulte y Secuencia: aqui NO se declara con valor por defecto
+   ninguna de las variables que pone el juego en <html> (--mj-pantalla,
+   --mj-pantalla-texto, --mj-fuente, --mj-simbolo-rel, --mj-texto-escala). Una
+   variable declarada en un elemento TAPA la que llega heredada, y el ajuste
+   se guardaria sin verse. El valor por defecto va EN EL SITIO DONDE SE USA:
+   var(--mj-fuente, var(--font)).
+
+   Lo que el juego escribe en <html> como ATRIBUTOS, y este bloque lee:
+     data-mj-tam        ajustar | mediano | grande | enorme
+     data-mj-espaciado  normal | amplio
+     data-mj-borde      on | off     (contorno grueso)
+     data-mj-luz        completo | aro | suave   (como se marca la elegida)
+     data-mj-mov        on | off     (que suba y que las quitadas se desvanezcan)
+     data-mj-marcar     on | off     (rayas en las fichas tapadas)
+     data-mj-piso       on | off     (el numero del piso en cada ficha)
+
+   LA MEDIDA. Una ficha ocupa 2 x 2 unidades de la cuadricula del nivel. El
+   ancho de una unidad es --u y el alto es --v (un poco mayor, porque una
+   ficha de mahjong es mas alta que ancha). Los pisos de arriba se dibujan
+   corridos hacia arriba y a la izquierda --prof, y cada ficha lleva un
+   "grosor" (la sombra dura de abajo a la derecha) que es lo que hace que se
+   vea el relieve SIN depender del color.
+
+   Lo que NO es color, a proposito: la ficha tapada lleva rayas, la elegida un
+   aro doble, la pista un borde de rayitas y la igual un borde de puntos.
+   ========================================================================= */
+.mj {
+  --mj-reserva: 16rem;
+  --mj-pantalla-alto: 100vh;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 80rem;
+  margin-inline: auto;
+  padding: var(--space-md);
+  font-family: var(--mj-fuente, var(--font));
+  font-size: calc(var(--mj-texto-escala, 1) * 1rem);
+  color: var(--mj-pantalla-texto, var(--text));
+  background: var(--mj-pantalla, transparent);
+  border-radius: var(--radius);
+}
+
+@supports (height: 100dvh) {
+  .mj { --mj-pantalla-alto: 100dvh; }
+}
+
+@media (max-height: 30rem) {
+  .mj { --mj-reserva: 9rem; }
+}
+
+html[data-mj-espaciado="amplio"] .mj {
+  letter-spacing: 0.12em;
+  word-spacing: 0.2em;
+  line-height: 1.8;
+}
+
+/* LA CAJA DEL TABLERO
+   Contenedor de medidas: asi el tamano de las fichas se calcula con el ancho de
+   la caja (cqw) y no con el de la pantalla. Se desplaza cuando el tablero es
+   mas grande que ella (tamanos fijos o pantallas muy chicas), y su altura se
+   limita para que el boton y los mensajes de abajo no se vayan de la pantalla. */
+.mj-caja {
+  container-type: inline-size;
+  box-sizing: border-box;
+  width: 100%;
+  max-height: max(12rem, calc(var(--mj-pantalla-alto) - var(--mj-reserva)));
+  overflow: auto;
+  padding: var(--space-xs);
+}
+
+.mj-caja:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.mj-tablero {
+  --u: 1.5rem;
+  --v: calc(var(--u) * 1.3);
+  --prof: calc(var(--u) * 0.28);
+  --grosor: calc(var(--u) * 0.16);
+  position: relative;
+  box-sizing: content-box;
+  width: calc(var(--mj-ancho, 12) * var(--u) + var(--mj-pisos, 0) * var(--prof) + var(--grosor));
+  height: calc(var(--mj-alto, 8) * var(--v) + var(--mj-pisos, 0) * var(--prof) + var(--grosor));
+  margin-inline: auto;
+}
+
+html[data-mj-tam="mediano"] .mj-tablero:not(.mj-tablero--muestra) { --u: 1.75rem; }
+html[data-mj-tam="grande"]  .mj-tablero:not(.mj-tablero--muestra) { --u: 2.25rem; }
+html[data-mj-tam="enorme"]  .mj-tablero:not(.mj-tablero--muestra) { --u: 3rem; }
+
+/* AJUSTAR A LA PANTALLA: la unidad mas grande que deje caber el tablero a lo
+   ancho Y a lo alto, entre un minimo (1.375 rem = una ficha de 44 px, lo
+   mas chico que se puede tocar con el dedo) y un maximo. Si el minimo no
+   alcanza, el tablero se desplaza dentro de su caja en vez de achicar mas las
+   fichas. */
+html[data-mj-tam="ajustar"] .mj-tablero:not(.mj-tablero--muestra) { --u: 1.375rem; }
+
+@supports (width: 1cqw) {
+  html[data-mj-tam="ajustar"] .mj-tablero:not(.mj-tablero--muestra) {
+    --u: clamp(
+      1.375rem,
+      min(
+        calc(100cqw / (var(--mj-ancho, 12) + var(--mj-pisos, 0) * 0.28 + 0.16)),
+        calc((var(--mj-pantalla-alto) - var(--mj-reserva)) / (var(--mj-alto, 8) * 1.3 + var(--mj-pisos, 0) * 0.28 + 0.16))
+      ),
+      4.5rem
+    );
+  }
+}
+
+.mj-tablero--muestra { --u: 1.1rem; }
+
+/* -------------------------------------------------------------------------
+   LA FICHA
+   Un <button>: funciona con dedo, raton y teclado sin hacer nada especial. El
+   color de fondo (--mj-c) y el del dibujo (--mj-t) los pone el juego en cada
+   ficha; si no hay (paleta "Un solo color"), mandan el tema.
+   El orden en que se apilan lo da --i (piso, luego fila, luego columna): asi la
+   sombra de una ficha queda DEBAJO de la que tiene a la derecha o abajo.
+   ------------------------------------------------------------------------- */
+.mj-ficha {
+  position: absolute;
+  left: calc(var(--x) * var(--u) + (var(--mj-pisos, 0) - var(--z)) * var(--prof));
+  top: calc(var(--y) * var(--v) + (var(--mj-pisos, 0) - var(--z)) * var(--prof));
+  z-index: var(--i);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: calc(2 * var(--u));
+  height: calc(2 * var(--v));
+  margin: 0;
+  padding: 0;
+  font-family: inherit;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--mj-t, var(--text));
+  background: var(--mj-c, var(--surface));
+  border: 2px solid var(--borde-fuerte);
+  border-radius: calc(var(--u) * 0.3);
+  box-shadow: var(--grosor) var(--grosor) 0 var(--borde-fuerte);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease, filter 0.12s ease, opacity 0.22s ease;
+}
+
+html[data-mj-borde="on"] .mj-ficha {
+  border-width: 4px;
+  border-color: var(--text);
+}
+
+.mj-cara {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.mj-cara svg {
+  display: block;
+  width: calc(var(--mj-simbolo-rel, 0.36) * 3 * var(--u));
+  height: calc(var(--mj-simbolo-rel, 0.36) * 3 * var(--u));
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.mj-cara--texto {
+  font-size: calc(var(--mj-simbolo-rel, 0.36) * 3.4 * var(--u));
+  font-variant-numeric: tabular-nums;
+}
+
+/* LOS EMOJIS COMO CARA. Traen sus propios colores, y sobre algunas paletas
+   (o sobre un color elegido por la persona) se perderían. Por eso van sobre un
+   círculo claro: se leen igual en todas, y el color de la ficha sigue ahí
+   como apoyo. */
+.mj-cara--emoji {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  font-size: calc(var(--mj-simbolo-rel, 0.36) * 2.7 * var(--u));
+  line-height: 1;
+}
+
+.mj-cara--emoji::before {
+  content: "";
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: calc(var(--mj-simbolo-rel, 0.36) * 4.2 * var(--u));
+  height: calc(var(--mj-simbolo-rel, 0.36) * 4.2 * var(--u));
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 50%;
+  z-index: -1;
+}
+
+.mj-piso {
+  display: none;
+  position: absolute;
+  right: 8%;
+  bottom: 4%;
+  z-index: 2;
+  font-size: max(0.7rem, calc(var(--u) * 0.5));
+  font-weight: 700;
+}
+
+html[data-mj-piso="on"] .mj-piso { display: block; }
+
+/* LA FICHA TAPADA lleva RAYAS (con el color del dibujo, a media fuerza), no
+   solo un color apagado: se distingue sin ver colores y el dibujo sigue
+   leyendose por encima. */
+html[data-mj-marcar="on"] .mj-ficha[data-libre="0"] {
+  cursor: default;
+}
+
+html[data-mj-marcar="on"] .mj-ficha[data-libre="0"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0,
+    transparent calc(var(--u) * 0.32),
+    color-mix(in srgb, var(--mj-t, var(--text)) 38%, transparent) calc(var(--u) * 0.32),
+    color-mix(in srgb, var(--mj-t, var(--text)) 38%, transparent) calc(var(--u) * 0.44)
+  );
+}
+
+.mj-ficha[data-libre="1"]:hover { border-color: var(--accent); }
+
+/* LA ELEGIDA: un aro doble (uno del color del fondo y otro del color del
+   texto, para que se vea sobre CUALQUIER ficha) y, si hay movimiento, sube un
+   poco. Se conserva el relieve de la ficha en la misma sombra. */
+.mj-ficha[data-sel="1"] {
+  box-shadow: 0 0 0 3px var(--bg), 0 0 0 7px var(--text),
+              var(--grosor) var(--grosor) 0 7px var(--borde-fuerte);
+}
+
+html[data-mj-luz="suave"] .mj-ficha[data-sel="1"] {
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--text),
+              var(--grosor) var(--grosor) 0 4px var(--borde-fuerte);
+}
+
+html[data-mj-luz="completo"] .mj-ficha[data-sel="1"] {
+  filter: brightness(1.15) saturate(1.1);
+}
+
+html[data-mj-mov="on"][data-mj-luz="completo"] .mj-ficha[data-sel="1"],
+html[data-mj-mov="on"][data-mj-luz="aro"] .mj-ficha[data-sel="1"] {
+  transform: translateY(-6%);
+}
+
+/* LA PISTA: borde de rayitas. LAS IGUALES (si se pidio resaltarlas): borde de
+   puntos. Dos formas distintas, y ninguna depende del color. */
+.mj-ficha[data-pista="1"] {
+  outline: 4px dashed var(--text);
+  outline-offset: 3px;
+}
+
+.mj-ficha[data-igual="1"] {
+  outline: 3px dotted var(--text);
+  outline-offset: 3px;
+}
+
+.mj-ficha:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 5px;
+}
+
+/* LAS QUE SE QUITAN se desvanecen (solo si hay movimiento: el juego no pone
+   este atributo si el ajuste, el sitio o el sistema piden quietud). */
+.mj-ficha[data-saliendo="1"] {
+  opacity: 0;
+  transform: scale(0.85);
+  pointer-events: none;
+}
+
+html[data-mj-mov="off"] .mj-ficha,
+html[data-anim="off"] .mj-ficha {
+  transition: none;
+}
+
+html[data-anim="off"] .mj-ficha[data-sel="1"] { transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-anim="on"]) .mj-ficha { transition: none; }
+  html:not([data-anim="on"]) .mj-ficha[data-sel="1"] { transform: none; }
+}
+
+@media (prefers-contrast: more) {
+  .mj-ficha { border-width: 4px; border-color: var(--text); }
+}
+
+@media (forced-colors: active) {
+  .mj-ficha { border-color: ButtonText; }
+  .mj-ficha[data-sel="1"] { outline: 4px solid Highlight; outline-offset: 2px; }
+}
+
+/* -------------------------------------------------------------------------
+   CUANTAS QUEDAN, EL MENSAJE Y EL BOTON DE ABAJO
+   El avance reserva su altura: aunque el texto cambie, el tablero no salta.
+   Con [hidden] se va entero (ver la regla global de [hidden] en 10_base.css).
+   ------------------------------------------------------------------------- */
+.mj-avance {
+  display: grid;
+  gap: var(--space-xs);
+  width: 100%;
+  max-width: 32rem;
+  min-height: 3em;
+  margin: var(--space-sm) auto 0;
+  text-align: center;
+}
+
+.mj-restan { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.mj-barra {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 22%, transparent);
+}
+
+.mj-barra-relleno {
+  width: 0%;
+  height: 100%;
+  background: currentColor;
+  transition: width 0.2s ease;
+}
+
+html[data-anim="off"] .mj-barra-relleno { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-anim="on"]) .mj-barra-relleno { transition: none; }
+}
+
+.mj-mensaje {
+  min-height: 2.6em;
+  margin: var(--space-xs) 0 0;
+  text-align: center;
+  white-space: pre-line;
+}
+
+.mj-mensaje:empty { display: none; }
+
+.mj-accion {
+  display: block;
+  min-width: 11rem;
+  min-height: 48px;
+  margin: var(--space-sm) auto 0;
+  font-size: inherit;
+}
+
+.mj-accion[hidden] { display: none; }
+
+/* -------------------------------------------------------------------------
+   EL MODAL DE AJUSTES
+   El cuadrito va PEGADO ARRIBA mientras se baja por los ajustes: es lo que se
+   esta mirando, y si hubiera que subir para verlo se perderia el ir-y-ver.
+   ------------------------------------------------------------------------- */
+.mj-config {
+  max-width: 36rem;
+  max-height: 92vh;
+  overflow-y: auto;
+  text-align: left;
+}
+
+@supports (height: 100dvh) {
+  .mj-config { max-height: 92dvh; }
+}
+
+.mj-config .dialogo-titulo { text-align: center; }
+
+.mj-cuadrito {
+  position: sticky;
+  top: calc(-1 * var(--space-lg));
+  z-index: 3;
+  margin: 0 calc(-1 * var(--space-lg)) var(--space-lg);
+  padding: var(--space-sm) var(--space-lg);
+  text-align: center;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.mj-muestra {
+  padding: var(--space-xs) 0;
+  color: inherit;
+  background: transparent;
+}
+
+.mj-cuadrito .ayuda { margin: var(--space-xs) 0 0; }
+
+.mj-perfiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: var(--space-sm);
+}
+
+.mj-perfil {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  height: 100%;
+  text-align: left;
+  font: inherit;
+  background: transparent;
+}
+
+.mj-perfil .ayuda { margin: 0; font-size: 0.85rem; }
+
+.mj-muestras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin: var(--space-sm) 0;
+}
+
+.mj-muestra-color {
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 2px solid var(--borde-fuerte);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.mj-personal {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-md);
+}
+
+.mj-personal[hidden] { display: none; }
+
+/* =============================================================================
+   STROOP
+   -----------------------------------------------------------------------------
+   El juego de atención donde dos cosas compiten en la pantalla. Todo sale de
+   los tokens del tema (--surface, --border, --text, --muted, --accent,
+   --acierto), así que funciona en los cinco temas sin escribir un color a
+   mano. Las únicas excepciones son los colores del juego (las paletas, que
+   viven en reto-stroop.js) y el fondo OSCURO del modo de colores: el amarillo
+   sobre el blanco del tema claro no se lee, y el estímulo tiene que verse
+   siempre. Con --stroop-fondo (el ajuste de color) se cambia, y lo elegido
+   gana.
+   ========================================================================== */
+.stroop {
+  /* Lo que se cambia desde los ajustes llega por estas variables, puestas en
+     <html> por el script: el juego y el cuadrito del modal las heredan. */
+  --stroop-escala: 1;
+  width: 100%;
+  max-width: 34rem;
+  margin-inline: auto;
+  /* El panel flotante va fijo abajo: sin este espacio taparía los botones. */
+  padding-bottom: 7rem;
+  text-align: center;
+  font-family: var(--stroop-fuente, var(--font));
+}
+
+.stroop-instruccion {
+  margin: 0 0 var(--space-sm);
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.stroop-instruccion strong { color: var(--text); }
+
+/* LOS NIVELES. El pulsado se ve con borde, grosor y un anillo, no solo con el
+   color del acento. */
+.stroop-niveles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  justify-content: center;
+  margin: 0 0 var(--space-md);
+}
+
+.stroop-nivel {
+  min-height: 44px;
+  padding: var(--space-xs) var(--space-md);
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.stroop-nivel:hover { border-color: var(--borde-fuerte); }
+
+.stroop-nivel[aria-pressed="true"] {
+  font-weight: 700;
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.stroop-nivel:focus-visible,
+.stroop-opcion:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* LAS CUENTAS */
+.stroop-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-xs);
+  margin: 0 0 var(--space-md);
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.stroop-stat strong {
+  display: block;
+  font-size: 1.2rem;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* EL ESCENARIO: donde está el estímulo. Alto mínimo fijo para que los botones
+   de abajo no salten cuando cambia de un tipo a otro. */
+.stroop-escenario {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 10.5rem;
+  margin: 0 0 var(--space-sm);
+  padding: var(--space-md);
+  color: var(--stroop-texto, var(--text));
+  background: var(--stroop-fondo, var(--surface));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-sizing: border-box;
+}
+
+/* Los colores van SIEMPRE sobre oscuro (ver arriba). */
+.stroop-escenario[data-contenido="colores"] {
+  color: var(--stroop-texto, #f0f0f8);
+  background: var(--stroop-fondo, #15161f);
+  border-color: var(--borde-fuerte);
+}
+
+.stroop-regla {
+  margin: 0 0 var(--space-sm);
+  padding: 0.15rem 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+}
+
+.stroop-regla[hidden] { display: none; }
+
+.stroop-estimulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3em 0.4em;
+  min-height: 1.5em;
+  font-size: calc(var(--stroop-letra, 2.6) * var(--stroop-escala, 1) * 1rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+@keyframes stroop-entrar {
+  from { opacity: 0; transform: scale(0.88); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.stroop-estimulo.stroop-entra { animation: stroop-entrar 0.25s ease; }
+
+.stroop-cifra {
+  font-variant-numeric: tabular-nums;
+  padding-inline: 0.1em;
+}
+
+.stroop-columna {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15em;
+}
+
+.stroop-emoji { font-size: 1.2em; line-height: 1.1; }
+
+.stroop-rotulo {
+  font-size: 0.5em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+/* Las figuras: una caja cuadrada con el dibujo de adentro, rellena con el color
+   del texto (currentColor). */
+.stroop-forma {
+  display: inline-flex;
+  width: 1em;
+  height: 1em;
+  flex: 0 0 auto;
+}
+
+.stroop-forma svg { width: 100%; height: 100%; display: block; }
+
+.stroop-figura { width: 1.5em; height: 1.5em; }
+
+/* El símbolo que acompaña a la palabra de color: más chico que la palabra. */
+.stroop-marca { width: 0.7em; height: 0.7em; }
+
+/* EL TIEMPO que queda. Lo mueve el script con --stroop-resto (de 1 a 0). */
+.stroop-tiempo {
+  width: 100%;
+  height: 0.5rem;
+  margin-top: var(--space-md);
+  overflow: hidden;
+  background: rgba(127, 127, 127, 0.3);
+  border-radius: 0.25rem;
+}
+
+.stroop-tiempo[hidden] { display: none; }
+
+.stroop-tiempo-relleno {
+  height: 100%;
+  background: currentColor;
+  transform-origin: left center;
+  transform: scaleX(var(--stroop-resto, 1));
+}
+
+/* EL AVISO. Reservado aunque esté vacío, para que los botones no salten. */
+.stroop-feedback {
+  min-height: 1.6em;
+  margin: 0 0 var(--space-sm);
+  font-weight: 700;
+}
+
+.stroop-feedback[data-tipo="bien"] { color: var(--acierto, var(--ayuda)); }
+.stroop-feedback[data-tipo="mal"]  { color: var(--text); }
+
+/* LOS BOTONES. Dos columnas; si es impar, el último ocupa el centro. Nunca
+   bajan de 44 px de alto: por debajo, la mitad de los toques se van al botón
+   de al lado. */
+.stroop-opciones {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-sm);
+}
+
+.stroop-opcion {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 3.5rem;
+  margin: 0;
+  padding: var(--space-xs) var(--space-sm);
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text);
+  background: var(--surface);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease, opacity 0.2s ease;
+}
+
+.stroop-opcion:active { transform: scale(0.97); }
+
+.stroop-opcion.impar-solo {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: min(100%, 14rem);
+}
+
+.stroop-opcion .stroop-forma { width: 1.4em; height: 1.4em; }
+.stroop-opcion-cifra { font-size: 1.7rem; font-variant-numeric: tabular-nums; }
+.stroop-opcion-emoji { font-size: 1.9rem; line-height: 1; }
+.stroop-opcion-nombre { font-size: 1rem; }
+
+/* Con 6 o 7 opciones, en pantallas anchas, tres columnas: así no se alarga la
+   página y los botones de abajo no se quedan detrás del panel flotante. En un
+   celular se queda en dos, porque con tres el nombre ya no cabe. */
+@media (min-width: 34rem) {
+  .stroop-opciones[data-cantidad="6"],
+  .stroop-opciones[data-cantidad="7"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* DESPUÉS DE CONTESTAR. La correcta se marca con un anillo y una marca de
+   verificación; la equivocada, con una tacha y apagada. Ninguna depende solo
+   del color. */
+.stroop-opcion[aria-disabled="true"] { cursor: default; }
+
+.stroop-opcion[data-estado="bien"] {
+  outline: 4px solid var(--acierto, var(--ayuda));
+  outline-offset: 2px;
+}
+
+.stroop-opcion[data-estado="bien"]::after,
+.stroop-opcion[data-estado="mal"]::after {
+  position: absolute;
+  top: -0.6rem;
+  right: -0.4rem;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1;
+  border-radius: 50%;
+}
+
+.stroop-opcion[data-estado="bien"]::after {
+  content: "✓";
+  color: #fff;
+  background: var(--acierto, var(--ayuda));
+}
+
+.stroop-opcion[data-estado="mal"] { opacity: 0.55; }
+
+.stroop-opcion[data-estado="mal"]::after {
+  content: "✗";
+  color: var(--bg);
+  background: var(--text);
+}
+
+/* EL MODAL DE AJUSTES, con su cuadrito de muestra hecho con las clases del
+   juego. El cuadrito no se puede tocar. */
+.stroop-config { text-align: center; }
+
+.stroop-cuadrito {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 var(--space-lg);
+}
+
+.stroop-previa {
+  --stroop-escala: 0.62;
+  padding-bottom: 0;
+  max-width: 20rem;
+  pointer-events: none;
+}
+
+.stroop-previa .stroop-escenario { min-height: 7rem; padding: var(--space-md); margin-bottom: var(--space-sm); }
+
+.stroop-previa .stroop-opciones { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-xs); }
+
+.stroop-previa .stroop-opcion { min-height: 2.8rem; font-size: 0.85rem; padding-inline: 0.25rem; flex-direction: column; gap: 0.1rem; }
+.stroop-previa .stroop-opcion-nombre { font-size: 0.75rem; }
+.stroop-previa .stroop-opcion-cifra { font-size: 1.3rem; }
+.stroop-previa .stroop-opcion-emoji { font-size: 1.4rem; }
+
+.stroop-config fieldset[hidden],
+.stroop-config .interruptor[hidden] { display: none; }

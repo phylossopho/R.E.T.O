@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="papel">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Animaciones - Configuración - R.E.T.O.</title>
+<link rel="preload" href="styles/fuentes/nunito.css" as="style">
+<link rel="stylesheet" href="styles/fuentes/nunito.css">
+<link rel="stylesheet" href="styles/styles.css?v=c85-flexfix">
+<script src="scripts/reto-panel-prefs.js?v=c01-0f3ddb54"></script>
+<script>
+(function () {
+  var t = localStorage.getItem('tema') || 'papel';
+  document.documentElement.setAttribute('data-theme', t);
+  var a = localStorage.getItem('animaciones');
+  if (a === 'off' || a === 'on') {
+    document.documentElement.setAttribute('data-anim', a);
+  }
+  var nivel = localStorage.getItem('anim_nivel');
+  if (nivel) { document.documentElement.setAttribute('data-anim-nivel', nivel); }
+  var hover = localStorage.getItem('anim_hover');
+  if (hover) { document.documentElement.setAttribute('data-anim-hover', hover); }
+  var accion = localStorage.getItem('anim_accion');
+  if (accion) { document.documentElement.setAttribute('data-anim-accion', accion); }
+  var panelAnim = localStorage.getItem('anim_panel');
+  if (panelAnim) { document.documentElement.setAttribute('data-anim-panel', panelAnim); }
+
+  try {
+    var forzar = /[?&]anim=1/.test(location.search);
+    if (sessionStorage.getItem('reto_anim_tarjetas') && !forzar) {
+      document.documentElement.setAttribute('data-anim-tarjetas', 'off');
+    } else {
+      sessionStorage.setItem('reto_anim_tarjetas', '1');
+    }
+  } catch (e) {}
+})();
+</script>
+</head>
+<body>
+<header>
+<h1>Animaciones y Comportamiento</h1>
+</header>
+<main>
+<form class="ajustes" id="ajustes-animaciones">
+
+<!-- SECCIÓN 1: INTERRUPTOR GENERAL -->
+<fieldset>
+<legend id="titulo-animaciones">1. Interruptor General</legend>
+<p class="ayuda">
+Los movimientos suaves ayudan a ubicar cada cosa. Si te molestan o te
+marean, apágalos: el sitio funciona igual.
+</p>
+<label class="interruptor" for="anim-activas">
+<input type="checkbox" id="anim-activas" checked>
+<span class="interruptor-caja" aria-hidden="true"></span>
+<span class="interruptor-texto">Animaciones activadas</span>
+</label>
+<p class="ayuda" id="anim-aviso" hidden>
+Tu sistema tiene apagados los efectos de animación, así que arrancan
+desactivadas. Puedes prenderlas aquí sí te sirven y no te incomodan.
+</p>
+</fieldset>
+
+<!-- SECCIÓN 2: ESTILO GENERAL -->
+<fieldset style="margin-top: var(--space-lg);">
+<legend>2. Estilo General de Tarjetas y Modales</legend>
+<p class="ayuda">
+Elige la presencia visual y profundidad de los elementos principales.
+</p>
+<div class="opciones" role="radiogroup" aria-label="Estilo General de Tarjetas y Modales">
+  <label class="opcion"><input type="radio" name="anim-nivel" value="estandar"><span>Estándar (limpio y tradicional)</span></label>
+  <label class="opcion"><input type="radio" name="anim-nivel" value="expresivo"><span>Expresivo / Vivo (con profundidad y brillo mejorados)</span></label>
+</div>
+</fieldset>
+
+<!-- SECCIÓN 3: EFECTO HOVER -->
+<fieldset style="margin-top: var(--space-lg);">
+<legend>3. Efecto al Pasar el Ratón (Hover)</legend>
+<p class="ayuda">
+Define cómo reaccionan las tarjetas al deslizar el ratón por encima.
+</p>
+<div class="opciones" role="radiogroup" aria-label="Efecto al Pasar el Ratón (Hover)">
+  <label class="opcion"><input type="radio" name="anim-hover" value="estandar"><span>Estándar (sutil zoom y elevación)</span></label>
+  <label class="opcion"><input type="radio" name="anim-hover" value="flotacion-3d"><span>Flotación 3D (elevación pronunciada y sombra profunda)</span></label>
+  <label class="opcion"><input type="radio" name="anim-hover" value="pulso-ludico"><span>Pulso Lúdico (latido rítmico, ideal para niños)</span></label>
+</div>
+</fieldset>
+
+<!-- SECCIÓN 4: ACCIÓN Y CLIC -->
+<fieldset style="margin-top: var(--space-lg);">
+<legend>4. Respuesta al Accionar (Clic / Tocar)</legend>
+<p class="ayuda">
+Elige la retroalimentación visual al presionar un botón o tarjeta.
+</p>
+<div class="opciones" role="radiogroup" aria-label="Respuesta al Accionar">
+  <label class="opcion"><input type="radio" name="anim-accion" value="estandar"><span>Estándar (hundimiento clásico)</span></label>
+  <label class="opcion"><input type="radio" name="anim-accion" value="rebote"><span>Rebote Táctil (efecto elástico al pulsar)</span></label>
+</div>
+</fieldset>
+
+<!-- SECCIÓN 5: PANEL FLOTANTE -->
+<fieldset style="margin-top: var(--space-lg);">
+<legend>5. Comportamiento del Panel Flotante</legend>
+<p class="ayuda">
+Personaliza la animación y dinamismo de la barra flotante de navegación.
+</p>
+<div class="opciones" role="radiogroup" aria-label="Comportamiento del Panel Flotante">
+  <label class="opcion"><input type="radio" name="anim-panel" value="estandar"><span>Estándar (deslizamiento fluido)</span></label>
+  <label class="opcion"><input type="radio" name="anim-panel" value="elastico"><span>Elástico (rebote al interactuar)</span></label>
+  <label class="opcion"><input type="radio" name="anim-panel" value="giro"><span>Giro Sutil (inclinación dinámica al pasar el ratón)</span></label>
+</div>
+</fieldset>
+
+</form>
+</main>
+<div class="panel-flotante" data-panel>
+  <a class="panel-boton" href="configuracion_general.html"
+     aria-label="Volver a configuración" title="Volver a configuración">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8592;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></span>
+  </a>
+  <a class="panel-boton" href="index.html"
+     aria-label="Ir a la portada" title="Ir a la portada">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8962;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 3l9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/><path d="M10 21v-6h4v6"/></svg></span>
+  </a>
+</div>
+<footer hidden>
+<p>R.E.T.O.</p>
+</footer>
+<script>
+// Sincronización y persistencia de todas las opciones de animación y paneles.
+(function () {
+  var casilla = document.getElementById('anim-activas');
+  var aviso = document.getElementById('anim-aviso');
+  var radiosNivel = document.querySelectorAll('input[name="anim-nivel"]');
+  var radiosHover = document.querySelectorAll('input[name="anim-hover"]');
+  var radiosAccion = document.querySelectorAll('input[name="anim-accion"]');
+  var radiosPanel = document.querySelectorAll('input[name="anim-panel"]');
+  if (!casilla) return;
+
+  var sistemaPideMenos = false;
+  try {
+    var mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    sistemaPideMenos = mq.matches;
+  } catch (e) {}
+
+  function aplicar(reduce) {
+    casilla.checked = localStorage.getItem('animaciones') !== 'off';
+    if (reduce && localStorage.getItem('animaciones') === null) {
+      casilla.checked = false;
+    }
+    if (aviso) aviso.hidden = !reduce;
+    if (casilla.checked) {
+      document.documentElement.setAttribute('data-anim', 'on');
+    } else {
+      document.documentElement.setAttribute('data-anim', 'off');
+    }
+
+    var nivelGuardado = localStorage.getItem('anim_nivel') || 'estandar';
+    radiosNivel.forEach(function (r) {
+      r.checked = (r.value === nivelGuardado);
+    });
+    document.documentElement.setAttribute('data-anim-nivel', nivelGuardado);
+
+    var hoverGuardado = localStorage.getItem('anim_hover') || 'estandar';
+    radiosHover.forEach(function (r) {
+      r.checked = (r.value === hoverGuardado);
+    });
+    document.documentElement.setAttribute('data-anim-hover', hoverGuardado);
+
+    var accionGuardada = localStorage.getItem('anim_accion') || 'estandar';
+    radiosAccion.forEach(function (r) {
+      r.checked = (r.value === accionGuardada);
+    });
+    document.documentElement.setAttribute('data-anim-accion', accionGuardada);
+
+    var panelGuardado = localStorage.getItem('anim_panel') || 'estandar';
+    radiosPanel.forEach(function (r) {
+      r.checked = (r.value === panelGuardado);
+    });
+    document.documentElement.setAttribute('data-anim-panel', panelGuardado);
+  }
+
+  casilla.addEventListener('change', function () {
+    if (this.checked) {
+      document.documentElement.setAttribute('data-anim', 'on');
+      localStorage.setItem('animaciones', 'on');
+    } else {
+      document.documentElement.setAttribute('data-anim', 'off');
+      localStorage.setItem('animaciones', 'off');
+    }
+  });
+
+  radiosNivel.forEach(function (r) {
+    r.addEventListener('change', function () {
+      if (this.checked) {
+        var val = this.value;
+        document.documentElement.setAttribute('data-anim-nivel', val);
+        localStorage.setItem('anim_nivel', val);
+      }
+    });
+  });
+
+  radiosHover.forEach(function (r) {
+    r.addEventListener('change', function () {
+      if (this.checked) {
+        var val = this.value;
+        document.documentElement.setAttribute('data-anim-hover', val);
+        localStorage.setItem('anim_hover', val);
+      }
+    });
+  });
+
+  radiosAccion.forEach(function (r) {
+    r.addEventListener('change', function () {
+      if (this.checked) {
+        var val = this.value;
+        document.documentElement.setAttribute('data-anim-accion', val);
+        localStorage.setItem('anim_accion', val);
+      }
+    });
+  });
+
+  radiosPanel.forEach(function (r) {
+    r.addEventListener('change', function () {
+      if (this.checked) {
+        var val = this.value;
+        document.documentElement.setAttribute('data-anim-panel', val);
+        localStorage.setItem('anim_panel', val);
+      }
+    });
+  });
+
+  aplicar(sistemaPideMenos);
+})();
+</script>
+<script src="scripts/reto-panel.js?v=c04-f73a0fa9"></script>
+<script src="scripts/reto-debug.js?v=c25-5ac10ea0"></script>
+</body>
+</html>

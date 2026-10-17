@@ -1,0 +1,33 @@
+FUENTES DE LA PANTALLA DE LECTURA
+=================================
+
+Estas son las fuentes entre las que se puede elegir en el modal de ajustes del
+modo Galactico (el boton de los controles deslizantes, en el panel de abajo).
+Nunito, la del sitio, vive en la carpeta de arriba (../nunito.css).
+
+CADA FUENTE ES DE DOS ARCHIVOS: <nombre>-400.woff2 (normal) y
+<nombre>-700.woff2 (negrita). Solo el formato .woff2: es el mas chico y lo
+abren todos los navegadores que pide el proyecto.
+
+PARA AGREGAR UNA FUENTE AL SITIO (para todos, no solo para ti) hay tres pasos:
+
+  1. Copia los dos archivos .woff2 a esta carpeta.
+     Revisa que su licencia permita repartirla con el sitio (la OFL si) y
+     agrega su aviso a LICENCIAS.txt.
+  2. Escribe sus dos @font-face en lectura.css, copiando uno de los que ya hay.
+  3. Agrega una linea a la lista DEL_SITIO de scripts/reto-fuentes.js, con el
+     mismo nombre que pusiste en font-family:
+        { id: 'miletra', nombre: 'Mi Letra', familia: 'Mi Letra',
+          nota: 'Una frase corta que diga como es.' }
+
+Despues, sube la version de reto-fuentes.js en practica.html (ver ESTADO.md,
+seccion 1).
+
+OJO: que cubra el espanol. Antes de agregarla, comprueba que tenga la n con
+tilde, las vocales con acento, la u con dieresis y los signos de apertura
+(los que abren una pregunta y una exclamacion). Si le falta alguno, el
+navegador lo pinta con otra fuente y se nota un salto en medio de la palabra.
+
+PARA UNA FUENTE QUE SOLO QUIERES USAR TU (no para todos): no hace falta tocar
+esta carpeta. En el modal, el boton "Instalar una fuente de mis archivos" la
+guarda en este navegador, y entra en tu respaldo.

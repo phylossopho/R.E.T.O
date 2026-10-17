@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Memorama</title>
+<style>
+  :root{
+    --bg:#0f0f1a; --card-bg:#1b1c2e; --card-edge:#2c2d45;
+    --carta-atras:#2a2b45; --carta-frente:#f4f1e8; --acento:#7c8aff;
+    --texto:#f0f0f8; --texto-sec:#9a9ac0; --exito:#4fd18b;
+    box-sizing:border-box;
+  }
+  *{box-sizing:inherit;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg); color:var(--texto);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    min-height:100vh; display:flex; justify-content:center;
+    padding: calc(20px + env(safe-area-inset-top,0px)) 14px calc(24px + env(safe-area-inset-bottom,0px));
+  }
+  .wrap{width:100%; max-width:520px;}
+  h1{font-size:1.4rem; text-align:center; margin:0 0 4px;}
+  .sub{text-align:center; color:var(--texto-sec); font-size:.85rem; margin:0 0 16px;}
+
+  .barra{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; flex-wrap:wrap; gap:12px;}
+  .selectores{display:flex; flex-direction:column; gap:8px;}
+  .grupo-selector{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .etiqueta-selector{font-size:.75rem; color:var(--texto-sec); min-width:52px;}
+  .tamanos{display:flex; gap:6px; flex-wrap:wrap;}
+  .tamanos button{
+    background:var(--card-bg); border:1px solid var(--card-edge); color:var(--texto);
+    border-radius:8px; padding:6px 12px; font-size:.85rem; cursor:pointer;
+  }
+  .tamanos button.activo{border-color:var(--acento); color:var(--acento); font-weight:700;}
+  .stats{display:flex; gap:14px; font-size:.85rem; color:var(--texto-sec);}
+  .stats strong{color:var(--texto);}
+  #btn-reiniciar{
+    background:var(--acento); color:#fff; border:none; border-radius:20px;
+    padding:7px 16px; font-size:.85rem; font-weight:700; cursor:pointer; align-self:flex-start;
+  }
+
+  #tablero{
+    display:grid; gap:8px; margin:0 auto;
+  }
+  .carta{ aspect-ratio:1; perspective:700px; cursor:pointer; }
+  .carta-interior{
+    position:relative; width:100%; height:100%;
+    transform-style:preserve-3d;
+  }
+  @keyframes flip-al-frente{
+    from{ transform:rotateY(0deg); }
+    50%{ transform:rotateY(90deg) scale(1.08); }
+    to{ transform:rotateY(180deg); }
+  }
+  @keyframes flip-al-dorso{
+    from{ transform:rotateY(180deg); }
+    50%{ transform:rotateY(90deg) scale(1.04); }
+    to{ transform:rotateY(0deg); }
+  }
+  @keyframes festejo{
+    0%{ transform:scale(1); }
+    40%{ transform:scale(1.12); }
+    100%{ transform:scale(1); }
+  }
+  .carta.volteada .carta-interior{ animation:flip-al-frente .4s ease forwards; }
+  .carta.destapando .carta-interior{ animation:flip-al-dorso .35s ease forwards; }
+  .carta.emparejada .carta-interior{ transform:rotateY(180deg); }
+  .carta.emparejada{ animation:festejo .4s ease; }
+  .cara{
+    position:absolute; inset:0; backface-visibility:hidden;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:10px; font-size:1.8rem;
+  }
+  .cara-atras{ background:var(--carta-atras); border:1px solid var(--card-edge); }
+  .cara-atras::after{ content:'?'; color:var(--texto-sec); font-size:1.3rem; font-weight:700; }
+  .cara-frente{ background:var(--carta-frente); transform:rotateY(180deg); }
+  .carta.emparejada .cara-frente{ background:#dff7ea; box-shadow:0 0 0 2px var(--exito) inset; transition:box-shadow .3s ease; }
+  .carta.emparejada{ cursor:default; }
+
+  #mensaje{ text-align:center; font-weight:700; margin-top:16px; min-height:1.4em; color:var(--exito); }
+  .carta:focus-visible{ outline:2px solid var(--acento); outline-offset:2px; }
+
+  @media (prefers-reduced-motion: reduce){
+    .carta.volteada .carta-interior,
+    .carta.destapando .carta-interior,
+    .carta.emparejada{ animation:none !important; }
+    .carta.volteada .carta-interior, .carta.emparejada .carta-interior{ transform:rotateY(180deg); }
+    .carta.destapando .carta-interior{ transform:rotateY(0deg); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🧠 Memorama</h1>
+  <p class="sub">Encuentra todas las parejas con el menor número de intentos.</p>
+
+  <div class="barra">
+    <div class="selectores">
+      <div class="grupo-selector">
+        <span class="etiqueta-selector">Tamaño</span>
+        <div class="tamanos" id="selector-tamano">
+          <button data-tamano="3x4">3×4</button>
+          <button data-tamano="4x4" class="activo">4×4</button>
+          <button data-tamano="4x5">4×5</button>
+          <button data-tamano="6x6">6×6</button>
+        </div>
+      </div>
+      <div class="grupo-selector">
+        <span class="etiqueta-selector">Símbolos</span>
+        <div class="tamanos" id="selector-categoria">
+          <button data-categoria="animales" class="activo">🐾 Animales</button>
+          <button data-categoria="espacio">🪐 Espacio</button>
+          <button data-categoria="frutas">🍉 Frutas</button>
+        </div>
+      </div>
+    </div>
+    <div class="stats">
+      <div>Intentos: <strong id="stat-intentos">0</strong></div>
+      <div>Mejor: <strong id="stat-mejor">—</strong></div>
+    </div>
+    <button id="btn-reiniciar">🔄 Reiniciar</button>
+  </div>
+
+  <div id="tablero"></div>
+  <p id="mensaje"></p>
+</div>
+
+<script>
+/* ================= MOTOR (sin DOM) ================= */
+const Motor = {
+  cartas: [],
+  volteadas: [],
+  intentos: 0,
+  parejasEncontradas: 0,
+  totalParejas: 0,
+  bloqueado: false,
+
+  iniciar(simbolos) {
+    const valores = [...simbolos, ...simbolos];
+    for (let i = valores.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [valores[i], valores[j]] = [valores[j], valores[i]];
+    }
+    this.cartas = valores.map((v, i) => ({ id: i, valor: v, volteada: false, emparejada: false }));
+    this.volteadas = [];
+    this.intentos = 0;
+    this.parejasEncontradas = 0;
+    this.totalParejas = simbolos.length;
+    this.bloqueado = false;
+  },
+
+  // Devuelve: 'ignorado' | 'volteada' | 'sin-pareja' | 'pareja-encontrada' | 'juego-completo'
+  voltear(id) {
+    if (this.bloqueado) return 'ignorado';
+    const carta = this.cartas.find(c => c.id === id);
+    if (!carta || carta.volteada || carta.emparejada || this.volteadas.length >= 2) return 'ignorado';
+
+    carta.volteada = true;
+    this.volteadas.push(carta);
+    if (this.volteadas.length < 2) return 'volteada';
+
+    this.intentos++;
+    const [a, b] = this.volteadas;
+    if (a.valor === b.valor) {
+      a.emparejada = true;
+      b.emparejada = true;
+      this.volteadas = [];
+      this.parejasEncontradas++;
+      return this.parejasEncontradas === this.totalParejas ? 'juego-completo' : 'pareja-encontrada';
+    }
+    this.bloqueado = true; // hasta que el llamador oculte las no emparejadas
+    return 'sin-pareja';
+  },
+
+  ocultarNoEmparejadas() {
+    this.volteadas.forEach(c => { c.volteada = false; });
+    this.volteadas = [];
+    this.bloqueado = false;
+  },
+};
+
+/* ================= PRESENTACIÓN (DOM) ================= */
+const CATEGORIAS = {
+  animales: ['🐶','🐱','🦊','🐻','🐼','🐸','🐵','🦁','🐷','🐰','🐯','🐨','🐔','🦄','🐙','🦋','🐢','🦉'],
+  espacio:  ['🌞','🌙','⭐','🌟','✨','💫','☄️','🪐','🌍','🌎','🌏','🌌','🚀','🛰️','👽','🌠','🔭','🌑'],
+  frutas:   ['🍎','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍒','🍑','🥭','🍍','🥝','🍅','🥥','🍐','🍈','🫒'],
+};
+
+const TAMANOS = {
+  '3x4': { columnas: 3, filas: 4, anchoMax: 270 },
+  '4x4': { columnas: 4, filas: 4, anchoMax: 360 },
+  '4x5': { columnas: 4, filas: 5, anchoMax: 360 },
+  '6x6': { columnas: 6, filas: 6, anchoMax: 480 },
+};
+
+const tablero = document.getElementById('tablero');
+const statIntentos = document.getElementById('stat-intentos');
+const statMejor = document.getElementById('stat-mejor');
+const mensajeEl = document.getElementById('mensaje');
+let tamanoActual = '4x4';
+let categoriaActual = 'animales';
+
+function claveMejor(tamano, categoria) {
+  return `memorama-mejor-${tamano}-${categoria}`;
+}
+function mejorGuardado(tamano, categoria) {
+  try { return localStorage.getItem(claveMejor(tamano, categoria)); } catch { return null; }
+}
+function guardarSiEsMejor(tamano, categoria, intentos) {
+  try {
+    const actual = mejorGuardado(tamano, categoria);
+    if (actual === null || intentos < Number(actual)) {
+      localStorage.setItem(claveMejor(tamano, categoria), String(intentos));
+      return true;
+    }
+  } catch { /* localStorage no disponible: seguimos sin guardar */ }
+  return false;
+}
+
+function iniciarJuego() {
+  const { columnas, filas, anchoMax } = TAMANOS[tamanoActual];
+  const totalParejas = (columnas * filas) / 2;
+  const simbolos = CATEGORIAS[categoriaActual];
+  Motor.iniciar(simbolos.slice(0, totalParejas));
+
+  mensajeEl.textContent = '';
+  statIntentos.textContent = '0';
+  statMejor.textContent = mejorGuardado(tamanoActual, categoriaActual) ?? '—';
+  tablero.style.gridTemplateColumns = `repeat(${columnas}, 1fr)`;
+  tablero.style.maxWidth = anchoMax + 'px';
+  renderTablero();
+}
+
+function renderTablero() {
+  tablero.innerHTML = Motor.cartas.map(c => `
+    <div class="carta" data-id="${c.id}" tabindex="0" role="button" aria-label="Carta boca abajo">
+      <div class="carta-interior">
+        <div class="cara cara-atras"></div>
+        <div class="cara cara-frente">${c.valor}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function elementoCarta(id) {
+  return tablero.querySelector(`.carta[data-id="${id}"]`);
+}
+
+/** Aplica al DOM el estado actual de una carta (solo esa carta, no todo el tablero). */
+function actualizarCartaDOM(id) {
+  const carta = Motor.cartas.find(c => c.id === id);
+  const el = elementoCarta(id);
+  if (!carta || !el) return;
+  el.classList.toggle('volteada', carta.volteada);
+  el.classList.toggle('emparejada', carta.emparejada);
+}
+
+/** Voltea de regreso (con su propia animación) las dos cartas que no hicieron pareja. */
+function ocultarConAnimacion(ids) {
+  ids.forEach(id => elementoCarta(id)?.classList.add('destapando'));
+  setTimeout(() => {
+    Motor.ocultarNoEmparejadas();
+    ids.forEach(id => {
+      const el = elementoCarta(id);
+      el?.classList.remove('volteada', 'destapando');
+    });
+  }, 350); // debe coincidir con la duración de la animación flip-al-dorso
+}
+
+function manejarSeleccion(id) {
+  const otraCartaId = Motor.volteadas.length === 1 ? Motor.volteadas[0].id : null;
+  const resultado = Motor.voltear(id);
+  if (resultado === 'ignorado') return;
+
+  actualizarCartaDOM(id);
+  if (otraCartaId !== null) actualizarCartaDOM(otraCartaId);
+  statIntentos.textContent = String(Motor.intentos);
+
+  if (resultado === 'sin-pareja') {
+    const ids = otraCartaId !== null ? [id, otraCartaId] : [id];
+    setTimeout(() => ocultarConAnimacion(ids), 800);
+  } else if (resultado === 'juego-completo') {
+    const esNuevoMejor = guardarSiEsMejor(tamanoActual, categoriaActual, Motor.intentos);
+    statMejor.textContent = mejorGuardado(tamanoActual, categoriaActual);
+    mensajeEl.textContent = esNuevoMejor
+      ? `🏆 ¡Nuevo mejor puntaje! ${Motor.intentos} intentos`
+      : `✅ ¡Completado en ${Motor.intentos} intentos!`;
+  }
+}
+
+tablero.addEventListener('click', (e) => {
+  const el = e.target.closest('.carta');
+  if (!el) return;
+  manejarSeleccion(Number(el.dataset.id));
+});
+
+tablero.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const el = e.target.closest('.carta');
+  if (!el) return;
+  e.preventDefault(); // evita que la barra espaciadora haga scroll de la página
+  manejarSeleccion(Number(el.dataset.id));
+});
+
+document.querySelectorAll('#selector-tamano button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#selector-tamano button').forEach(b => b.classList.remove('activo'));
+    btn.classList.add('activo');
+    tamanoActual = btn.dataset.tamano;
+    iniciarJuego();
+  });
+});
+
+document.querySelectorAll('#selector-categoria button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#selector-categoria button').forEach(b => b.classList.remove('activo'));
+    btn.classList.add('activo');
+    categoriaActual = btn.dataset.categoria;
+    iniciarJuego();
+  });
+});
+
+document.getElementById('btn-reiniciar').addEventListener('click', () => iniciarJuego());
+
+iniciarJuego();
+</script>
+</body>
+</html>

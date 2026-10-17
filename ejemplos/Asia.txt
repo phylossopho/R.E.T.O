@@ -1,0 +1,134 @@
+[N1] Test de Evaluación: El Continente Asiático
+[MATERIA] Geografía
+[DESCRIPCION] Evaluación de conocimientos básicos sobre la geografía, cultura, fauna y características generales del continente asiático.
+
+[N2] Características Generales de Asia
+[N3] Extensión y Población
+[P] ¿Qué posición ocupa Asia en cuanto a tamaño y población a nivel mundial?
+[R] Es el segundo continente más grande y el menos poblado.
+[OK] Es el continente más grande y el más poblado de la Tierra.
+[R] Es el continente más pequeño pero con la mayor densidad de población.
+[R] Es el tercer continente en extensión y el segundo en población.
+[EXPLICA] Asia destaca por ser el continente que ocupa la mayor superficie terrestre y que alberga a la mayor cantidad de habitantes a nivel global.
+
+[P] ¿Qué fracción aproximada de la superficie terrestre del planeta ocupa Asia?
+[R] Casi la mitad (50%)
+[OK] Casi un tercio
+[R] Un cuarto (25%)
+[R] Un quinto (20%)
+[EXPLICA] De acuerdo con los datos geográficos, el continente asiático abarca aproximadamente una tercera parte de toda la superficie terrestre sólida.
+
+[P] ¿Qué porcentaje aproximado de la población mundial reside en Asia?
+[R] 40%
+[R] 50%
+[OK] 60%
+[R] 30%
+[EXPLICA] Asia es el hogar de la inmensa mayoría de la humanidad, albergando a cerca del 60% de todas las personas que habitan el planeta.
+
+[N2] Ubicación Geográfica
+[N3] Límites y Fronteras
+[P] ¿Qué océano se encuentra al norte del continente asiático?
+[R] Océano Pacífico
+[OK] Océano Glacial Ártico
+[R] Océano Atlántico
+[R] Océano Índico
+[EXPLICA] El límite septentrional (norte) de Asia está definido por las aguas del Océano Glacial Ártico.
+
+[P] ¿Qué océano limita a Asia por el sur?
+[R] Océano Glacial Ártico
+[R] Océano Pacífico
+[OK] Océano Índico
+[R] Océano Atlántico
+[EXPLICA] Hacia el sur, la masa continental asiática se extiende hasta alcanzar las aguas del Océano Índico.
+
+[P] ¿Qué océano se ubica al este de Asia?
+[R] Océano Índico
+[OK] Océano Pacífico
+[R] Océano Atlántico
+[R] Océano Glacial Ártico
+[EXPLICA] La costa oriental del continente asiático da directamente al Océano Pacífico, el más extenso del mundo.
+
+[P] ¿Qué elementos geográficos limitan a Asia por el oeste?
+[R] Océano Atlántico y la Cordillera de los Andes
+[OK] Montes Urales, Mar Caspio y Mar Negro
+[R] Océano Pacífico y el Canal de Suez
+[R] Montañas del Himalaya y el Mar Mediterráneo
+[EXPLICA] El límite occidental de Asia (que lo separa tradicionalmente de Europa) está marcado por la cadena de los Montes Urales y las masas de agua del Mar Caspio y el Mar Negro.
+
+[N2] Cultura y Lengua
+[N3] Religiones e Idiomas
+[P] ¿Cuál de las siguientes afirmaciones es correcta sobre el origen de las religiones?
+[R] Asia es el origen exclusivo de la religión cristiana.
+[R] Asia no tiene relación con el origen de las principales religiones del mundo.
+[OK] Asia es el lugar de origen de las principales religiones del mundo, como el budismo, el hinduismo, el islam y el cristianismo.
+[R] El hinduismo y el islam tienen su origen en el continente americano.
+[EXPLICA] El continente asiático es cuna de las grandes tradiciones espirituales y religiosas que han marcado la historia de la humanidad.
+
+[P] ¿Cuántos idiomas diferentes se hablan en Asia?
+[R] Más de 1,000 idiomas
+[R] Menos de 500 idiomas
+[OK] Más de 2,300 idiomas
+[R] Exactamente 1,500 idiomas
+[EXPLICA] La diversidad cultural del continente es inmensa, reflejada en la existencia de más de 2,300 lenguas distintas.
+
+[P] ¿Cuáles de los siguientes son ejemplos de idiomas hablados en Asia?
+[R] Francés y alemán
+[OK] Chino mandarín e hindi
+[R] Español e inglés
+[R] Ruso e italiano
+[EXPLICA] El chino mandarín y el hindi son dos de las lenguas con mayor número de hablantes nativos en el continente asiático.
+
+[N2] Fauna y Flora
+[N3] Animales Emblemáticos
+[P] ¿Cuál es el animal nacional de la India?
+[R] Elefante Asiático
+[R] Tigre Siberiano
+[OK] Tigre de Bengala
+[R] León de Asia
+[EXPLICA] El tigre de Bengala es una de las especies más icónicas de la fauna india y ha sido designado como su animal nacional.
+
+[P] ¿Qué figura animal es una de las más veneradas en la cultura asiática?
+[R] Tigre de Bengala
+[OK] Elefante Asiático
+[R] Tigre Siberiano
+[R] Oso Panda
+[EXPLICA] El elefante asiático ha tenido un papel fundamental en la historia, la religión y la mitología de varias culturas del continente.
+
+[P] ¿Cuál de los siguientes es considerado el felino más grande del mundo?
+[R] Tigre de Bengala
+[R] León de Asia
+[OK] Tigre Siberiano
+[R] Pantera de las Nieblas
+[EXPLICA] El tigre siberiano (o del Amur) es la subespecie de tigre de mayor tamaño que existe en el planeta.
+
+[N2] Geografía Física y Cultura Pop
+[N3] Picos, Lagos y Publicaciones
+[P] ¿Cuál es el pico más alto del mundo, ubicado en Asia?
+[R] Monte Fuji
+[R] K2
+[OK] Monte Everest
+[R] Monte Chimborazo
+[EXPLICA] El Monte Everest, situado en la cordillera del Himalaya, es la cima más elevada de la Tierra.
+
+[P] ¿Cuál es el lago más profundo del mundo, situado en Asia?
+[R] Lago Superior
+[OK] Lago Baikal
+[R] Lago Caspio
+[R] Lago Titicaca
+[EXPLICA] El Lago Baikal, ubicado en Rusia, posee una profundidad que lo convierte en el más hondo del mundo y en el que contiene mayor volumen de agua dulce.
+
+[P] ¿Qué porcentaje de las publicaciones impresas y libros en Japón corresponden a comics de manga?
+[R] 10%
+[R] 25%
+[OK] Más del 40%
+[R] 60%
+[EXPLICA] El manga es un pilar fundamental de la cultura pop japonesa, representando más de la cuarta parte (específicamente más del 40%) de toda la producción editorial del país.
+
+[N2] Etimología
+[N3] Origen del Nombre
+[P] ¿Qué significa etimológicamente la palabra "Asia"?
+[R] "Oeste" o "Puesta del Sol"
+[OK] "Este" o "Salida del Sol"
+[R] "Centro" o "Corazón del Mundo"
+[R] "Norte" o "Tierra Helada"
+[EXPLICA] El nombre del continente tiene sus raíces en términos antiguos que hacen referencia a la dirección donde nace el sol, es decir, el este.   

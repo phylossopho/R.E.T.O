@@ -1,0 +1,23 @@
+[N1] Práctica de Divisiones de Sexto Grado
+[MATERIA] Matemáticas
+[DESCRIPCION] Ejercicios de divisiones con números de cuatro dígitos y decimales entre divisores de dos dígitos.
+
+[N2] Aritmética
+[N3] Divisiones con decimales
+[P] Resuelve la siguiente división: 4520.50 ÷ 25.5. Redondea el resultado a dos decimales.
+[R] 115272.75
+[R] 177.00
+[OK] 177.27
+[EXPLICA] Al dividir 4520.50 entre 25.5, el cociente exacto es 177.2745..., que redondeado a las centésimas da 177.27.
+
+[P] Resuelve la siguiente división: 8140.25 ÷ 32.4. Redondea el resultado a dos decimales.
+[R] 251.20
+[R] 263744.10
+[OK] 251.24
+[EXPLICA] Divide el dividendo entre el divisor y aproxima correctamente a dos decimales.
+
+[P] Resuelve la siguiente división: 3412.80 ÷ 18.2. Redondea el resultado a dos decimales.
+[R] 187.51
+[OK] 187.52
+[R] 62113.76
+[EXPLICA] Verifica el punto decimal al dividir 3412.80 entre 18.2.
