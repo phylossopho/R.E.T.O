@@ -6,9 +6,8 @@
    el trabajo es tocar "azul" (lo que se ve) aunque la lectura se adelante
    diciendo "rojo". Entrena la atención selectiva y el control de impulsos.
 
-   Este módulo parte de Stroop.html (el prototipo suelto de la raíz) y lo lleva
-   a la forma de los demás mini juegos: página propia, ajustes que se guardan,
-   botón y modal de configuración, y los temas del sitio.
+  Este módulo implementa el Stroop integrado en Mini-juegos: página propia,
+  ajustes que se guardan, controles compartidos y temas del sitio.
 
    LO QUE SE PUEDE ELEGIR, Y POR QUÉ ESTÁ AQUÍ
    El clásico depende de distinguir colores, y no todas las personas pueden. Por
