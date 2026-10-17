@@ -67,19 +67,17 @@
 
 <p class="editor-label" for="panel-op">¿Qué tan transparente cuando no la usas?</p>
 <div class="rango-lectura">
-  <input type="range" class="rango" id="panel-op" min="5" max="40" step="1" value="9">
-  <output class="rango-valor" for="panel-op" id="panel-op-valor">9%</output>
+  <input type="range" class="rango" id="panel-op" min="10" max="100" step="1" value="50">
+  <output class="rango-valor" for="panel-op" id="panel-op-valor">50%</output>
 </div>
 <p class="ayuda">
-  Nunca baja de 5%: si llegara a cero, el panel seguiría ahí pero nadie lo
-  encontraría. Con las animaciones apagadas el panel **igual se aparta**: esto
-  no es decoración, es lo que lo saca de en medio.
+  Nunca baja de 10%: el panel siempre mantiene suficiente visibilidad para encontrarse con facilidad. Con las animaciones apagadas el panel **igual se aparta**: esto no es decoración, es lo que lo saca de en medio.
 </p>
 
 <p class="editor-label" for="panel-espera">¿Cuánto espera quieto antes de apartarse?</p>
 <div class="rango-lectura">
-  <input type="range" class="rango" id="panel-espera" min="500" max="5000" step="100" value="2100">
-  <output class="rango-valor" for="panel-espera" id="panel-espera-valor">2.1 s</output>
+  <input type="range" class="rango" id="panel-espera" min="500" max="5000" step="100" value="1200">
+  <output class="rango-valor" for="panel-espera" id="panel-espera-valor">1.2 s</output>
 </div>
 <p class="ayuda">
   Más tiempo quiere decir que se queda a la vista más rato. Con 500 se aparta

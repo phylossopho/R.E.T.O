@@ -61,11 +61,33 @@
       window.addEventListener('load', function () {
         navigator.serviceWorker.register(new URL('sw.js', raiz).href, {
           scope: raiz.pathname
+        }).then(function (registration) {
+          registration.addEventListener('updatefound', function () {
+            var installingWorker = registration.installing;
+            if (installingWorker) {
+              installingWorker.addEventListener('statechange', function () {
+                if (installingWorker.state === 'installed') {
+                  if (navigator.serviceWorker.controller) {
+                    // New update available, force reload
+                    window.location.reload();
+                  }
+                }
+              });
+            }
+          });
         }).catch(function (error) {
           if (window.console && console.warn) {
             console.warn('[R.E.T.O.] No se pudo registrar el modo PWA.', error);
           }
         });
+      });
+
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
       });
     }
   }
@@ -75,8 +97,8 @@
   var POR_DEFECTO = {
     pos: 'abajo',
     tam: 'mediano',
-    op: 0.09,
-    espera: 2100
+    op: 0.50,
+    espera: 1200
   };
 
   var VALORES = {
@@ -114,10 +136,8 @@
 
   var op = parseFloat(leer('panel_op'));
   if (isNaN(op)) op = POR_DEFECTO.op;
-  // Se limita entre 0.05 y 0.40. El minimo es para que el panel nunca llegue a
-  // ser invisible del todo: con 0 sigue ahi y se puede tocar, pero quien no sepa
-  // que esta ahi no lo encontraria, y en un celular no hay raton que lo despierte.
-  op = Math.min(0.4, Math.max(0.05, op));
+  // Se limita entre 0.10 y 1.00.
+  op = Math.min(1.0, Math.max(0.10, op));
 
   var espera = parseInt(leer('panel_espera'), 10);
   if (isNaN(espera)) espera = POR_DEFECTO.espera;
