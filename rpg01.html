@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trivia RPG - Batalla de Física</title>
+    <style>
+        /* --- 1. CONFIGURACIÓN BASE Y RETRO --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace; /* Fuente estilo RPG */
+        }
+
+        body {
+            background-color: #111116;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #ffffff;
+        }
+
+        /* Contenedor principal con relación de aspecto 16:9 */
+        .game-container {
+            width: 900px;
+            height: 550px;
+            border: 4px solid #3a3a4a;
+            background-color: #1d213a; /* Fondo azul noche */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+        }
+
+        /* --- 2. ESCENARIO DE BATALLA (ZONA SUPERIOR) --- */
+        .battle-screen {
+            flex: 1;
+            position: relative;
+            padding: 20px;
+        }
+
+        /* Estilo general para los bloques de vida (HUD) */
+        .hud-box {
+            background-color: #2a2a35;
+            border: 2px solid #555;
+            border-radius: 8px;
+            padding: 10px;
+            width: 250px;
+            position: absolute;
+        }
+
+        .hud-name {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .health-bar-bg {
+            background-color: #441111;
+            height: 10px;
+            border-radius: 3px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .health-bar-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        /* Posiciones específicas de personajes y barras */
+        .hud-mago { top: 20px; left: 20px; }
+        .hud-mago .health-bar-fill { background-color: #ff3333; width: 80%; } /* 80% HP */
+
+        .hud-caballero { bottom: 20px; right: 20px; }
+        .hud-caballero .health-bar-fill { background-color: #33ff33; width: 60%; } /* 60% HP */
+        
+        .hud-numeric {
+            font-size: 11px;
+            text-align: right;
+            margin-top: 3px;
+            color: #ccc;
+        }
+
+        /* Sprites representativos (Simulación de tus SVG o Pixel Art) */
+        .sprite {
+            position: absolute;
+            font-size: 50px;
+            text-align: center;
+        }
+        .sprite-mago { top: 40px; right: 80px; }
+        .sprite-caballero { bottom: 40px; left: 80px; }
+        .sprite span { font-size: 12px; display: block; color: #aaa; }
+
+        /* --- 3. CAJA DE LA PREGUNTA (ZONA CENTRAL) --- */
+        .question-box {
+            background-color: #0f0f14;
+            border-top: 4px solid #a0a0c0;
+            border-bottom: 2px solid #a0a0c0;
+            padding: 15px;
+            min-height: 75px;
+            font-size: 15px;
+            color: #00ffcc;
+            line-height: 1.4;
+        }
+
+        /* --- 4. PANEL DE COMANDOS INFERIOR (RESPUESTAS Y POWER UPS) --- */
+        .control-panel {
+            height: 160px;
+            display: grid;
+            grid-template-columns: 2fr 1fr; /* Dividido: 2 partes respuestas, 1 parte power-ups */
+            background-color: #111;
+        }
+
+        /* Sección Izquierda: Respuestas de opción múltiple */
+        .answers-grid {
+            background-color: #13131a;
+            border-right: 4px solid #3a3a4a;
+            padding: 15px;
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* Rejilla de 2x2 */
+            gap: 12px;
+        }
+
+        .btn-answer {
+            background-color: #22222e;
+            border: 2px solid #333344;
+            color: #ffffff;
+            border-radius: 6px;
+            font-size: 14px;
+            text-align: left;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-answer:hover {
+            background-color: #333344;
+            border-color: #00ffcc;
+            color: #00ffcc;
+        }
+
+        /* Sección Derecha: Tus 3 Power-Ups */
+        .powerups-panel {
+            background-color: #1a1510;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .powerups-title {
+            font-size: 12px;
+            color: #ffaa34;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+        }
+
+        .btn-powerup {
+            background-color: #2d2015;
+            border: 2px solid #553311;
+            color: #ffdfb0;
+            border-radius: 4px;
+            font-size: 12px;
+            padding: 6px 10px;
+            cursor: pointer;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-powerup:hover {
+            background-color: #443020;
+            border-color: #ffaa34;
+            box-shadow: 0 0 5px rgba(255, 170, 52, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <!-- 1. ESCENARIO DE BATALLA -->
+        <div class="battle-screen">
+            <!-- HUD Mago -->
+            <div class="hud-box hud-mago">
+                <div class="hud-name">MAGO DE FÍSICA Nv.42</div>
+                <div class="health-bar-bg">
+                    <div class="health-bar-fill"></div>
+                </div>
+            </div>
+
+            <!-- Sprite Mago -->
+            <div class="sprite sprite-mago">🧙‍♂️<span>Mago</span></div>
+
+            <!-- Sprite Caballero -->
+            <div class="sprite sprite-caballero">⚔️<span>Caballero (Tú)</span></div>
+
+            <!-- HUD Caballero -->
+            <div class="hud-box hud-caballero">
+                <div class="hud-name">CABALLERO Nv.40</div>
+                <div class="health-bar-bg">
+                    <div class="health-bar-fill"></div>
+                </div>
+                <div class="hud-numeric">120 / 200 HP</div>
+            </div>
+        </div>
+
+        <!-- 2. CAJA DE PREGUNTA DEL ATACANTE -->
+        <div class="question-box">
+            [TURNO DEL ENEMIGO] El Mago te lanza un conjuro cinemático...<br>
+            <strong>¿Cuál es la velocidad constante de un objeto si recorre 30 metros en 6 segundos?</strong>
+        </div>
+
+        <!-- 3. MENÚ DE COMANDOS (RESPUESTAS Y VENTAJAS) -->
+        <div class="control-panel">
+            <!-- 4 Opciones de contraataque -->
+            <div class="answers-grid">
+                <button class="btn-answer">A) 5 m/s</button>
+                <button class="btn-answer">B) 180 m/s</button>
+                <button class="btn-answer">C) 0.2 m/s</button>
+                <button class="btn-answer">D) 36 m/s</button>
+            </div>
+
+            <!-- 3 Ranuras de Power-Ups a un lado -->
+            <div class="powerups-panel">
+                <div class="powerups-title">✨ Objetos / Ventajas</div>
+                <button class="btn-powerup"><span>❤️</span> Curar (+50 HP)</button>
+                <button class="btn-powerup"><span>👁️</span> Autorespuesta</button>
+                <button class="btn-powerup"><span>⏳</span> Más Tiempo (+15s)</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

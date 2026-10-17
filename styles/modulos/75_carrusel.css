@@ -1,0 +1,112 @@
+/* =========================================================================
+   R.E.T.O. - Módulo de Carrusel (Galería horizontal deslizable)
+   -------------------------------------------------------------------------
+   Diseñado para mostrar tarjetas de preguntas (mazo de ataque), opciones
+   o elementos en formato horizontal con soporte táctil, por teclado y
+   accesibilidad WCAG.
+   ========================================================================= */
+
+.carrusel-contenedor {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin: var(--space-md) 0;
+}
+
+.carrusel-pista {
+  display: flex;
+  gap: var(--space-md);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) var(--surface);
+  padding: var(--space-sm) 0 var(--space-md) 0;
+  width: 100%;
+  outline: none;
+}
+
+.carrusel-pista:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
+
+.carrusel-pista::-webkit-scrollbar {
+  height: 8px;
+}
+
+.carrusel-pista::-webkit-scrollbar-track {
+  background: var(--surface);
+  border-radius: 4px;
+}
+
+.carrusel-pista::-webkit-scrollbar-thumb {
+  background-color: var(--accent);
+  border-radius: 4px;
+}
+
+.carrusel-item {
+  flex: 0 0 280px;
+  scroll-snap-align: start;
+  background: var(--surface);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.carrusel-item:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+}
+
+.carrusel-item:focus-within {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.carrusel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  background: var(--surface);
+  border: 2px solid var(--borde-fuerte);
+  color: var(--text);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.carrusel-btn:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.carrusel-btn:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.carrusel-btn-prev { left: -20px; }
+.carrusel-btn-next { right: -20px; }
+
+@media (max-width: 768px) {
+  .carrusel-btn { display: none; }
+  .carrusel-item { flex: 0 0 85%; }
+}

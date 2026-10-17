@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="papel">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aventura Gráfica - Test de conocimientos - R.E.T.O.</title>
+<link rel="preload" href="../../../styles/fuentes/nunito.css" as="style">
+<link rel="stylesheet" href="../../../styles/fuentes/nunito.css">
+<link rel="stylesheet" href="../../../styles/styles.css?v=c85-flexfix">
+<script>
+(function () {
+  var t = localStorage.getItem('tema');
+  if (t) { document.documentElement.setAttribute('data-theme', t); }
+  var a = localStorage.getItem('animaciones');
+  if (a === 'off' || a === 'on') { document.documentElement.setAttribute('data-anim', a); }
+  try {
+    var forzar = /[?&]anim=1/.test(location.search);
+    if (sessionStorage.getItem('reto_anim_tarjetas') && !forzar) {
+      document.documentElement.setAttribute('data-anim-tarjetas', 'off');
+    } else {
+      sessionStorage.setItem('reto_anim_tarjetas', '1');
+    }
+  } catch (e) {}
+})();
+</script>
+<script src="../../../scripts/reto-panel-prefs.js?v=c01-0f3ddb54"></script>
+</head>
+<body>
+<header>
+<h1>Aventura Gráfica (Modo RPG)</h1>
+</header>
+<main class="tst">
+<p class="tst-estado" id="estado" role="status" aria-live="polite">Cargando aventura...</p>
+<div id="vistas">
+  <!-- Pantalla inicial de bienvenida y configuración de aventura -->
+  <div class="aventura-container" style="display: flex; flex-direction: column; gap: var(--space-md); align-items: center; text-align: center; padding: var(--space-lg);">
+    <div style="font-size: 60px; animation: float 3s ease-in-out infinite;">⚔️🧙‍♂️🏰</div>
+    <h2>Bienvenido a la Aventura del Saber</h2>
+    <p style="max-width: 500px; line-height: 1.6;">
+      Explora el minimapa estilo Pokémon, elige tu avatar, selecciona tus Power-Ups estratégicamente (estilo Yu-Gi-Oh) y enfréntate a las preguntas como batallas RPG.
+    </p>
+    <div style="display: flex; gap: var(--space-sm); flex-wrap: wrap; justify-content: center; margin-top: var(--space-md);">
+      <button type="button" class="panel-opcion boton" id="btn-iniciar-aventura" style="padding: var(--space-sm) var(--space-lg); font-weight: bold; cursor: pointer;">
+        🚀 Comenzar Aventura
+      </button>
+    </div>
+  </div>
+</div>
+</main>
+<div class="panel-flotante" data-panel>
+  <a class="panel-boton" href="../test-conocimientos.html"
+     aria-label="Volver a Test de conocimientos" title="Volver a Test de conocimientos">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8592;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></span>
+  </a>
+  <a class="panel-boton" href="../../../index.html"
+     aria-label="Ir a la portada" title="Ir a la portada">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8962;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 3l9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/><path d="M10 21v-6h4v6"/></svg></span>
+  </a>
+  <button type="button" class="panel-boton" data-configurar
+     aria-label="Ajustes de lectura y de sonido" title="Ajustes de lectura y de sonido">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#9881;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M2 14h4"/><path d="M10 8h4"/><path d="M18 16h4"/></svg></span>
+  </button>
+  <button type="button" class="panel-boton panel-boton--ayuda" data-ayuda
+     aria-label="Ayuda: cómo funciona la aventura" title="Cómo jugar">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">?</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span>
+  </button>
+</div>
+<footer hidden>
+<p>R.E.T.O.</p>
+</footer>
+<script src="../../../scripts/reto-datos.js?v=c01-c6fe548d"></script>
+<script src="../../../scripts/reto-sonido.js?v=c02-b552a4e7"></script>
+<script src="../../../scripts/reto-fuentes.js?v=c01-86f25e1c"></script>
+<script src="../../../scripts/reto-dialogo.js?v=c08-ae075893"></script>
+<script src="../../../scripts/reto-carrusel.js"></script>
+<script src="../../../scripts/reto-tests-banco.js?v=c01-d0a2c1cb"></script>
+<script src="../../../scripts/reto-tests-muestra.js?v=c04-6abe6813"></script>
+<script src="../../../scripts/reto-panel.js?v=c04-f73a0fa9"></script>
+<script src="../../../scripts/reto-debug.js?v=c25-5ac10ea0"></script>
+</body>
+</html>

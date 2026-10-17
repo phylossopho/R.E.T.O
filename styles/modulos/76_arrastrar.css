@@ -1,0 +1,41 @@
+/* =========================================================================
+   R.E.T.O. - Módulo de Arrastrar y Soltar (Drag and Drop con Indicadores UX)
+   -------------------------------------------------------------------------
+   Estilos limpios con indicadores visuales claros (marcos de inserción y
+   espacio dinámico) para mostrar dónde se ubicará la tarjeta al soltarla.
+   ========================================================================= */
+
+[data-zona-arrastre] {
+  outline: none;
+}
+
+[data-zona-arrastre]:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
+
+.rejilla > li.arrastrable {
+  cursor: grab;
+  transition: transform 0.15s ease, opacity 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.rejilla > li.arrastrable:active {
+  cursor: grabbing;
+}
+
+.rejilla > li.arrastrable.arrastrando {
+  opacity: 0.35;
+  transform: scale(0.95);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.rejilla > li.arrastrable-sobre-arriba {
+  border-top: 4px solid var(--accent) !important;
+  transform: translateY(-4px);
+}
+
+.rejilla > li.arrastrable-sobre-abajo {
+  border-bottom: 4px solid var(--accent) !important;
+  transform: translateY(4px);
+}
