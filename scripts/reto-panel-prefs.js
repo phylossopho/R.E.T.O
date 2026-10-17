@@ -1,12 +1,9 @@
 /* =========================================================================
    R.E.T.O. - Las preferencias del panel, antes de pintar
    -------------------------------------------------------------------------
-   Este archivo va en el <head> de las CINCO paginas que tienen panel
-   (revision, edicion, textos, libros y la pantalla de lectura veloz), y SOLO
-   de esas. No va en las otras porque alli no hay ningun panel que colocar, y
-   meterlo en todas seria el mismo error de copiar codigo por pagina que ya se
-   sufrio con el script del tema: veinte y una copias de lo mismo, y cambiar un
-   ajuste obliga a editar veinte y una archivos.
+  Este archivo se carga desde el <head> de las paginas de R.E.T.O. Lee las
+  preferencias compartidas del panel antes de pintar y conecta manifest y
+  service worker para que toda la plataforma pueda instalarse como PWA.
 
    POR QUE ESTA EN EL HEAD Y NO AL FINAL DEL BODY
    Porque el panel esta fijo en una esquina de la pantalla. Si su posicion se
@@ -24,7 +21,7 @@
    suelto en el atributo "style" no se puede cambiar desde ninguna otra regla.
    La transparencia si va como variable de CSS, porque es un valor, no un modo.
 
-   SI NO HAY NADA GUARDADO
+  SI NO HAY NADA GUARDADO
    Se usan los valores de ahora, que son los que ya se veian antes de que
    existiera esta pagina: abajo, mediano, 9% y 2100 ms. Es decir, quien no ha
    tocado nada no ve ningun cambio. */
@@ -32,6 +29,49 @@
   'use strict';
 
   var h = document.documentElement;
+
+  function iniciarPwa() {
+    var script = document.currentScript;
+    if (!script || !script.src) return;
+
+    var raiz = new URL('../', script.src);
+    function enlace(rel, ruta) {
+      var elemento = document.createElement('link');
+      elemento.rel = rel;
+      elemento.href = new URL(ruta, raiz).href;
+      document.head.appendChild(elemento);
+    }
+    function meta(nombre, contenido) {
+      var elemento = document.querySelector('meta[name="' + nombre + '"]');
+      if (!elemento) {
+        elemento = document.createElement('meta');
+        elemento.name = nombre;
+        document.head.appendChild(elemento);
+      }
+      elemento.content = contenido;
+    }
+
+    enlace('manifest', 'manifest.webmanifest');
+    enlace('apple-touch-icon', 'pwa/icon-192.png');
+    meta('theme-color', '#16445a');
+    meta('apple-mobile-web-app-capable', 'yes');
+    meta('apple-mobile-web-app-title', 'R.E.T.O.');
+
+    if ('serviceWorker' in navigator && window.isSecureContext) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register(new URL('sw.js', raiz).href, {
+          scope: raiz.pathname
+        }).catch(function (error) {
+          if (window.console && console.warn) {
+            console.warn('[R.E.T.O.] No se pudo registrar el modo PWA.', error);
+          }
+        });
+      });
+    }
+  }
+
+  iniciarPwa();
+
   var POR_DEFECTO = {
     pos: 'abajo',
     tam: 'mediano',

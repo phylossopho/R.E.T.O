@@ -22,11 +22,47 @@ La primera visita muestra una advertencia del navegador porque el servidor usa u
 También se puede iniciar desde PowerShell, en esta carpeta:
 
 ```powershell
-python -m pip install Flask cryptography
+python -m pip install -r requirements.txt
 python server.py
 ```
 
 El servidor escucha en el puerto `8000`. La dirección para otros dispositivos de la misma red se muestra en la consola y se escribe en `direccion-del-sitio.txt`. Ese archivo y los certificados son locales y no se incluyen en el repositorio.
+
+## Aplicación instalable (PWA)
+
+Con HTTPS, R.E.T.O. ofrece manifest e iconos de instalación. El service worker precarga la portada y recursos básicos, y guarda páginas y recursos estáticos que se visitan. Las rutas `/api/` no se almacenan: los juegos y funciones que requieren Flask necesitan conexión; si no la hay, se muestra una página de desconexión. El almacenamiento personal continúa en el navegador y no se sincroniza entre dispositivos.
+
+En PythonAnywhere el sitio se sirve bajo HTTPS, condición necesaria para registrar el service worker. La PWA está preparada para publicarse desde la raíz del dominio.
+
+## Publicar en PythonAnywhere
+
+1. Sube o clona el repositorio privado en tu directorio de usuario.
+2. En una consola Bash, crea un entorno virtual con la misma versión de Python que usarás en la pestaña **Web**, e instala dependencias:
+
+	```bash
+	mkvirtualenv --python=/usr/bin/python3.13 reto-env
+	pip install -r ~/R.E.T.O/requirements.txt
+	```
+
+	Ajusta la ruta `~/R.E.T.O` si elegiste otro directorio.
+3. En **Web**, crea una aplicación con configuración manual, elige esa versión de Python y asigna `reto-env` en el campo **Virtualenv**.
+4. En el archivo WSGI de la pestaña **Web**, apunta al directorio del proyecto e importa el callable:
+
+	```python
+	import sys
+
+	project_home = "/home/USUARIO/R.E.T.O"
+	if project_home not in sys.path:
+		 sys.path.insert(0, project_home)
+
+	from wsgi import application
+	```
+
+	Sustituye `USUARIO` por tu nombre de cuenta y ajusta la ruta si es necesario; luego pulsa **Reload** en la pestaña **Web**.
+
+PythonAnywhere termina HTTPS delante de la aplicación. No ejecutes `python server.py` allí: ese arranque es solo para uso local y crea un certificado autofirmado. El entrypoint WSGI importa Flask sin iniciar un servidor de desarrollo.
+
+Antes de invitar usuarios, ten en cuenta que el progreso y las preferencias se guardan en el navegador. Las partidas activas de Memorama viven en memoria del proceso y pueden perderse si la aplicación se reinicia; los datos no son una cuenta en la nube ni una copia central.
 
 ## Datos y alcance de red
 
@@ -43,5 +79,7 @@ El servidor escucha en todas las interfaces de red para permitir el acceso desde
 - `ejemplos/`: textos que el servidor ofrece para probar la biblioteca.
 - `server.py`: servidor local y API.
 - `servidor.cmd`: arranque para Windows.
+- `wsgi.py`: callable de entrada para alojamientos WSGI.
+- `manifest.webmanifest`, `sw.js` y `pwa/`: instalación y recursos de la PWA.
 
 La documentación de Lectura Veloz está en [lectura-veloz.md](lectura-veloz.md). Los prompts de ejemplo para generar contenido están en `ejemplos/`.

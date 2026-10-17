@@ -73,11 +73,13 @@ TIPOS = {
     ".woff2": "font/woff2",
     ".woff": "font/woff",
     ".txt": "text/plain; charset=utf-8",
+    ".webmanifest": "application/manifest+json; charset=utf-8",
 }
 
 EXTENSIONES_PUBLICAS = frozenset({
     ".html", ".css", ".js", ".json", ".svg", ".png", ".jpg", ".jpeg",
     ".gif", ".webp", ".ico", ".woff2", ".woff", ".ttf", ".mp3", ".txt",
+    ".webmanifest",
 })
 
 
@@ -126,7 +128,8 @@ def archivo(ruta):
         return jsonify({"error": "no existe", "ruta": ruta}), 404
     if not os.path.isfile(completa):
         return jsonify({"error": "no existe", "ruta": ruta}), 404
-    return send_from_directory(BASE, ruta)
+    mimetype = TIPOS.get(os.path.splitext(ruta)[1].lower())
+    return send_from_directory(BASE, ruta, mimetype=mimetype)
 
 
 # ===========================================================================
