@@ -10,6 +10,7 @@
   var Banco = window.RetoTestsBanco;
   var Sonido = window.RetoSonido;
   var Eval = window.RetoTestsEval;
+  var Instancia = window.RetoTestsInstancia;
 
   var estadoAventura = {
     avatar: 'mago',
@@ -241,7 +242,9 @@
     setTimeout(function () {
       try {
         var candidatas = test.preguntas || [];
-        var mazo = RetoTestsInstancia.armarMazo(candidatas, 15, { evaluador: Eval });
+        // Barajar el orden de las preguntas candidatas antes de armar el mazo
+        var candidatasBarajadas = Instancia ? Instancia.barajar(candidatas) : candidatas;
+        var mazo = Instancia ? Instancia.armarMazo(candidatasBarajadas, 15, { evaluador: Eval }) : candidatasBarajadas;
         
         if (!mazo || mazo.length === 0) {
           alert('Este test no tiene preguntas jugables.');
@@ -249,7 +252,7 @@
           return;
         }
 
-        // Asegurar exactamente 1 correcta y hasta 3 distractores (4 opciones en total), barajadas al azar
+        // Asegurar exactamente 1 correcta y hasta 3 distractores (4 opciones en total), barajadas al azar usando Instancia.barajar
         mazo.forEach(function (q) {
           if (q.opciones && q.opciones.length > 0) {
             var correcta = null;
@@ -265,10 +268,11 @@
               correcta = q.opciones[0];
               correcta.correcta = true;
             }
-            // Barajar distractores y tomar máximo 3
-            distractores = barajarOpciones(distractores).slice(0, 3);
-            var seleccionadas = [correcta].concat(distractores);
-            q.opciones = barajarOpciones(seleccionadas);
+            // Barajar distractores usando el motor oficial y tomar máximo 3
+            var distractoresBarajados = Instancia ? Instancia.barajar(distractores) : distractores;
+            distractoresBarajados = distractoresBarajados.slice(0, 3);
+            var seleccionadas = [correcta].concat(distractoresBarajados);
+            q.opciones = Instancia ? Instancia.barajar(seleccionadas) : seleccionadas;
           }
         });
 
@@ -285,15 +289,6 @@
         contenedor.style.opacity = '1';
       }
     }, 400);
-  }
-
-  function barajarOpciones(lista) {
-    var s = lista.slice();
-    for (var i = s.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var t = s[i]; s[i] = s[j]; s[j] = t;
-    }
-    return s;
   }
 
   /* -------------------------------------------------------------------------
