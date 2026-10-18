@@ -330,14 +330,14 @@
       <style>
         .game-container-rpg1 {
           width: 100%;
-          max-width: 900px;
-          height: 550px;
-          border: 4px solid var(--borde-fuerte);
+          max-width: 920px;
+          border: 3px solid var(--borde-fuerte);
           background-color: var(--bg);
           display: flex;
           flex-direction: column;
           overflow: hidden;
-          box-shadow: var(--sombra, 0 10px 30px rgba(0,0,0,0.7));
+          box-shadow: var(--sombra);
+          border-radius: calc(var(--radius) * 1.5);
           margin: 0 auto;
           font-family: inherit;
           color: var(--text);
@@ -349,20 +349,22 @@
         .battle-screen-rpg1 {
           flex: 1;
           position: relative;
-          padding: 20px;
+          padding: 24px;
+          min-height: 280px;
           overflow: hidden;
+          background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
         }
         .hud-box-rpg1 {
           background-color: var(--surface);
           border: 2px solid var(--borde-fuerte);
           border-radius: var(--radius, 8px);
-          padding: 8px 12px;
-          width: 320px;
+          padding: 10px 14px;
+          width: 310px;
           position: absolute;
           z-index: 10;
           display: flex;
           align-items: center;
-          gap: 10px;
+          gap: 12px;
           box-shadow: var(--sombra);
         }
         .hud-header-rpg1 {
@@ -371,29 +373,30 @@
           flex-shrink: 0;
         }
         .hud-name-rpg1 {
-          font-size: 11px;
-          font-weight: bold;
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0.5px;
           color: var(--text);
           text-transform: uppercase;
           white-space: nowrap;
         }
         .health-bar-bg-rpg1 {
           background-color: var(--bg);
-          height: 16px;
-          border-radius: 4px;
+          height: 18px;
+          border-radius: 6px;
           flex: 1;
           overflow: hidden;
           position: relative;
-          border: 1px solid var(--borde);
+          border: 1px solid var(--borde-fuerte);
         }
         .health-bar-fill-rpg1 {
           height: 100%;
-          transition: width 0.3s ease;
+          background: linear-gradient(90deg, var(--accent), var(--borde-fuerte));
+          transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          border-radius: 4px;
         }
         .hud-mago-rpg1 { top: 20px; left: 20px; }
-        .hud-mago-rpg1 .health-bar-fill-rpg1 { background-color: var(--accent); width: ${(estadoAventura.hpRival / 9000) * 100}%; opacity: 0.85; }
         .hud-caballero-rpg1 { bottom: 20px; right: 20px; }
-        .hud-caballero-rpg1 .health-bar-fill-rpg1 { background-color: var(--accent); width: ${(estadoAventura.hpJugador / 9000) * 100}%; }
         .hud-hp-text-rpg1 {
           position: absolute;
           top: 0;
@@ -404,78 +407,89 @@
           align-items: center;
           justify-content: center;
           font-size: 11px;
-          font-weight: bold;
+          font-weight: 700;
           color: var(--text);
-          text-shadow: 0 1px 2px var(--bg);
+          text-shadow: 0 1px 1px var(--bg);
         }
         .sprite-rpg1 {
           position: absolute;
           text-align: center;
           z-index: 2;
         }
-        /* Avatar del rival y del usuario escalados a 540% (324px), usuario inclinado hacia el frente y arriba */
-        .sprite-mago-rpg1 { top: -40px; right: 40px; opacity: 0.9; pointer-events: none; }
-        .sprite-caballero-rpg1 { bottom: -60px; left: 30px; opacity: 0.9; pointer-events: none; }
-        .sprite-rpg1 img { width: 324px; height: 324px; object-fit: contain; filter: drop-shadow(0 8px 20px rgba(0,0,0,0.5)); }
+        /* Avatar del rival y del usuario escalados, posicionados dinámicamente */
+        .sprite-mago-rpg1 { top: -20px; right: 40px; opacity: 0.95; pointer-events: none; }
+        .sprite-caballero-rpg1 { bottom: -40px; left: 30px; opacity: 0.95; pointer-events: none; }
+        .sprite-rpg1 img { width: 300px; height: 300px; object-fit: contain; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.25)); }
         .sprite-mago-rpg1 img { transform: scaleX(-1); }
-        .sprite-caballero-rpg1 img { transform: rotate(-10deg) translateY(10px); transform-origin: bottom center; }
+        .sprite-caballero-rpg1 img { transform: rotate(-6deg) translateY(6px); transform-origin: bottom center; }
+        
         .question-box-rpg1 {
           background-color: var(--surface);
-          border-top: 4px solid var(--borde-fuerte);
-          border-bottom: 2px solid var(--borde-fuerte);
-          padding: 15px;
-          min-height: 75px;
-          font-size: 15px;
+          border-top: 3px solid var(--borde-fuerte);
+          border-bottom: 2px solid var(--borde);
+          padding: 18px 24px;
+          min-height: 85px;
+          font-size: 1.05rem;
+          font-weight: 600;
           color: var(--text);
-          line-height: 1.4;
+          line-height: 1.5;
           z-index: 12;
           position: relative;
+          box-shadow: inset 0 4px 12px rgba(0,0,0,0.03);
         }
         .control-panel-rpg1 {
-          height: 160px;
           display: grid;
           grid-template-columns: 2fr 1fr;
           background-color: var(--surface);
-          border-top: 2px solid var(--borde-fuerte);
           z-index: 12;
           position: relative;
         }
         .answers-grid-rpg1 {
           background-color: var(--surface);
           border-right: 2px solid var(--borde);
-          padding: 15px;
+          padding: 18px;
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 12px;
+          align-content: center;
         }
         .btn-answer-rpg1 {
           background-color: var(--bg);
           border: 2px solid var(--borde-fuerte);
           color: var(--text);
-          border-radius: var(--radius, 6px);
-          font-size: 14px;
+          border-radius: var(--radius);
+          font-size: 0.95rem;
+          font-weight: 600;
           text-align: left;
-          padding: 10px;
+          padding: 14px 16px;
           cursor: pointer;
-          transition: all 0.2s;
+          transition: all 150ms ease;
           font-family: inherit;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.04);
         }
         .btn-answer-rpg1:hover {
           background-color: var(--accent);
           border-color: var(--accent);
           color: var(--bg);
+          transform: translateY(-2px);
+          box-shadow: var(--sombra);
+        }
+        .btn-answer-rpg1:active {
+          transform: translateY(0);
         }
         .powerups-panel-rpg1 {
           background-color: var(--bg);
-          padding: 12px;
+          padding: 16px;
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 10px;
+          justify-content: center;
         }
         .powerups-title-rpg1 {
-          font-size: 12px;
+          font-size: 11px;
           color: var(--accent);
-          font-weight: bold;
+          font-weight: 800;
+          letter-spacing: 1px;
           text-align: center;
           margin-bottom: 2px;
           text-transform: uppercase;
@@ -484,22 +498,39 @@
           background-color: var(--surface);
           border: 2px solid var(--borde-fuerte);
           color: var(--text);
-          border-radius: 4px;
-          font-size: 12px;
-          padding: 6px 10px;
+          border-radius: var(--radius);
+          font-size: 0.85rem;
+          font-weight: 700;
+          padding: 8px 12px;
           cursor: pointer;
           text-align: left;
           display: flex;
           align-items: center;
-          gap: 8px;
-          transition: all 0.2s;
+          gap: 10px;
+          transition: all 150ms ease;
           font-family: inherit;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.03);
         }
         .btn-powerup-rpg1:hover {
           background-color: var(--accent);
           border-color: var(--accent);
           color: var(--bg);
+          transform: translateY(-1px);
           box-shadow: var(--sombra);
+        }
+        .btn-powerup-rpg1:active {
+          transform: translateY(0);
+        }
+        .rpg-timer-badge {
+          font-size: 12px;
+          font-weight: 700;
+          color: var(--text);
+          text-align: center;
+          padding: 4px 8px;
+          background: var(--surface);
+          border: 1px solid var(--borde);
+          border-radius: 6px;
+          margin-top: 4px;
         }
       </style>
 
@@ -512,7 +543,7 @@
               <div class="hud-name-rpg1">MAGO DE FÍSICA</div>
             </div>
             <div class="health-bar-bg-rpg1">
-              <div class="health-bar-fill-rpg1" id="bar-rival"></div>
+              <div class="health-bar-fill-rpg1" id="bar-rival" style="width: ${(estadoAventura.hpRival / 9000) * 100}%;"></div>
               <div class="hud-hp-text-rpg1"><span id="hp-rival">${estadoAventura.hpRival}</span> / 9000 HP</div>
             </div>
           </div>
@@ -533,7 +564,7 @@
               <div class="hud-name-rpg1">${estadoAventura.avatar.toUpperCase()}</div>
             </div>
             <div class="health-bar-bg-rpg1">
-              <div class="health-bar-fill-rpg1" id="bar-jugador"></div>
+              <div class="health-bar-fill-rpg1" id="bar-jugador" style="width: ${(estadoAventura.hpJugador / 9000) * 100}%;"></div>
               <div class="hud-hp-text-rpg1"><span id="hp-jugador">${estadoAventura.hpJugador}</span> / 9000 HP</div>
             </div>
           </div>
@@ -541,7 +572,7 @@
 
         <!-- 2. CAJA DE LA PREGUNTA -->
         <div class="question-box-rpg1">
-          [TURNO DEL ENEMIGO] El Mago te lanza un conjuro...<br>
+          <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px;">⚔️ Turno de Batalla</div>
           <strong>${p.enunciado}</strong>
         </div>
 
@@ -556,11 +587,11 @@
 
           <!-- Power-Ups y Tiempo -->
           <div class="powerups-panel-rpg1">
-            <div class="powerups-title-rpg1">✨ Objetos / Ventajas</div>
+            <div class="powerups-title-rpg1">✨ Inventario</div>
             <button type="button" id="btn-pw-pocion" class="btn-powerup-rpg1"><span>❤️</span> Poción (${estadoAventura.powerUps.pocion})</button>
             <button type="button" id="btn-pw-pista" class="btn-powerup-rpg1"><span>👁️</span> Pista (${estadoAventura.powerUps.pista})</button>
             <button type="button" id="btn-pw-reloj" class="btn-powerup-rpg1"><span>⏳</span> Reloj (+15s) (${estadoAventura.powerUps.reloj})</button>
-            <div style="font-size: 11px; color: #ffaa34; text-align: center; margin-top: auto;">⏳ Tiempo: <span id="span-tiempo">30</span>s</div>
+            <div class="rpg-timer-badge">⏳ Tiempo: <span id="span-tiempo">30</span>s</div>
           </div>
         </div>
       </div>
