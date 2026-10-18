@@ -58,39 +58,20 @@
 
       <fieldset style="border: 2px solid var(--borde-fuerte); border-radius: var(--radius); padding: var(--space-md); background: var(--surface);">
         <legend style="font-weight: bold; padding: 0 var(--space-xs); color: var(--accent);">1. Elige tu Avatar</legend>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: var(--space-sm); margin-top: var(--space-sm);">
-          <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-xs); cursor: pointer; text-align: center;">
-            <img src="../../../imagenes/mago.webp" alt="Mago" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
-            <input type="radio" name="avatar" value="mago" checked style="margin-bottom: 2px;"> Mago
-          </label>
-          <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-xs); cursor: pointer; text-align: center;">
-            <img src="../../../imagenes/maga.webp" alt="Maga" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
-            <input type="radio" name="avatar" value="maga" style="margin-bottom: 2px;"> Maga
-          </label>
-          <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-xs); cursor: pointer; text-align: center;">
-            <img src="../../../imagenes/caballero.webp" alt="Caballero" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
-            <input type="radio" name="avatar" value="caballero" style="margin-bottom: 2px;"> Caballero
-          </label>
-          <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-xs); cursor: pointer; text-align: center;">
-            <img src="../../../imagenes/caballera.webp" alt="Caballera" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
-            <input type="radio" name="avatar" value="caballera" style="margin-bottom: 2px;"> Caballera
-          </label>
-          <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-xs); cursor: pointer; text-align: center;">
-            <img src="../../../imagenes/arquero.webp" alt="Arquero" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
-            <input type="radio" name="avatar" value="arquero" style="margin-bottom: 2px;"> Arquero
-          </label>
-          <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-xs); cursor: pointer; text-align: center;">
-            <img src="../../../imagenes/arquera.webp" alt="Arquera" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
-            <input type="radio" name="avatar" value="arquera" style="margin-bottom: 2px;"> Arquera
-          </label>
-          <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-xs); cursor: pointer; text-align: center;">
-            <img src="../../../imagenes/guerrero.webp" alt="Guerrero" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
-            <input type="radio" name="avatar" value="guerrero" style="margin-bottom: 2px;"> Guerrero
-          </label>
-          <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-xs); cursor: pointer; text-align: center;">
-            <img src="../../../imagenes/guerrera.webp" alt="Guerrera" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
-            <input type="radio" name="avatar" value="guerrera" style="margin-bottom: 2px;"> Guerrera
-          </label>
+        
+        <div style="display: flex; gap: 8px; margin-bottom: 12px; justify-content: center; align-items: center;" id="filtro-genero-container">
+          <span style="font-size: 0.85em; font-weight: bold;">Filtrar:</span>
+          <button type="button" class="boton boton--chico filtro-genero-btn active" data-genero="todos" style="cursor: pointer; padding: 4px 10px; font-size: 0.8em; background: var(--accent); color: var(--bg);">Todos</button>
+          <button type="button" class="boton boton--chico filtro-genero-btn" data-genero="hombre" style="cursor: pointer; padding: 4px 10px; font-size: 0.8em;">Hombre</button>
+          <button type="button" class="boton boton--chico filtro-genero-btn" data-genero="mujer" style="cursor: pointer; padding: 4px 10px; font-size: 0.8em;">Mujer</button>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: center; gap: 12px; position: relative; margin: 10px 0;">
+          <button type="button" id="carrusel-prev" class="carrusel-btn" style="position: static; transform: none; width: 38px; height: 38px;">‹</button>
+          <div id="carrusel-3items-viewport" style="display: flex; gap: 10px; align-items: center; justify-content: center; overflow: hidden; width: 100%; padding: 10px 0;">
+            <!-- Renderizado de 3 tarjetas -->
+          </div>
+          <button type="button" id="carrusel-next" class="carrusel-btn" style="position: static; transform: none; width: 38px; height: 38px;">›</button>
         </div>
       </fieldset>
 
@@ -138,11 +119,121 @@
 
     contenedor.appendChild(wrapper);
 
+    var avataresBase = [
+      { id: 'mago', nombre: 'Mago', genero: 'hombre', archivo: 'mago.webp' },
+      { id: 'maga', nombre: 'Maga', genero: 'mujer', archivo: 'maga.webp' },
+      { id: 'caballero', nombre: 'Caballero', genero: 'hombre', archivo: 'caballero.webp' },
+      { id: 'caballera', nombre: 'Caballera', genero: 'mujer', archivo: 'caballera.webp' },
+      { id: 'arquero', nombre: 'Arquero', genero: 'hombre', archivo: 'arquero.webp' },
+      { id: 'arquera', nombre: 'Arquera', genero: 'mujer', archivo: 'arquera.webp' },
+      { id: 'guerrero', nombre: 'Guerrero', genero: 'hombre', archivo: 'guerrero.webp' },
+      { id: 'guerrera', nombre: 'Guerrera', genero: 'mujer', archivo: 'guerrera.webp' },
+      { id: 'asesino', nombre: 'Asesino', genero: 'hombre', archivo: 'asesino.webp' },
+      { id: 'asesina', nombre: 'Asesina', genero: 'mujer', archivo: 'asesina.webp' },
+      { id: 'clerigo', nombre: 'Clérigo', genero: 'hombre', archivo: 'clerigo.webp' },
+      { id: 'sacerdotiza', nombre: 'Sacerdotisa', genero: 'mujer', archivo: 'sacerdotiza.webp' }
+    ];
+
+    var filtroActual = 'todos';
+    var avataresFiltrados = avataresBase;
+    
+    var currentIndex = avataresFiltrados.findIndex(function(a) { return a.id === estadoAventura.avatar; });
+    if (currentIndex === -1) currentIndex = 0;
+
+    var viewport = wrapper.querySelector('#carrusel-3items-viewport');
+
+    function actualizarCarrusel() {
+      avataresFiltrados = avataresBase.filter(function (av) {
+        if (filtroActual === 'todos') return true;
+        return av.genero === filtroActual;
+      });
+
+      if (avataresFiltrados.length === 0) {
+        avataresFiltrados = avataresBase;
+      }
+
+      if (currentIndex >= avataresFiltrados.length) {
+        currentIndex = 0;
+      }
+
+      var currentAv = avataresFiltrados[currentIndex] || avataresFiltrados[0];
+      estadoAventura.avatar = currentAv.id;
+
+      viewport.innerHTML = '';
+
+      var len = avataresFiltrados.length;
+      var idxLeft = (currentIndex - 1 + len) % len;
+      var idxCenter = currentIndex;
+      var idxRight = (currentIndex + 1) % len;
+
+      var indices = [idxLeft, idxCenter, idxRight];
+
+      indices.forEach(function (idx, pos) {
+        var av = avataresFiltrados[idx];
+        var isCenter = (pos === 1);
+        var card = document.createElement('div');
+        
+        card.style.cssText = 'flex: 0 0 ' + (isCenter ? '140px' : '100px') + '; ' +
+          'transform: scale(' + (isCenter ? '1.1' : '0.85') + '); ' +
+          'opacity: ' + (isCenter ? '1' : '0.7') + '; ' +
+          'transition: all 0.3s ease; ' +
+          'text-align: center; cursor: pointer; ' +
+          'background: var(--surface); ' +
+          'border: ' + (isCenter ? '3px solid var(--accent)' : '2px solid var(--borde-fuerte)') + '; ' +
+          'border-radius: var(--radius); ' +
+          'padding: 8px; ' +
+          'box-shadow: ' + (isCenter ? 'var(--sombra)' : 'none') + ';';
+
+        card.innerHTML = `
+          <img src="../../../imagenes/${av.archivo}" alt="${av.nombre}" style="width: ${isCenter ? '56px' : '42px'}; height: ${isCenter ? '56px' : '42px'}; object-fit: contain; margin: 0 auto 4px;">
+          <div style="font-size: ${isCenter ? '0.8em' : '0.7em'}; font-weight: bold; color: var(--text);">${av.nombre}</div>
+        `;
+
+        card.addEventListener('click', function () {
+          currentIndex = idx;
+          estadoAventura.avatar = av.id;
+          if (Sonido && Sonido.reproducir) Sonido.reproducir('acierto');
+          actualizarCarrusel();
+        });
+
+        viewport.appendChild(card);
+      });
+    }
+
+    actualizarCarrusel();
+
+    wrapper.querySelector('#carrusel-prev').addEventListener('click', function () {
+      var len = avataresFiltrados.length;
+      currentIndex = (currentIndex - 1 + len) % len;
+      if (Sonido && Sonido.reproducir) Sonido.reproducir('soft');
+      actualizarCarrusel();
+    });
+
+    wrapper.querySelector('#carrusel-next').addEventListener('click', function () {
+      var len = avataresFiltrados.length;
+      currentIndex = (currentIndex + 1) % len;
+      if (Sonido && Sonido.reproducir) Sonido.reproducir('soft');
+      actualizarCarrusel();
+    });
+
+    var botonesFiltro = wrapper.querySelectorAll('.filtro-genero-btn');
+    botonesFiltro.forEach(function (btnF) {
+      btnF.addEventListener('click', function () {
+        botonesFiltro.forEach(function (b) {
+          b.style.background = 'var(--surface)';
+          b.style.color = 'var(--text)';
+        });
+        this.style.background = 'var(--accent)';
+        this.style.color = 'var(--bg)';
+        filtroActual = this.getAttribute('data-genero');
+        currentIndex = 0;
+        actualizarCarrusel();
+      });
+    });
+
     var btn = wrapper.querySelector('#btn-ir-mapa');
     btn.addEventListener('click', function () {
-      var avEl = wrapper.querySelector('input[name="avatar"]:checked');
       var infEl = wrapper.querySelector('input[name="interfaz"]:checked');
-      if (avEl) estadoAventura.avatar = avEl.value;
       if (infEl) estadoAventura.interfaz = infEl.value;
       
       estadoAventura.powerUps.pocion = parseInt(wrapper.querySelector('#pw-pocion').value) || 0;
@@ -337,7 +428,7 @@
           box-shadow: var(--sombra);
           border-radius: calc(var(--radius) * 1.5);
           margin: 0 auto;
-          font-family: 'Courier New', Courier, monospace;
+          font-family: 'Press Start 2P', system-ui, sans-serif;
           color: var(--text);
           box-sizing: border-box;
         }
@@ -608,7 +699,7 @@
           border-color: var(--accent) !important;
         }
       </style>
-      <div style="max-width: 650px; margin: 0 auto; background: var(--surface); color: var(--text); border: 2px solid var(--borde-fuerte); border-radius: var(--radius, 12px); padding: 14px; box-shadow: var(--sombra); display: flex; flex-direction: column; gap: 10px; font-family: 'Courier New', Courier, monospace;">
+      <div style="max-width: 650px; margin: 0 auto; background: var(--surface); color: var(--text); border: 2px solid var(--borde-fuerte); border-radius: var(--radius, 12px); padding: 14px; box-shadow: var(--sombra); display: flex; flex-direction: column; gap: 10px; font-family: 'Press Start 2P', system-ui, sans-serif;">
         <!-- HUD Superior -->
         <div style="display: flex; justify-content: space-between; background: var(--bg); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--borde); font-size: 0.9em;">
           <div>🛡️ ${estadoAventura.avatar.toUpperCase()}: HP <span id="hp-jugador">${estadoAventura.hpJugador}</span>/9000</div>
@@ -655,7 +746,7 @@
           color: var(--bg) !important;
         }
       </style>
-      <div style="max-width: 650px; margin: 0 auto; background: var(--surface); color: var(--text); border: 3px solid var(--borde-fuerte); border-radius: 6px; padding: 14px; font-family: 'Courier New', Courier, monospace;">
+      <div style="max-width: 650px; margin: 0 auto; background: var(--surface); color: var(--text); border: 3px solid var(--borde-fuerte); border-radius: 6px; padding: 14px; font-family: 'Press Start 2P', system-ui, sans-serif;">
         <div style="display: flex; justify-content: space-between; border-bottom: 2px solid var(--borde-fuerte); padding-bottom: 6px; margin-bottom: 10px; font-size: 0.9em;">
           <div>PLAYER: <span id="hp-jugador">${estadoAventura.hpJugador}</span> HP</div>
           <div>TIME: <span id="span-tiempo">30</span>s</div>
