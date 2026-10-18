@@ -302,6 +302,9 @@
   function renderBatalla(contenedor) {
     contenedor.innerHTML = '';
 
+    var headerEl = document.querySelector('body > header');
+    if (headerEl) headerEl.style.display = 'none';
+
     var pActual = estadoAventura.preguntas[estadoAventura.indicePregunta];
     if (!pActual) {
       renderVictoriaDerrota(contenedor);
