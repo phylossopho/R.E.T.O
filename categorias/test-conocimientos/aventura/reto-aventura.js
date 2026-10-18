@@ -332,15 +332,15 @@
           width: 100%;
           max-width: 900px;
           height: 550px;
-          border: 4px solid #3a3a4a;
-          background-color: #1d213a;
+          border: 4px solid var(--borde-fuerte);
+          background-color: var(--bg);
           display: flex;
           flex-direction: column;
           overflow: hidden;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+          box-shadow: var(--sombra, 0 10px 30px rgba(0,0,0,0.7));
           margin: 0 auto;
-          font-family: 'Courier New', Courier, monospace;
-          color: #ffffff;
+          font-family: inherit;
+          color: var(--text);
           box-sizing: border-box;
         }
         .game-container-rpg1 *, .game-container-rpg1 *::before, .game-container-rpg1 *::after {
@@ -353,9 +353,9 @@
           overflow: hidden;
         }
         .hud-box-rpg1 {
-          background-color: #2a2a35;
-          border: 2px solid #555;
-          border-radius: 8px;
+          background-color: var(--surface);
+          border: 2px solid var(--borde-fuerte);
+          border-radius: var(--radius, 8px);
           padding: 8px 12px;
           width: 320px;
           position: absolute;
@@ -363,6 +363,7 @@
           display: flex;
           align-items: center;
           gap: 10px;
+          box-shadow: var(--sombra);
         }
         .hud-header-rpg1 {
           display: flex;
@@ -372,27 +373,27 @@
         .hud-name-rpg1 {
           font-size: 11px;
           font-weight: bold;
-          color: #fff;
+          color: var(--text);
           text-transform: uppercase;
           white-space: nowrap;
         }
         .health-bar-bg-rpg1 {
-          background-color: #441111;
+          background-color: var(--bg);
           height: 16px;
           border-radius: 4px;
           flex: 1;
           overflow: hidden;
           position: relative;
-          border: 1px solid rgba(255,255,255,0.2);
+          border: 1px solid var(--borde);
         }
         .health-bar-fill-rpg1 {
           height: 100%;
           transition: width 0.3s ease;
         }
         .hud-mago-rpg1 { top: 20px; left: 20px; }
-        .hud-mago-rpg1 .health-bar-fill-rpg1 { background-color: #ff3333; width: ${(estadoAventura.hpRival / 9000) * 100}%; }
+        .hud-mago-rpg1 .health-bar-fill-rpg1 { background-color: var(--accent); width: ${(estadoAventura.hpRival / 9000) * 100}%; opacity: 0.85; }
         .hud-caballero-rpg1 { bottom: 20px; right: 20px; }
-        .hud-caballero-rpg1 .health-bar-fill-rpg1 { background-color: #33ff33; width: ${(estadoAventura.hpJugador / 9000) * 100}%; }
+        .hud-caballero-rpg1 .health-bar-fill-rpg1 { background-color: var(--accent); width: ${(estadoAventura.hpJugador / 9000) * 100}%; }
         .hud-hp-text-rpg1 {
           position: absolute;
           top: 0;
@@ -404,8 +405,8 @@
           justify-content: center;
           font-size: 11px;
           font-weight: bold;
-          color: #fff;
-          text-shadow: 1px 1px 2px #000, -1px -1px 2px #000;
+          color: var(--text);
+          text-shadow: 0 1px 2px var(--bg);
         }
         .sprite-rpg1 {
           position: absolute;
@@ -415,17 +416,17 @@
         /* Avatar del rival y del usuario escalados a 540% (324px), usuario inclinado hacia el frente y arriba */
         .sprite-mago-rpg1 { top: -40px; right: 40px; opacity: 0.9; pointer-events: none; }
         .sprite-caballero-rpg1 { bottom: -60px; left: 30px; opacity: 0.9; pointer-events: none; }
-        .sprite-rpg1 img { width: 324px; height: 324px; object-fit: contain; filter: drop-shadow(0 8px 20px rgba(0,0,0,0.9)); }
+        .sprite-rpg1 img { width: 324px; height: 324px; object-fit: contain; filter: drop-shadow(0 8px 20px rgba(0,0,0,0.5)); }
         .sprite-mago-rpg1 img { transform: scaleX(-1); }
         .sprite-caballero-rpg1 img { transform: rotate(-10deg) translateY(10px); transform-origin: bottom center; }
         .question-box-rpg1 {
-          background-color: #0f0f14;
-          border-top: 4px solid #a0a0c0;
-          border-bottom: 2px solid #a0a0c0;
+          background-color: var(--surface);
+          border-top: 4px solid var(--borde-fuerte);
+          border-bottom: 2px solid var(--borde-fuerte);
           padding: 15px;
           min-height: 75px;
           font-size: 15px;
-          color: #00ffcc;
+          color: var(--text);
           line-height: 1.4;
           z-index: 12;
           position: relative;
@@ -434,23 +435,24 @@
           height: 160px;
           display: grid;
           grid-template-columns: 2fr 1fr;
-          background-color: #111;
+          background-color: var(--surface);
+          border-top: 2px solid var(--borde-fuerte);
           z-index: 12;
           position: relative;
         }
         .answers-grid-rpg1 {
-          background-color: #13131a;
-          border-right: 4px solid #3a3a4a;
+          background-color: var(--surface);
+          border-right: 2px solid var(--borde);
           padding: 15px;
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 12px;
         }
         .btn-answer-rpg1 {
-          background-color: #22222e;
-          border: 2px solid #333344;
-          color: #ffffff;
-          border-radius: 6px;
+          background-color: var(--bg);
+          border: 2px solid var(--borde-fuerte);
+          color: var(--text);
+          border-radius: var(--radius, 6px);
           font-size: 14px;
           text-align: left;
           padding: 10px;
@@ -459,12 +461,12 @@
           font-family: inherit;
         }
         .btn-answer-rpg1:hover {
-          background-color: #333344;
-          border-color: #00ffcc;
-          color: #00ffcc;
+          background-color: var(--accent);
+          border-color: var(--accent);
+          color: var(--bg);
         }
         .powerups-panel-rpg1 {
-          background-color: #1a1510;
+          background-color: var(--bg);
           padding: 12px;
           display: flex;
           flex-direction: column;
@@ -472,16 +474,16 @@
         }
         .powerups-title-rpg1 {
           font-size: 12px;
-          color: #ffaa34;
+          color: var(--accent);
           font-weight: bold;
           text-align: center;
           margin-bottom: 2px;
           text-transform: uppercase;
         }
         .btn-powerup-rpg1 {
-          background-color: #2d2015;
-          border: 2px solid #553311;
-          color: #ffdfb0;
+          background-color: var(--surface);
+          border: 2px solid var(--borde-fuerte);
+          color: var(--text);
           border-radius: 4px;
           font-size: 12px;
           padding: 6px 10px;
@@ -494,9 +496,10 @@
           font-family: inherit;
         }
         .btn-powerup-rpg1:hover {
-          background-color: #443020;
-          border-color: #ffaa34;
-          box-shadow: 0 0 5px rgba(255, 170, 52, 0.4);
+          background-color: var(--accent);
+          border-color: var(--accent);
+          color: var(--bg);
+          box-shadow: var(--sombra);
         }
       </style>
 
@@ -571,16 +574,17 @@
           transition: background 150ms ease, border-color 150ms ease;
         }
         .btn-opcion-rpg:hover {
-          background-color: var(--tarjeta-hover-bg) !important;
+          background-color: var(--accent) !important;
+          color: var(--bg) !important;
           border-color: var(--accent) !important;
         }
       </style>
-      <div style="max-width: 650px; margin: 0 auto; background: var(--surface); color: var(--text); border: 2px solid var(--borde-fuerte); border-radius: 12px; padding: 14px; box-shadow: var(--sombra); display: flex; flex-direction: column; gap: 10px;">
+      <div style="max-width: 650px; margin: 0 auto; background: var(--surface); color: var(--text); border: 2px solid var(--borde-fuerte); border-radius: var(--radius, 12px); padding: 14px; box-shadow: var(--sombra); display: flex; flex-direction: column; gap: 10px;">
         <!-- HUD Superior -->
         <div style="display: flex; justify-content: space-between; background: var(--bg); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--borde); font-size: 0.9em;">
-          <div>🛡️ ${estadoAventura.avatar.toUpperCase()}: HP <span id="hp-jugador">${estadoAventura.hpJugador}</span>/100</div>
+          <div>🛡️ ${estadoAventura.avatar.toUpperCase()}: HP <span id="hp-jugador">${estadoAventura.hpJugador}</span>/9000</div>
           <div>⏳ TIEMPO: <span id="span-tiempo" style="color: var(--accent); font-weight: bold;">30</span>s</div>
-          <div>👾 RIVAL: HP <span id="hp-rival">${estadoAventura.hpRival}</span>/100</div>
+          <div>👾 RIVAL: HP <span id="hp-rival">${estadoAventura.hpRival}</span>/9000</div>
         </div>
 
         <!-- Pantalla de Combate Central -->
@@ -618,11 +622,11 @@
           transition: background 150ms ease, color 150ms ease;
         }
         .btn-opcion-rpg:hover {
-          background: var(--text) !important;
-          color: var(--surface) !important;
+          background: var(--accent) !important;
+          color: var(--bg) !important;
         }
       </style>
-      <div style="max-width: 650px; margin: 0 auto; background: var(--surface); color: var(--text); border: 3px solid var(--borde-fuerte); border-radius: 6px; padding: 14px; font-family: 'Courier New', Courier, monospace;">
+      <div style="max-width: 650px; margin: 0 auto; background: var(--surface); color: var(--text); border: 3px solid var(--borde-fuerte); border-radius: 6px; padding: 14px; font-family: inherit;">
         <div style="display: flex; justify-content: space-between; border-bottom: 2px solid var(--borde-fuerte); padding-bottom: 6px; margin-bottom: 10px; font-size: 0.9em;">
           <div>PLAYER: <span id="hp-jugador">${estadoAventura.hpJugador}</span> HP</div>
           <div>TIME: <span id="span-tiempo">30</span>s</div>
