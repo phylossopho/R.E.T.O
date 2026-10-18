@@ -18,8 +18,8 @@
     testSeleccionado: null,
     preguntas: [],
     indicePregunta: 0,
-    hpJugador: 100,
-    hpRival: 100,
+    hpJugador: 9000,
+    hpRival: 9000,
     tiempoRestante: 30,
     temporizador: null
   };
@@ -27,7 +27,16 @@
   function iniciar() {
     var raiz = document.getElementById('vistas');
     if (!raiz) return;
-    renderConfiguracion(raiz);
+
+    var btnIniciar = document.getElementById('btn-iniciar-aventura');
+    if (btnIniciar) {
+      btnIniciar.addEventListener('click', function () {
+        if (Sonido && Sonido.reproducir) Sonido.reproducir('acierto');
+        renderConfiguracion(raiz);
+      });
+    } else {
+      renderConfiguracion(raiz);
+    }
   }
 
   /* -------------------------------------------------------------------------
@@ -48,18 +57,38 @@
 
       <fieldset style="border: 2px solid var(--borde-fuerte); border-radius: var(--radius); padding: var(--space-md); background: var(--surface);">
         <legend style="font-weight: bold; padding: 0 var(--space-xs); color: var(--accent);">1. Elige tu Avatar</legend>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: var(--space-sm); margin-top: var(--space-sm);">
-          <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-sm); cursor: pointer;">
-            <input type="radio" name="avatar" value="mago" checked style="margin-bottom: 4px;"> 🧙‍♂️ Mago
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: var(--space-sm); margin-top: var(--space-sm);">
+          <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-xs); cursor: pointer; text-align: center;">
+            <img src="../../../imagenes/mago.png" alt="Mago" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
+            <input type="radio" name="avatar" value="mago" checked style="margin-bottom: 2px;"> Mago
           </label>
-          <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-sm); cursor: pointer;">
-            <input type="radio" name="avatar" value="caballero" style="margin-bottom: 4px;"> 🛡️ Caballero
+          <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-xs); cursor: pointer; text-align: center;">
+            <img src="../../../imagenes/maga.png" alt="Maga" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
+            <input type="radio" name="avatar" value="maga" style="margin-bottom: 2px;"> Maga
           </label>
-          <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-sm); cursor: pointer;">
-            <input type="radio" name="avatar" value="arquero" style="margin-bottom: 4px;"> 🏹 Arquero
+          <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-xs); cursor: pointer; text-align: center;">
+            <img src="../../../imagenes/caballero.png" alt="Caballero" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
+            <input type="radio" name="avatar" value="caballero" style="margin-bottom: 2px;"> Caballero
           </label>
-          <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-sm); cursor: pointer;">
-            <input type="radio" name="avatar" value="erudito" style="margin-bottom: 4px;"> 📜 Erudito
+          <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-xs); cursor: pointer; text-align: center;">
+            <img src="../../../imagenes/caballera.png" alt="Caballera" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
+            <input type="radio" name="avatar" value="caballera" style="margin-bottom: 2px;"> Caballera
+          </label>
+          <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-xs); cursor: pointer; text-align: center;">
+            <img src="../../../imagenes/arquero.png" alt="Arquero" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
+            <input type="radio" name="avatar" value="arquero" style="margin-bottom: 2px;"> Arquero
+          </label>
+          <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-xs); cursor: pointer; text-align: center;">
+            <img src="../../../imagenes/arquera.png" alt="Arquera" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
+            <input type="radio" name="avatar" value="arquera" style="margin-bottom: 2px;"> Arquera
+          </label>
+          <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-xs); cursor: pointer; text-align: center;">
+            <img src="../../../imagenes/guerrero.png" alt="Guerrero" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
+            <input type="radio" name="avatar" value="guerrero" style="margin-bottom: 2px;"> Guerrero
+          </label>
+          <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-xs); cursor: pointer; text-align: center;">
+            <img src="../../../imagenes/guerrera.png" alt="Guerrera" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
+            <input type="radio" name="avatar" value="guerrera" style="margin-bottom: 2px;"> Guerrera
           </label>
         </div>
       </fieldset>
@@ -136,6 +165,14 @@
     }
 
     Banco.cargar().then(function (tests) {
+      if ((!tests || tests.length === 0) && window.RetoTestsMuestra && window.RetoTestsMuestra.copiar) {
+        var muestra = window.RetoTestsMuestra.copiar();
+        return Banco.guardarVarios(muestra).then(function () {
+          return Banco.cargar();
+        });
+      }
+      return tests;
+    }).then(function (tests) {
       if (!tests || tests.length === 0) {
         contenedor.innerHTML = `
           <div style="text-align: center; padding: var(--space-lg);">
@@ -212,18 +249,34 @@
           return;
         }
 
-        // Barajar opciones de cada pregunta como en los demás módulos
+        // Asegurar exactamente 1 correcta y hasta 3 distractores (4 opciones en total), barajadas al azar
         mazo.forEach(function (q) {
           if (q.opciones && q.opciones.length > 0) {
-            q.opciones = barajarOpciones(q.opciones);
+            var correcta = null;
+            var distractores = [];
+            q.opciones.forEach(function (op) {
+              if (op.correcta && !correcta) {
+                correcta = op;
+              } else if (!op.correcta) {
+                distractores.push(op);
+              }
+            });
+            if (!correcta) {
+              correcta = q.opciones[0];
+              correcta.correcta = true;
+            }
+            // Barajar distractores y tomar máximo 3
+            distractores = barajarOpciones(distractores).slice(0, 3);
+            var seleccionadas = [correcta].concat(distractores);
+            q.opciones = barajarOpciones(seleccionadas);
           }
         });
 
         estadoAventura.testSeleccionado = test;
         estadoAventura.preguntas = mazo;
         estadoAventura.indicePregunta = 0;
-        estadoAventura.hpJugador = 100;
-        estadoAventura.hpRival = 100;
+        estadoAventura.hpJugador = 9000;
+        estadoAventura.hpRival = 9000;
 
         contenedor.style.opacity = '1';
         renderBatalla(contenedor);
@@ -272,30 +325,236 @@
   }
 
   function renderInterfazRPG01(p) {
+    var avatarImg = (estadoAventura.avatar || 'caballero') + '.png';
     return `
-      <div style="background: #111116; color: #00ffcc; border: 3px solid #33ff33; border-radius: 8px; padding: var(--space-md); font-family: 'Courier New', monospace; box-shadow: 0 4px 20px rgba(0,255,204,0.2);">
-        <div style="display: flex; justify-content: space-between; margin-bottom: var(--space-md); border-bottom: 2px dashed #33ff33; padding-bottom: var(--space-xs);">
-          <div>🧙‍♂️ <strong>Héroe (${estadoAventura.avatar.toUpperCase()})</strong><br>HP: <span id="hp-jugador">${estadoAventura.hpJugador}</span>/100</div>
-          <div style="text-align: center;">⏳ TIEMPO: <span id="span-tiempo" style="color: #ffeb3b; font-size: 1.2em;">30</span>s</div>
-          <div style="text-align: right;">👾 <strong>Rival de Turno</strong><br>HP: <span id="hp-rival">${estadoAventura.hpRival}</span>/100</div>
+      <style>
+        .game-container-rpg1 {
+          width: 100%;
+          max-width: 900px;
+          height: 550px;
+          border: 4px solid #3a3a4a;
+          background-color: #1d213a;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+          margin: 0 auto;
+          font-family: 'Courier New', Courier, monospace;
+          color: #ffffff;
+          box-sizing: border-box;
+        }
+        .game-container-rpg1 *, .game-container-rpg1 *::before, .game-container-rpg1 *::after {
+          box-sizing: border-box;
+        }
+        .battle-screen-rpg1 {
+          flex: 1;
+          position: relative;
+          padding: 20px;
+          overflow: hidden;
+        }
+        .hud-box-rpg1 {
+          background-color: #2a2a35;
+          border: 2px solid #555;
+          border-radius: 8px;
+          padding: 8px 10px;
+          width: 260px;
+          position: absolute;
+          z-index: 10;
+        }
+        .hud-header-rpg1 {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 4px;
+        }
+        .hud-name-rpg1 {
+          font-size: 12px;
+          font-weight: bold;
+          color: #fff;
+          text-transform: uppercase;
+        }
+        .health-bar-bg-rpg1 {
+          background-color: #441111;
+          height: 16px;
+          border-radius: 4px;
+          width: 100%;
+          overflow: hidden;
+          position: relative;
+          border: 1px solid rgba(255,255,255,0.2);
+        }
+        .health-bar-fill-rpg1 {
+          height: 100%;
+          transition: width 0.3s ease;
+        }
+        .hud-mago-rpg1 { top: 20px; left: 20px; }
+        .hud-mago-rpg1 .health-bar-fill-rpg1 { background-color: #ff3333; width: ${(estadoAventura.hpRival / 9000) * 100}%; }
+        .hud-caballero-rpg1 { bottom: 20px; right: 20px; }
+        .hud-caballero-rpg1 .health-bar-fill-rpg1 { background-color: #33ff33; width: ${(estadoAventura.hpJugador / 9000) * 100}%; }
+        .hud-hp-text-rpg1 {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 11px;
+          font-weight: bold;
+          color: #fff;
+          text-shadow: 1px 1px 2px #000, -1px -1px 2px #000;
+        }
+        .sprite-rpg1 {
+          position: absolute;
+          text-align: center;
+          z-index: 2;
+        }
+        /* Avatar del rival y del usuario escalados a 540% (324px), usuario inclinado hacia el frente y arriba */
+        .sprite-mago-rpg1 { top: -40px; right: 40px; opacity: 0.9; pointer-events: none; }
+        .sprite-caballero-rpg1 { bottom: -60px; left: 30px; opacity: 0.9; pointer-events: none; }
+        .sprite-rpg1 img { width: 324px; height: 324px; object-fit: contain; filter: drop-shadow(0 8px 20px rgba(0,0,0,0.9)); }
+        .sprite-mago-rpg1 img { transform: scaleX(-1); }
+        .sprite-caballero-rpg1 img { transform: rotate(-10deg) translateY(10px); transform-origin: bottom center; }
+        .question-box-rpg1 {
+          background-color: #0f0f14;
+          border-top: 4px solid #a0a0c0;
+          border-bottom: 2px solid #a0a0c0;
+          padding: 15px;
+          min-height: 75px;
+          font-size: 15px;
+          color: #00ffcc;
+          line-height: 1.4;
+          z-index: 12;
+          position: relative;
+        }
+        .control-panel-rpg1 {
+          height: 160px;
+          display: grid;
+          grid-template-columns: 2fr 1fr;
+          background-color: #111;
+          z-index: 12;
+          position: relative;
+        }
+        .answers-grid-rpg1 {
+          background-color: #13131a;
+          border-right: 4px solid #3a3a4a;
+          padding: 15px;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+        .btn-answer-rpg1 {
+          background-color: #22222e;
+          border: 2px solid #333344;
+          color: #ffffff;
+          border-radius: 6px;
+          font-size: 14px;
+          text-align: left;
+          padding: 10px;
+          cursor: pointer;
+          transition: all 0.2s;
+          font-family: inherit;
+        }
+        .btn-answer-rpg1:hover {
+          background-color: #333344;
+          border-color: #00ffcc;
+          color: #00ffcc;
+        }
+        .powerups-panel-rpg1 {
+          background-color: #1a1510;
+          padding: 12px;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .powerups-title-rpg1 {
+          font-size: 12px;
+          color: #ffaa34;
+          font-weight: bold;
+          text-align: center;
+          margin-bottom: 2px;
+          text-transform: uppercase;
+        }
+        .btn-powerup-rpg1 {
+          background-color: #2d2015;
+          border: 2px solid #553311;
+          color: #ffdfb0;
+          border-radius: 4px;
+          font-size: 12px;
+          padding: 6px 10px;
+          cursor: pointer;
+          text-align: left;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          transition: all 0.2s;
+          font-family: inherit;
+        }
+        .btn-powerup-rpg1:hover {
+          background-color: #443020;
+          border-color: #ffaa34;
+          box-shadow: 0 0 5px rgba(255, 170, 52, 0.4);
+        }
+      </style>
+
+      <div class="game-container-rpg1">
+        <!-- 1. ESCENARIO DE BATALLA -->
+        <div class="battle-screen-rpg1">
+          <!-- HUD Mago -->
+          <div class="hud-box-rpg1 hud-mago-rpg1">
+            <div class="hud-header-rpg1">
+              <div class="hud-name-rpg1">MAGO DE FÍSICA</div>
+            </div>
+            <div class="health-bar-bg-rpg1">
+              <div class="health-bar-fill-rpg1" id="bar-rival"></div>
+              <div class="hud-hp-text-rpg1"><span id="hp-rival">${estadoAventura.hpRival}</span> / 9000 HP</div>
+            </div>
+          </div>
+
+          <!-- Sprite Mago (Espejo horizontal) -->
+          <div class="sprite-rpg1 sprite-mago-rpg1">
+            <img src="../../../imagenes/mago.png" alt="Mago">
+          </div>
+
+          <!-- Sprite Jugador (Inclinado hacia el frente y arriba) -->
+          <div class="sprite-rpg1 sprite-caballero-rpg1">
+            <img src="../../../imagenes/${avatarImg}" alt="Jugador">
+          </div>
+
+          <!-- HUD Jugador -->
+          <div class="hud-box-rpg1 hud-caballero-rpg1">
+            <div class="hud-header-rpg1">
+              <div class="hud-name-rpg1">${estadoAventura.avatar.toUpperCase()}</div>
+            </div>
+            <div class="health-bar-bg-rpg1">
+              <div class="health-bar-fill-rpg1" id="bar-jugador"></div>
+              <div class="hud-hp-text-rpg1"><span id="hp-jugador">${estadoAventura.hpJugador}</span> / 9000 HP</div>
+            </div>
+          </div>
         </div>
 
-        <div style="background: #1a1a24; border: 2px solid #00ffcc; padding: var(--space-md); border-radius: 6px; margin-bottom: var(--space-md); min-height: 90px; display: flex; align-items: center; justify-content: center; text-align: center;">
-          <p style="margin: 0; font-size: 1.1em; color: #fff;">${p.enunciado}</p>
+        <!-- 2. CAJA DE LA PREGUNTA -->
+        <div class="question-box-rpg1">
+          [TURNO DEL ENEMIGO] El Mago te lanza un conjuro...<br>
+          <strong>${p.enunciado}</strong>
         </div>
 
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--space-md);">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-xs);" id="opciones-batalla">
+        <!-- 3. PANEL DE COMANDOS INFERIOR -->
+        <div class="control-panel-rpg1">
+          <!-- Opciones 2x2 -->
+          <div class="answers-grid-rpg1" id="opciones-batalla">
             ${(p.opciones || []).map(function(op, idx) {
-              return '<button type="button" class="btn-opcion-rpg" data-idx="' + idx + '" style="background: #1d213a; border: 2px solid #00ffcc; color: #00ffcc; padding: var(--space-sm); border-radius: 4px; cursor: pointer; text-align: left; font-family: inherit; font-weight: bold;">[' + (idx + 1) + '] ' + op.texto + '</button>';
+              return '<button type="button" class="btn-answer-rpg1 btn-opcion-rpg" data-idx="' + idx + '">' + String.fromCharCode(65 + idx) + ') ' + op.texto + '</button>';
             }).join('')}
           </div>
 
-          <div style="background: #1d213a; border: 2px solid #ffeb3b; padding: var(--space-sm); border-radius: 6px; display: flex; flex-direction: column; gap: 8px;">
-            <strong style="color: #ffeb3b; font-size: 0.9em; text-align: center;">INVENTARIO (Power-Ups)</strong>
-            <button type="button" id="btn-pw-pocion" class="btn-power" style="background: #333; color: #ff3366; border: 1px solid #ff3366; padding: 6px; cursor: pointer; border-radius: 4px;">❤️ Poción (${estadoAventura.powerUps.pocion})</button>
-            <button type="button" id="btn-pw-pista" class="btn-power" style="background: #333; color: #00ffcc; border: 1px solid #00ffcc; padding: 6px; cursor: pointer; border-radius: 4px;">👁️ Pista (${estadoAventura.powerUps.pista})</button>
-            <button type="button" id="btn-pw-reloj" class="btn-power" style="background: #333; color: #ffeb3b; border: 1px solid #ffeb3b; padding: 6px; cursor: pointer; border-radius: 4px;">⏳ Reloj (${estadoAventura.powerUps.reloj})</button>
+          <!-- Power-Ups y Tiempo -->
+          <div class="powerups-panel-rpg1">
+            <div class="powerups-title-rpg1">✨ Objetos / Ventajas</div>
+            <button type="button" id="btn-pw-pocion" class="btn-powerup-rpg1"><span>❤️</span> Poción (${estadoAventura.powerUps.pocion})</button>
+            <button type="button" id="btn-pw-pista" class="btn-powerup-rpg1"><span>👁️</span> Pista (${estadoAventura.powerUps.pista})</button>
+            <button type="button" id="btn-pw-reloj" class="btn-powerup-rpg1"><span>⏳</span> Reloj (+15s) (${estadoAventura.powerUps.reloj})</button>
+            <div style="font-size: 11px; color: #ffaa34; text-align: center; margin-top: auto;">⏳ Tiempo: <span id="span-tiempo">30</span>s</div>
           </div>
         </div>
       </div>
@@ -304,29 +563,45 @@
 
   function renderInterfazRPG02(p) {
     return `
-      <div style="background: radial-gradient(circle, #2d1b4e 0%, #11071f 100%); color: #e2e8f0; border: 3px solid #9333ea; border-radius: 12px; padding: var(--space-md); box-shadow: 0 4px 25px rgba(147,51,234,0.3);">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md); border-bottom: 1px solid #4c1d95; padding-bottom: var(--space-xs);">
-          <div>🧙‍♂️ <strong>Jugador:</strong> HP <span id="hp-jugador">${estadoAventura.hpJugador}</span>/100</div>
-          <div style="background: #4c1d95; padding: 4px 12px; border-radius: 999px; font-weight: bold;">⏳ <span id="span-tiempo">30</span>s</div>
-          <div>👾 <strong>Jefe Rival:</strong> HP <span id="hp-rival">${estadoAventura.hpRival}</span>/100</div>
+      <style>
+        .btn-opcion-rpg {
+          transition: background 150ms ease, border-color 150ms ease;
+        }
+        .btn-opcion-rpg:hover {
+          background-color: var(--tarjeta-hover-bg) !important;
+          border-color: var(--accent) !important;
+        }
+      </style>
+      <div style="max-width: 650px; margin: 0 auto; background: var(--surface); color: var(--text); border: 2px solid var(--borde-fuerte); border-radius: 12px; padding: 14px; box-shadow: var(--sombra); display: flex; flex-direction: column; gap: 10px;">
+        <!-- HUD Superior -->
+        <div style="display: flex; justify-content: space-between; background: var(--bg); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--borde); font-size: 0.9em;">
+          <div>🛡️ ${estadoAventura.avatar.toUpperCase()}: HP <span id="hp-jugador">${estadoAventura.hpJugador}</span>/100</div>
+          <div>⏳ TIEMPO: <span id="span-tiempo" style="color: var(--accent); font-weight: bold;">30</span>s</div>
+          <div>👾 RIVAL: HP <span id="hp-rival">${estadoAventura.hpRival}</span>/100</div>
         </div>
 
-        <div style="text-align: center; margin-bottom: var(--space-md);">
-          <div style="font-size: 50px; animation: float 3s ease-in-out infinite;">🦹‍♂️</div>
-          <p style="background: rgba(0,0,0,0.4); border: 2px solid #7c3aed; padding: var(--space-md); border-radius: 8px; font-size: 1.1em; margin-top: 8px;">${p.enunciado}</p>
+        <!-- Pantalla de Combate Central -->
+        <div style="background: var(--bg); border: 1px solid var(--borde); border-radius: 10px; padding: 20px; text-align: center;">
+          <div style="font-size: 50px;">🧙‍♂️</div>
+          <div style="font-size: 0.9rem; color: var(--accent); font-weight: bold; margin-top: 4px;">Mago Jefe de Conocimiento</div>
         </div>
 
-        <div style="display: flex; gap: var(--space-md);">
-          <div style="flex: 2; display: flex; flex-direction: column; gap: var(--space-xs);" id="opciones-batalla">
-            ${(p.opciones || []).map(function(op, idx) {
-              return '<button type="button" class="btn-opcion-rpg" data-idx="' + idx + '" style="background: #251738; border: 2px solid #7c3aed; color: #e2e8f0; padding: var(--space-sm); border-radius: 8px; cursor: pointer; text-align: left; font-weight: bold;">▪️ ' + op.texto + '</button>';
-            }).join('')}
+        <!-- Panel Inferior Dividido: Pregunta/Opciones vs Inventario -->
+        <div style="display: grid; grid-template-columns: 1fr 180px; gap: 10px; background: var(--bg); border: 1px solid var(--borde); padding: 12px; border-radius: 10px;">
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="font-size: 0.95rem; font-weight: bold; color: var(--text);">${p.enunciado}</div>
+            <div style="display: flex; flex-direction: column; gap: 6px;" id="opciones-batalla">
+              ${(p.opciones || []).map(function(op, idx) {
+                return '<button type="button" class="btn-opcion-rpg" data-idx="' + idx + '" style="background: var(--surface); border: 1px solid var(--borde-fuerte); color: var(--text); padding: 8px 10px; text-align: left; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9em;">' + (idx + 1) + ') ' + op.texto + '</button>';
+              }).join('')}
+            </div>
           </div>
-          <div style="flex: 1; background: #1a0b2e; border: 2px solid #581c87; padding: var(--space-sm); border-radius: 8px; display: flex; flex-direction: column; gap: 8px;">
-            <span style="font-weight: bold; color: #c084fc; text-align: center;">🎒 INVENTARIO</span>
-            <button type="button" id="btn-pw-pocion" style="background: #3b0764; color: #f472b6; border: 1px solid #f472b6; padding: 8px; border-radius: 6px; cursor: pointer;">❤️ Poción (${estadoAventura.powerUps.pocion})</button>
-            <button type="button" id="btn-pw-pista" style="background: #3b0764; color: #38bdf8; border: 1px solid #38bdf8; padding: 8px; border-radius: 6px; cursor: pointer;">👁️ Pista (${estadoAventura.powerUps.pista})</button>
-            <button type="button" id="btn-pw-reloj" style="background: #3b0764; color: #facc15; border: 1px solid #facc15; padding: 8px; border-radius: 6px; cursor: pointer;">⏳ Reloj (${estadoAventura.powerUps.reloj})</button>
+
+          <div style="background: var(--surface); border: 1px solid var(--borde-fuerte); padding: 8px; border-radius: 6px; display: flex; flex-direction: column; gap: 6px;">
+            <div style="font-size: 0.8rem; color: var(--accent); font-weight: bold; text-align: center;">🎒 INVENTARIO</div>
+            <button type="button" id="btn-pw-pocion" class="btn-power" style="background: var(--bg); color: var(--text); border: 1px solid var(--borde); padding: 6px; font-size: 0.85em; border-radius: 4px; cursor: pointer;">❤️ Poción (${estadoAventura.powerUps.pocion})</button>
+            <button type="button" id="btn-pw-pista" class="btn-power" style="background: var(--bg); color: var(--text); border: 1px solid var(--borde); padding: 6px; font-size: 0.85em; border-radius: 4px; cursor: pointer;">👁️ Pista (${estadoAventura.powerUps.pista})</button>
+            <button type="button" id="btn-pw-reloj" class="btn-power" style="background: var(--bg); color: var(--text); border: 1px solid var(--borde); padding: 6px; font-size: 0.85em; border-radius: 4px; cursor: pointer;">⏳ Reloj (${estadoAventura.powerUps.reloj})</button>
           </div>
         </div>
       </div>
@@ -335,27 +610,45 @@
 
   function renderInterfazRPG03(p) {
     return `
-      <div style="background: #000; color: #fff; border: 3px solid #fff; border-radius: 4px; padding: var(--space-md); font-family: 'Courier New', Courier, monospace;">
-        <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #fff; padding-bottom: 8px; margin-bottom: var(--space-md);">
+      <style>
+        .btn-opcion-rpg {
+          transition: background 150ms ease, color 150ms ease;
+        }
+        .btn-opcion-rpg:hover {
+          background: var(--text) !important;
+          color: var(--surface) !important;
+        }
+      </style>
+      <div style="max-width: 650px; margin: 0 auto; background: var(--surface); color: var(--text); border: 3px solid var(--borde-fuerte); border-radius: 6px; padding: 14px; font-family: 'Courier New', Courier, monospace;">
+        <div style="display: flex; justify-content: space-between; border-bottom: 2px solid var(--borde-fuerte); padding-bottom: 6px; margin-bottom: 10px; font-size: 0.9em;">
           <div>PLAYER: <span id="hp-jugador">${estadoAventura.hpJugador}</span> HP</div>
           <div>TIME: <span id="span-tiempo">30</span>s</div>
           <div>ENEMY: <span id="hp-rival">${estadoAventura.hpRival}</span> HP</div>
         </div>
 
-        <div style="border: 2px solid #fff; padding: var(--space-md); margin-bottom: var(--space-md); min-height: 80px;">
-          <p style="margin: 0; font-size: 1.1em;">* ${p.enunciado}</p>
+        <div style="display: flex; justify-content: space-around; align-items: center; border-bottom: 2px dashed var(--borde); padding-bottom: 10px; margin-bottom: 10px;">
+          <div style="border: 2px solid var(--borde-fuerte); padding: 8px 16px; text-align: center; font-size: 0.9em;">⚔️ ${estadoAventura.avatar.toUpperCase()}</div>
+          <div style="font-weight: bold;">VS</div>
+          <div style="border: 2px solid var(--borde-fuerte); padding: 8px 16px; text-align: center; font-size: 0.9em;">🧙‍♂️ MAGO RIVAL</div>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: var(--space-sm);" id="opciones-batalla">
+        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg); padding: 6px 10px; border: 1px solid var(--borde); margin-bottom: 10px; font-size: 0.85em;">
+          <div>ITEMS:</div>
+          <div style="display: flex; gap: 6px;">
+            <button type="button" id="btn-pw-pocion" style="background: var(--surface); color: var(--text); border: 1px solid var(--borde-fuerte); padding: 2px 6px; cursor: pointer;">[POT (${estadoAventura.powerUps.pocion})]</button>
+            <button type="button" id="btn-pw-pista" style="background: var(--surface); color: var(--text); border: 1px solid var(--borde-fuerte); padding: 2px 6px; cursor: pointer;">[HINT (${estadoAventura.powerUps.pista})]</button>
+            <button type="button" id="btn-pw-reloj" style="background: var(--surface); color: var(--text); border: 1px solid var(--borde-fuerte); padding: 2px 6px; cursor: pointer;">[TIME (${estadoAventura.powerUps.reloj})]</button>
+          </div>
+        </div>
+
+        <div style="border: 2px solid var(--borde-fuerte); background: var(--bg); padding: 12px; margin-bottom: 10px;">
+          <p style="margin: 0; font-size: 0.95em; color: var(--text);">* ${p.enunciado}</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;" id="opciones-batalla">
           ${(p.opciones || []).map(function(op, idx) {
-            return '<button type="button" class="btn-opcion-rpg" data-idx="' + idx + '" style="background: #000; color: #fff; border: 2px solid #fff; padding: var(--space-sm); cursor: pointer; text-align: left; font-family: inherit;">> ' + op.texto + '</button>';
+            return '<button type="button" class="btn-opcion-rpg" data-idx="' + idx + '" style="background: var(--surface); color: var(--text); border: 2px solid var(--borde-fuerte); padding: 8px; cursor: pointer; text-align: left; font-family: inherit; font-size: 0.9em;">> ' + op.texto + '</button>';
           }).join('')}
-        </div>
-
-        <div style="display: flex; gap: var(--space-sm); margin-top: var(--space-md); justify-content: center;">
-          <button type="button" id="btn-pw-pocion" style="background: #000; color: #fff; border: 1px solid #fff; padding: 4px 8px; cursor: pointer;">[❤️ POT (${estadoAventura.powerUps.pocion})]</button>
-          <button type="button" id="btn-pw-pista" style="background: #000; color: #fff; border: 1px solid #fff; padding: 4px 8px; cursor: pointer;">[👁️ HINT (${estadoAventura.powerUps.pista})]</button>
-          <button type="button" id="btn-pw-reloj" style="background: #000; color: #fff; border: 1px solid #fff; padding: 4px 8px; cursor: pointer;">[⏳ TIME (${estadoAventura.powerUps.reloj})]</button>
         </div>
       </div>
     `;
@@ -398,12 +691,27 @@
             return;
           }
         } else {
-          if (Sonido && Sonido.reproducir) Sonido.reproducir('error');
           aplicarDanoJugador(30);
         }
 
         siguientePreguntaOVerificar(contenedor);
       });
+    }
+
+    function mostrarAvisoPowerUp(textoAviso) {
+      var viejo = wrapper.querySelector('#aviso-power-up');
+      if (viejo) viejo.remove();
+
+      var aviso = document.createElement('div');
+      aviso.id = 'aviso-power-up';
+      aviso.style.cssText = 'position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background: var(--accent); color: var(--bg); padding: 8px 16px; border-radius: 999px; font-weight: bold; font-size: 0.95em; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 100; animation: fadeInOut 2s ease forwards;';
+      aviso.textContent = textoAviso;
+      wrapper.style.position = 'relative';
+      wrapper.appendChild(aviso);
+
+      setTimeout(function () {
+        if (aviso.parentNode) aviso.remove();
+      }, 2000);
     }
 
     var btnPocion = wrapper.querySelector('#btn-pw-pocion');
@@ -413,8 +721,9 @@
           estadoAventura.powerUps.pocion--;
           estadoAventura.hpJugador = Math.min(100, estadoAventura.hpJugador + 30);
           actualizarHPs(wrapper);
-          if (Sonido && Sonido.reproducir) Sonido.reproducir('acierto');
+          if (Sonido && Sonido.reproducir) Sonido.reproducir('charm');
           this.textContent = this.textContent.replace(/\(\d+\)/, '(' + estadoAventura.powerUps.pocion + ')');
+          mostrarAvisoPowerUp('❤️ ¡Poción usada! +30 HP');
         } else {
           alert('No te quedan Pociones.');
         }
@@ -427,6 +736,8 @@
         if (estadoAventura.powerUps.pista > 0) {
           estadoAventura.powerUps.pista--;
           this.textContent = this.textContent.replace(/\(\d+\)/, '(' + estadoAventura.powerUps.pista + ')');
+          if (Sonido && Sonido.reproducir) Sonido.reproducir('ding');
+          mostrarAvisoPowerUp('👁️ ¡Puesta en marcha! Opción incorrecta eliminada');
           
           var errOptions = wrapper.querySelectorAll('.btn-opcion-rpg');
           for (var j = 0; j < errOptions.length; j++) {
@@ -448,8 +759,10 @@
         if (estadoAventura.powerUps.reloj > 0) {
           estadoAventura.powerUps.reloj--;
           estadoAventura.tiempoRestante += 15;
+          if (spanTiempo) spanTiempo.textContent = estadoAventura.tiempoRestante;
           this.textContent = this.textContent.replace(/\(\d+\)/, '(' + estadoAventura.powerUps.reloj + ')');
-          if (Sonido && Sonido.reproducir) Sonido.reproducir('acierto');
+          if (Sonido && Sonido.reproducir) Sonido.reproducir('soft');
+          mostrarAvisoPowerUp('⏳ ¡Reloj de Arena usado! +15s');
         } else {
           alert('No te quedan Relojes de Arena.');
         }
