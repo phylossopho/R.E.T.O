@@ -337,7 +337,7 @@
           box-shadow: var(--sombra);
           border-radius: calc(var(--radius) * 1.5);
           margin: 0 auto;
-          font-family: inherit;
+          font-family: 'Courier New', Courier, monospace;
           color: var(--text);
           box-sizing: border-box;
         }
@@ -608,7 +608,7 @@
           border-color: var(--accent) !important;
         }
       </style>
-      <div style="max-width: 650px; margin: 0 auto; background: var(--surface); color: var(--text); border: 2px solid var(--borde-fuerte); border-radius: var(--radius, 12px); padding: 14px; box-shadow: var(--sombra); display: flex; flex-direction: column; gap: 10px;">
+      <div style="max-width: 650px; margin: 0 auto; background: var(--surface); color: var(--text); border: 2px solid var(--borde-fuerte); border-radius: var(--radius, 12px); padding: 14px; box-shadow: var(--sombra); display: flex; flex-direction: column; gap: 10px; font-family: 'Courier New', Courier, monospace;">
         <!-- HUD Superior -->
         <div style="display: flex; justify-content: space-between; background: var(--bg); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--borde); font-size: 0.9em;">
           <div>🛡️ ${estadoAventura.avatar.toUpperCase()}: HP <span id="hp-jugador">${estadoAventura.hpJugador}</span>/9000</div>
@@ -655,7 +655,7 @@
           color: var(--bg) !important;
         }
       </style>
-      <div style="max-width: 650px; margin: 0 auto; background: var(--surface); color: var(--text); border: 3px solid var(--borde-fuerte); border-radius: 6px; padding: 14px; font-family: inherit;">
+      <div style="max-width: 650px; margin: 0 auto; background: var(--surface); color: var(--text); border: 3px solid var(--borde-fuerte); border-radius: 6px; padding: 14px; font-family: 'Courier New', Courier, monospace;">
         <div style="display: flex; justify-content: space-between; border-bottom: 2px solid var(--borde-fuerte); padding-bottom: 6px; margin-bottom: 10px; font-size: 0.9em;">
           <div>PLAYER: <span id="hp-jugador">${estadoAventura.hpJugador}</span> HP</div>
           <div>TIME: <span id="span-tiempo">30</span>s</div>
