@@ -5,7 +5,7 @@
 ## Módulos
 
 - **Lectura Veloz:** práctica por palabra, grupos de palabras, frases y modo galáctico. Permite elegir textos de la biblioteca y ajustar ritmo y presentación.
-- **Evaluaciones:** banco de tests fijos y dinámicos, importación desde texto marcado, resolución en varios formatos y seguimiento de preguntas por repasar.
+- **Evaluaciones:** banco de tests fijos y dinámicos, importación desde texto marcado, resolución en varios formatos, seguimiento de preguntas por repasar y **Aventura Gráfica (Modo RPG)** con selección de avatares en formato WebP, inventario estratégico de Power-Ups y HUD compacto de combate.
 - **Mini-juegos:** Mahjong, Memorama, tablas de Schulte, memoria secuencial y Stroop.
 - **Biblioteca:** importa, organiza, lee y practica con textos propios.
 - **Organizando ideas:** espacio para registrar y relacionar ideas.

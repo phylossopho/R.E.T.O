@@ -59,35 +59,35 @@
         <legend style="font-weight: bold; padding: 0 var(--space-xs); color: var(--accent);">1. Elige tu Avatar</legend>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: var(--space-sm); margin-top: var(--space-sm);">
           <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-xs); cursor: pointer; text-align: center;">
-            <img src="../../../imagenes/mago.png" alt="Mago" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
+            <img src="../../../imagenes/mago.webp" alt="Mago" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
             <input type="radio" name="avatar" value="mago" checked style="margin-bottom: 2px;"> Mago
           </label>
           <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-xs); cursor: pointer; text-align: center;">
-            <img src="../../../imagenes/maga.png" alt="Maga" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
+            <img src="../../../imagenes/maga.webp" alt="Maga" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
             <input type="radio" name="avatar" value="maga" style="margin-bottom: 2px;"> Maga
           </label>
           <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-xs); cursor: pointer; text-align: center;">
-            <img src="../../../imagenes/caballero.png" alt="Caballero" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
+            <img src="../../../imagenes/caballero.webp" alt="Caballero" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
             <input type="radio" name="avatar" value="caballero" style="margin-bottom: 2px;"> Caballero
           </label>
           <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-xs); cursor: pointer; text-align: center;">
-            <img src="../../../imagenes/caballera.png" alt="Caballera" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
+            <img src="../../../imagenes/caballera.webp" alt="Caballera" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
             <input type="radio" name="avatar" value="caballera" style="margin-bottom: 2px;"> Caballera
           </label>
           <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-xs); cursor: pointer; text-align: center;">
-            <img src="../../../imagenes/arquero.png" alt="Arquero" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
+            <img src="../../../imagenes/arquero.webp" alt="Arquero" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
             <input type="radio" name="avatar" value="arquero" style="margin-bottom: 2px;"> Arquero
           </label>
           <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-xs); cursor: pointer; text-align: center;">
-            <img src="../../../imagenes/arquera.png" alt="Arquera" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
+            <img src="../../../imagenes/arquera.webp" alt="Arquera" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
             <input type="radio" name="avatar" value="arquera" style="margin-bottom: 2px;"> Arquera
           </label>
           <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-xs); cursor: pointer; text-align: center;">
-            <img src="../../../imagenes/guerrero.png" alt="Guerrero" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
+            <img src="../../../imagenes/guerrero.webp" alt="Guerrero" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
             <input type="radio" name="avatar" value="guerrero" style="margin-bottom: 2px;"> Guerrero
           </label>
           <label class="marca-opcion" style="justify-content: center; flex-direction: column; padding: var(--space-xs); cursor: pointer; text-align: center;">
-            <img src="../../../imagenes/guerrera.png" alt="Guerrera" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
+            <img src="../../../imagenes/guerrera.webp" alt="Guerrera" style="width: 36px; height: 36px; object-fit: contain; margin: 0 auto 4px;">
             <input type="radio" name="avatar" value="guerrera" style="margin-bottom: 2px;"> Guerrera
           </label>
         </div>
@@ -325,7 +325,7 @@
   }
 
   function renderInterfazRPG01(p) {
-    var avatarImg = (estadoAventura.avatar || 'caballero') + '.png';
+    var avatarImg = (estadoAventura.avatar || 'caballero') + '.webp';
     return `
       <style>
         .game-container-rpg1 {
@@ -356,28 +356,31 @@
           background-color: #2a2a35;
           border: 2px solid #555;
           border-radius: 8px;
-          padding: 8px 10px;
-          width: 260px;
+          padding: 8px 12px;
+          width: 320px;
           position: absolute;
           z-index: 10;
+          display: flex;
+          align-items: center;
+          gap: 10px;
         }
         .hud-header-rpg1 {
           display: flex;
-          justify-content: space-between;
           align-items: center;
-          margin-bottom: 4px;
+          flex-shrink: 0;
         }
         .hud-name-rpg1 {
-          font-size: 12px;
+          font-size: 11px;
           font-weight: bold;
           color: #fff;
           text-transform: uppercase;
+          white-space: nowrap;
         }
         .health-bar-bg-rpg1 {
           background-color: #441111;
           height: 16px;
           border-radius: 4px;
-          width: 100%;
+          flex: 1;
           overflow: hidden;
           position: relative;
           border: 1px solid rgba(255,255,255,0.2);
@@ -513,7 +516,7 @@
 
           <!-- Sprite Mago (Espejo horizontal) -->
           <div class="sprite-rpg1 sprite-mago-rpg1">
-            <img src="../../../imagenes/mago.png" alt="Mago">
+            <img src="../../../imagenes/mago.webp" alt="Mago">
           </div>
 
           <!-- Sprite Jugador (Inclinado hacia el frente y arriba) -->
