@@ -14,13 +14,14 @@
 
   var estadoAventura = {
     avatar: 'mago',
+    avatarRival: 'mago',
     interfaz: 'rpg01',
     powerUps: { pocion: 2, pista: 2, reloj: 1 },
     testSeleccionado: null,
     preguntas: [],
     indicePregunta: 0,
-    hpJugador: 9000,
-    hpRival: 9000,
+    hpJugador: 999,
+    hpRival: 999,
     tiempoRestante: 30,
     temporizador: null
   };
@@ -28,6 +29,16 @@
   function iniciar() {
     var raiz = document.getElementById('vistas');
     if (!raiz) return;
+
+    aplicarAjustesAventura();
+
+    var btnConfig = document.querySelector('[data-configurar]');
+    if (btnConfig) {
+      btnConfig.addEventListener('click', function (e) {
+        e.preventDefault();
+        abrirConfigAventura();
+      });
+    }
 
     var btnIniciar = document.getElementById('btn-iniciar-aventura');
     if (btnIniciar) {
@@ -38,6 +49,217 @@
     } else {
       renderConfiguracion(raiz);
     }
+  }
+
+  var cfgModal = null;
+  var ajustesAventura = {
+    dialogosOponente: localStorage.getItem('aventura_dialogos') || 'on',
+    fuente: localStorage.getItem('aventura_fuente') || 'press-start-2p',
+    sizePregunta: localStorage.getItem('aventura_size_pregunta') || 'normal',
+    sizeOpciones: localStorage.getItem('aventura_size_opciones') || 'normal',
+    sizePowerups: localStorage.getItem('aventura_size_powerups') || 'normal',
+    danoTiempo: localStorage.getItem('aventura_dano_tiempo') || 'off',
+    danPorcentaje: parseInt(localStorage.getItem('aventura_dan_porcentaje') || '10', 10),
+    numPreguntas: parseInt(localStorage.getItem('aventura_num_preguntas') || '15', 10)
+  };
+
+  function aplicarAjustesAventura() {
+    var fontMap = {
+      'press-start-2p': '"Press Start 2P", system-ui, sans-serif',
+      'vt323': '"VT323", monospace',
+      'handjet': '"Handjet", sans-serif',
+      'nunito': '"Nunito", system-ui, sans-serif'
+    };
+    var familia = fontMap[ajustesAventura.fuente] || fontMap['press-start-2p'];
+    document.documentElement.style.setProperty('--aventura-font', familia);
+
+    var sizeMapPregunta = { 'chico': '0.85rem', 'normal': '1.05rem', 'grande': '1.25rem', 'muy-grande': '1.45rem' };
+    var sizeMapOpciones = { 'chico': '0.8rem', 'normal': '0.95rem', 'grande': '1.1rem', 'muy-grande': '1.25rem' };
+    var sizeMapPowerups = { 'chico': '0.75rem', 'normal': '0.85rem', 'grande': '0.95rem', 'muy-grande': '1.1rem' };
+
+    document.documentElement.style.setProperty('--aventura-size-pregunta', sizeMapPregunta[ajustesAventura.sizePregunta] || '1.05rem');
+    document.documentElement.style.setProperty('--aventura-size-opciones', sizeMapOpciones[ajustesAventura.sizeOpciones] || '0.95rem');
+    document.documentElement.style.setProperty('--aventura-size-powerups', sizeMapPowerups[ajustesAventura.sizePowerups] || '0.85rem');
+
+    document.body.style.fontFamily = familia;
+    var vistasEl = document.getElementById('vistas');
+    if (vistasEl) {
+      vistasEl.style.fontFamily = familia;
+    }
+  }
+
+  function armarConfigAventura() {
+    if (cfgModal) return;
+    cfgModal = document.createElement('dialog');
+    cfgModal.className = 'dialogo';
+    cfgModal.style.cssText = 'max-width: 625px; width: 90%; background: var(--surface); color: var(--text); border: 3px solid var(--borde-fuerte); border-radius: var(--radius); padding: var(--space-lg);';
+    
+    cfgModal.innerHTML = `
+      <h2 class="dialogo-titulo" style="margin-bottom: var(--space-md); font-size: 1.1em;">⚙️ Configuración de Aventura</h2>
+      
+      <div style="display: flex; flex-direction: column; gap: var(--space-md);">
+        <fieldset style="border: 2px solid var(--borde); border-radius: var(--radius); padding: var(--space-sm) var(--space-md); background: var(--bg);">
+          <legend style="font-weight: bold; color: var(--accent);">Animaciones</legend>
+          <p style="font-size: 0.85em; color: var(--muted); margin: 0;">En desarrollo (próximamente).</p>
+        </fieldset>
+
+        <fieldset style="border: 2px solid var(--borde); border-radius: var(--radius); padding: var(--space-sm) var(--space-md); background: var(--bg); display: flex; flex-direction: column; gap: var(--space-sm);">
+          <legend style="font-weight: bold; color: var(--accent);">Comportamiento de Batalla</legend>
+          
+          <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: 0.85em;">
+            <span>⏳ Pérdida de HP por tiempo (0.1%/s)</span>
+            <input type="checkbox" id="cfg-dano-tiempo" ${ajustesAventura.danoTiempo === 'on' ? 'checked' : ''} style="cursor: pointer; width: 18px; height: 18px;">
+          </label>
+
+          <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
+              <label for="cfg-dan-porcentaje" style="font-weight: bold;">⚔️ Daño por ataque/error:</label>
+              <span id="val-dan-porcentaje" style="font-weight: bold; color: var(--accent);">${ajustesAventura.danPorcentaje}%</span>
+            </div>
+            <input type="range" id="cfg-dan-porcentaje" min="3" max="10" step="1" value="${ajustesAventura.danPorcentaje}" style="width: 100%; cursor: pointer;">
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.85em;">
+              <label for="cfg-num-preguntas" style="font-weight: bold;">📝 Preguntas en batalla:</label>
+              <span id="val-num-preguntas" style="font-weight: bold; color: var(--accent);">${ajustesAventura.numPreguntas}</span>
+            </div>
+            <input type="range" id="cfg-num-preguntas" min="10" max="30" step="1" value="${ajustesAventura.numPreguntas}" style="width: 100%; cursor: pointer;">
+          </div>
+        </fieldset>
+
+        <fieldset style="border: 2px solid var(--borde); border-radius: var(--radius); padding: var(--space-sm) var(--space-md); background: var(--bg);">
+          <legend style="font-weight: bold; color: var(--accent);">Sonidos</legend>
+          <p style="font-size: 0.85em; color: var(--muted); margin: 0;">En desarrollo (próximamente).</p>
+        </fieldset>
+
+        <fieldset style="border: 2px solid var(--borde); border-radius: var(--radius); padding: var(--space-sm) var(--space-md); background: var(--bg); display: flex; flex-direction: column; gap: var(--space-sm);">
+          <legend style="font-weight: bold; color: var(--accent);">Textos y Fuentes</legend>
+          
+          <label style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: 0.85em;">
+            <span>💬 Diálogos de oponentes</span>
+            <input type="checkbox" id="cfg-dialogos" ${ajustesAventura.dialogosOponente === 'on' ? 'checked' : ''} style="cursor: pointer; width: 18px; height: 18px;">
+          </label>
+          <span style="font-size: 0.75em; color: var(--muted);">Muestra u oculta comentarios y hechizos lanzados por los rivales.</span>
+
+          <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px;">
+            <label for="cfg-fuente-select" style="font-size: 0.85em; font-weight: bold;">🔤 Fuente de la Aventura:</label>
+            <select id="cfg-fuente-select" style="padding: 8px; border: 2px solid var(--borde-fuerte); border-radius: var(--radius); background: var(--surface); color: var(--text); font-family: inherit; cursor: pointer; font-size: 0.85em;">
+              <option value="press-start-2p">Press Start 2P (Pixel Retro)</option>
+              <option value="vt323">VT323 (Terminal Arcade)</option>
+              <option value="handjet">Handjet (Futurista / Variable)</option>
+              <option value="nunito">Nunito (Limpia / Estándar)</option>
+            </select>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px;">
+            <label for="cfg-size-pregunta" style="font-size: 0.85em; font-weight: bold;">📏 Tamaño de Preguntas:</label>
+            <select id="cfg-size-pregunta" style="padding: 6px; border: 2px solid var(--borde-fuerte); border-radius: var(--radius); background: var(--surface); color: var(--text); font-family: inherit; cursor: pointer; font-size: 0.85em;">
+              <option value="chico">Chico</option>
+              <option value="normal">Normal</option>
+              <option value="grande">Grande</option>
+              <option value="muy-grande">Muy Grande</option>
+            </select>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px;">
+            <label for="cfg-size-opciones" style="font-size: 0.85em; font-weight: bold;">📏 Tamaño de Opciones de Respuesta:</label>
+            <select id="cfg-size-opciones" style="padding: 6px; border: 2px solid var(--borde-fuerte); border-radius: var(--radius); background: var(--surface); color: var(--text); font-family: inherit; cursor: pointer; font-size: 0.85em;">
+              <option value="chico">Chico</option>
+              <option value="normal">Normal</option>
+              <option value="grande">Grande</option>
+              <option value="muy-grande">Muy Grande</option>
+            </select>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px;">
+            <label for="cfg-size-powerups" style="font-size: 0.85em; font-weight: bold;">📏 Tamaño de Power-Ups / Inventario:</label>
+            <select id="cfg-size-powerups" style="padding: 6px; border: 2px solid var(--borde-fuerte); border-radius: var(--radius); background: var(--surface); color: var(--text); font-family: inherit; cursor: pointer; font-size: 0.85em;">
+              <option value="chico">Chico</option>
+              <option value="normal">Normal</option>
+              <option value="grande">Grande</option>
+              <option value="muy-grande">Muy Grande</option>
+            </select>
+          </div>
+        </fieldset>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; margin-top: var(--space-md);">
+        <button type="button" id="cfg-cerrar" class="boton" style="padding: 8px 16px; cursor: pointer;">Cerrar</button>
+      </div>
+    `;
+
+    document.body.appendChild(cfgModal);
+
+    var selectFuente = cfgModal.querySelector('#cfg-fuente-select');
+    selectFuente.value = ajustesAventura.fuente;
+    selectFuente.addEventListener('change', function () {
+      ajustesAventura.fuente = this.value;
+      localStorage.setItem('aventura_fuente', ajustesAventura.fuente);
+      aplicarAjustesAventura();
+    });
+
+    var selectSizePregunta = cfgModal.querySelector('#cfg-size-pregunta');
+    selectSizePregunta.value = ajustesAventura.sizePregunta;
+    selectSizePregunta.addEventListener('change', function () {
+      ajustesAventura.sizePregunta = this.value;
+      localStorage.setItem('aventura_size_pregunta', ajustesAventura.sizePregunta);
+      aplicarAjustesAventura();
+    });
+
+    var selectSizeOpciones = cfgModal.querySelector('#cfg-size-opciones');
+    selectSizeOpciones.value = ajustesAventura.sizeOpciones;
+    selectSizeOpciones.addEventListener('change', function () {
+      ajustesAventura.sizeOpciones = this.value;
+      localStorage.setItem('aventura_size_opciones', ajustesAventura.sizeOpciones);
+      aplicarAjustesAventura();
+    });
+
+    var selectSizePowerups = cfgModal.querySelector('#cfg-size-powerups');
+    selectSizePowerups.value = ajustesAventura.sizePowerups;
+    selectSizePowerups.addEventListener('change', function () {
+      ajustesAventura.sizePowerups = this.value;
+      localStorage.setItem('aventura_size_powerups', ajustesAventura.sizePowerups);
+      aplicarAjustesAventura();
+    });
+
+    var chkDialogos = cfgModal.querySelector('#cfg-dialogos');
+    chkDialogos.addEventListener('change', function () {
+      ajustesAventura.dialogosOponente = this.checked ? 'on' : 'off';
+      localStorage.setItem('aventura_dialogos', ajustesAventura.dialogosOponente);
+    });
+
+    var chkDanoTiempo = cfgModal.querySelector('#cfg-dano-tiempo');
+    chkDanoTiempo.addEventListener('change', function () {
+      ajustesAventura.danoTiempo = this.checked ? 'on' : 'off';
+      localStorage.setItem('aventura_dano_tiempo', ajustesAventura.danoTiempo);
+    });
+
+    var rangeDan = cfgModal.querySelector('#cfg-dan-porcentaje');
+    var valDan = cfgModal.querySelector('#val-dan-porcentaje');
+    rangeDan.addEventListener('input', function () {
+      ajustesAventura.danPorcentaje = parseInt(this.value, 10);
+      valDan.textContent = ajustesAventura.danPorcentaje + '%';
+      localStorage.setItem('aventura_dan_porcentaje', ajustesAventura.danPorcentaje);
+    });
+
+    var rangePreg = cfgModal.querySelector('#cfg-num-preguntas');
+    var valPreg = cfgModal.querySelector('#val-num-preguntas');
+    rangePreg.addEventListener('input', function () {
+      ajustesAventura.numPreguntas = parseInt(this.value, 10);
+      valPreg.textContent = ajustesAventura.numPreguntas;
+      localStorage.setItem('aventura_num_preguntas', ajustesAventura.numPreguntas);
+    });
+
+    cfgModal.querySelector('#cfg-cerrar').addEventListener('click', function () {
+      cfgModal.close();
+    });
+  }
+
+  function abrirConfigAventura() {
+    if (!cfgModal) armarConfigAventura();
+    aplicarAjustesAventura();
+    if (!cfgModal.open) cfgModal.showModal();
   }
 
   /* -------------------------------------------------------------------------
@@ -335,7 +557,7 @@
         var candidatas = test.preguntas || [];
         // Barajar el orden de las preguntas candidatas antes de armar el mazo
         var candidatasBarajadas = Instancia ? Instancia.barajar(candidatas) : candidatas;
-        var mazo = Instancia ? Instancia.armarMazo(candidatasBarajadas, 15, { evaluador: Eval }) : candidatasBarajadas;
+        var mazo = Instancia ? Instancia.armarMazo(candidatasBarajadas, ajustesAventura.numPreguntas, { evaluador: Eval }) : candidatasBarajadas;
         
         if (!mazo || mazo.length === 0) {
           alert('Este test no tiene preguntas jugables.');
@@ -370,8 +592,10 @@
         estadoAventura.testSeleccionado = test;
         estadoAventura.preguntas = mazo;
         estadoAventura.indicePregunta = 0;
-        estadoAventura.hpJugador = 9000;
-        estadoAventura.hpRival = 9000;
+        estadoAventura.hpJugador = 999;
+        estadoAventura.hpRival = 999;
+        var todosAvatares = ['mago', 'maga', 'caballero', 'caballera', 'arquero', 'arquera', 'guerrero', 'guerrera', 'asesino', 'asesina', 'clerigo', 'sacerdotiza'];
+        estadoAventura.avatarRival = todosAvatares[Math.floor(Math.random() * todosAvatares.length)];
 
         contenedor.style.opacity = '1';
         renderBatalla(contenedor);
@@ -415,6 +639,7 @@
 
   function renderInterfazRPG01(p) {
     var avatarImg = (estadoAventura.avatar || 'caballero') + '.webp';
+    var rivalImg = (estadoAventura.avatarRival || 'mago') + '.webp';
     return `
       <style>
         .game-container-rpg1 {
@@ -428,7 +653,7 @@
           box-shadow: var(--sombra);
           border-radius: calc(var(--radius) * 1.5);
           margin: 0 auto;
-          font-family: 'Press Start 2P', system-ui, sans-serif;
+          font-family: var(--aventura-font, 'Press Start 2P', system-ui, sans-serif);
           color: var(--text);
           box-sizing: border-box;
         }
@@ -518,7 +743,7 @@
           border-bottom: 2px solid var(--borde);
           padding: 18px 24px;
           min-height: 85px;
-          font-size: 1.05rem;
+          font-size: var(--aventura-size-pregunta, 1.05rem);
           font-weight: 600;
           color: var(--text);
           line-height: 1.5;
@@ -547,7 +772,7 @@
           border: 2px solid var(--borde-fuerte);
           color: var(--text);
           border-radius: var(--radius);
-          font-size: 0.95rem;
+          font-size: var(--aventura-size-opciones, 0.95rem);
           font-weight: 600;
           text-align: left;
           padding: 14px 16px;
@@ -588,7 +813,7 @@
           border: 2px solid var(--borde-fuerte);
           color: var(--text);
           border-radius: var(--radius);
-          font-size: 0.85rem;
+          font-size: var(--aventura-size-powerups, 0.85rem);
           font-weight: 700;
           padding: 8px 12px;
           cursor: pointer;
@@ -626,23 +851,23 @@
       <div class="game-container-rpg1">
         <!-- 1. ESCENARIO DE BATALLA -->
         <div class="battle-screen-rpg1">
-          <!-- HUD Mago -->
+          <!-- HUD Rival -->
           <div class="hud-box-rpg1 hud-mago-rpg1">
             <div class="hud-header-rpg1">
-              <div class="hud-name-rpg1">MAGO DE FÍSICA</div>
+              <div class="hud-name-rpg1">${estadoAventura.avatarRival.toUpperCase()}</div>
             </div>
             <div class="health-bar-bg-rpg1">
-              <div class="health-bar-fill-rpg1" id="bar-rival" style="width: ${(estadoAventura.hpRival / 9000) * 100}%;"></div>
-              <div class="hud-hp-text-rpg1"><span id="hp-rival">${estadoAventura.hpRival}</span> / 9000 HP</div>
+              <div class="health-bar-fill-rpg1" id="bar-rival" style="width: ${(estadoAventura.hpRival / 999) * 100}%;"></div>
+              <div class="hud-hp-text-rpg1"><span id="hp-rival">${Math.round(estadoAventura.hpRival)}</span> / 999 HP</div>
             </div>
           </div>
 
-          <!-- Sprite Mago (Espejo horizontal) -->
+          <!-- Sprite Rival -->
           <div class="sprite-rpg1 sprite-mago-rpg1">
-            <img src="../../../imagenes/mago.webp" alt="Mago">
+            <img src="../../../imagenes/${rivalImg}" alt="Rival">
           </div>
 
-          <!-- Sprite Jugador (Inclinado hacia el frente y arriba) -->
+          <!-- Sprite Jugador -->
           <div class="sprite-rpg1 sprite-caballero-rpg1">
             <img src="../../../imagenes/${avatarImg}" alt="Jugador">
           </div>
@@ -653,8 +878,8 @@
               <div class="hud-name-rpg1">${estadoAventura.avatar.toUpperCase()}</div>
             </div>
             <div class="health-bar-bg-rpg1">
-              <div class="health-bar-fill-rpg1" id="bar-jugador" style="width: ${(estadoAventura.hpJugador / 9000) * 100}%;"></div>
-              <div class="hud-hp-text-rpg1"><span id="hp-jugador">${estadoAventura.hpJugador}</span> / 9000 HP</div>
+              <div class="health-bar-fill-rpg1" id="bar-jugador" style="width: ${(estadoAventura.hpJugador / 999) * 100}%;"></div>
+              <div class="hud-hp-text-rpg1"><span id="hp-jugador">${Math.round(estadoAventura.hpJugador)}</span> / 999 HP</div>
             </div>
           </div>
         </div>
@@ -688,47 +913,60 @@
   }
 
   function renderInterfazRPG02(p) {
+    var rivalImg = (estadoAventura.avatarRival || 'mago') + '.webp';
     return `
       <style>
         .btn-opcion-rpg {
-          transition: background 150ms ease, border-color 150ms ease;
+          transition: background 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+          font-size: var(--aventura-size-opciones, 0.9em);
+          box-shadow: 0 3px 8px rgba(0,0,0,0.1);
         }
         .btn-opcion-rpg:hover {
           background-color: var(--accent) !important;
           color: var(--bg) !important;
           border-color: var(--accent) !important;
+          box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+        }
+        .btn-power {
+          font-size: var(--aventura-size-powerups, 0.85em);
+          box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+        }
+        .btn-power:hover {
+          box-shadow: 0 5px 12px rgba(0,0,0,0.2);
         }
       </style>
-      <div style="max-width: 650px; margin: 0 auto; background: var(--surface); color: var(--text); border: 2px solid var(--borde-fuerte); border-radius: var(--radius, 12px); padding: 14px; box-shadow: var(--sombra); display: flex; flex-direction: column; gap: 10px; font-family: 'Press Start 2P', system-ui, sans-serif;">
+      <div style="max-width: 650px; margin: 0 auto; background: var(--surface); color: var(--text); border: 2px solid var(--borde-fuerte); border-radius: var(--radius, 12px); padding: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.35); display: flex; flex-direction: column; gap: 10px; font-family: var(--aventura-font, 'Press Start 2P', system-ui, sans-serif);">
         <!-- HUD Superior -->
-        <div style="display: flex; justify-content: space-between; background: var(--bg); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--borde); font-size: 0.9em;">
-          <div>🛡️ ${estadoAventura.avatar.toUpperCase()}: HP <span id="hp-jugador">${estadoAventura.hpJugador}</span>/9000</div>
+        <div style="display: flex; justify-content: space-between; background: var(--bg); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--borde); font-size: 0.9em; box-shadow: inset 0 2px 6px rgba(0,0,0,0.1);">
+          <div>🛡️ ${estadoAventura.avatar.toUpperCase()}: HP <span id="hp-jugador">${Math.round(estadoAventura.hpJugador)}</span>/999</div>
           <div>⏳ TIEMPO: <span id="span-tiempo" style="color: var(--accent); font-weight: bold;">30</span>s</div>
-          <div>👾 RIVAL: HP <span id="hp-rival">${estadoAventura.hpRival}</span>/9000</div>
+          <div>👾 RIVAL: HP <span id="hp-rival">${Math.round(estadoAventura.hpRival)}</span>/999</div>
         </div>
 
         <!-- Pantalla de Combate Central -->
-        <div style="background: var(--bg); border: 1px solid var(--borde); border-radius: 10px; padding: 20px; text-align: center;">
-          <div style="font-size: 50px;">🧙‍♂️</div>
-          <div style="font-size: 0.9rem; color: var(--accent); font-weight: bold; margin-top: 4px;">Mago Jefe de Conocimiento</div>
+        <div style="background: var(--bg); border: 1px solid var(--borde); border-radius: 10px; padding: 20px; text-align: center; box-shadow: inset 0 6px 16px rgba(0,0,0,0.15);">
+          <div style="font-size: 50px; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.3));">
+            <img src="../../../imagenes/${rivalImg}" alt="Rival" style="width: 70px; height: 70px; object-fit: contain;">
+          </div>
+          <div style="font-size: 0.9rem; color: var(--accent); font-weight: bold; margin-top: 4px;">Rival: ${estadoAventura.avatarRival.toUpperCase()}</div>
         </div>
 
         <!-- Panel Inferior Dividido: Pregunta/Opciones vs Inventario -->
-        <div style="display: grid; grid-template-columns: 1fr 180px; gap: 10px; background: var(--bg); border: 1px solid var(--borde); padding: 12px; border-radius: 10px;">
+        <div style="display: grid; grid-template-columns: 1fr 180px; gap: 10px; background: var(--bg); border: 1px solid var(--borde); padding: 12px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
           <div style="display: flex; flex-direction: column; gap: 8px;">
-            <div style="font-size: 0.95rem; font-weight: bold; color: var(--text);">${p.enunciado}</div>
+            <div style="font-size: var(--aventura-size-pregunta, 0.95rem); font-weight: bold; color: var(--text);">${p.enunciado}</div>
             <div style="display: flex; flex-direction: column; gap: 6px;" id="opciones-batalla">
               ${(p.opciones || []).map(function(op, idx) {
-                return '<button type="button" class="btn-opcion-rpg" data-idx="' + idx + '" style="background: var(--surface); border: 1px solid var(--borde-fuerte); color: var(--text); padding: 8px 10px; text-align: left; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9em;">' + (idx + 1) + ') ' + op.texto + '</button>';
+                return '<button type="button" class="btn-opcion-rpg" data-idx="' + idx + '" style="background: var(--surface); border: 1px solid var(--borde-fuerte); color: var(--text); padding: 8px 10px; text-align: left; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: var(--aventura-size-opciones, 0.9em);">' + (idx + 1) + ') ' + op.texto + '</button>';
               }).join('')}
             </div>
           </div>
 
-          <div style="background: var(--surface); border: 1px solid var(--borde-fuerte); padding: 8px; border-radius: 6px; display: flex; flex-direction: column; gap: 6px;">
+          <div style="background: var(--surface); border: 1px solid var(--borde-fuerte); padding: 8px; border-radius: 6px; display: flex; flex-direction: column; gap: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
             <div style="font-size: 0.8rem; color: var(--accent); font-weight: bold; text-align: center;">🎒 INVENTARIO</div>
-            <button type="button" id="btn-pw-pocion" class="btn-power" style="background: var(--bg); color: var(--text); border: 1px solid var(--borde); padding: 6px; font-size: 0.85em; border-radius: 4px; cursor: pointer;">❤️ Poción (${estadoAventura.powerUps.pocion})</button>
-            <button type="button" id="btn-pw-pista" class="btn-power" style="background: var(--bg); color: var(--text); border: 1px solid var(--borde); padding: 6px; font-size: 0.85em; border-radius: 4px; cursor: pointer;">👁️ Pista (${estadoAventura.powerUps.pista})</button>
-            <button type="button" id="btn-pw-reloj" class="btn-power" style="background: var(--bg); color: var(--text); border: 1px solid var(--borde); padding: 6px; font-size: 0.85em; border-radius: 4px; cursor: pointer;">⏳ Reloj (${estadoAventura.powerUps.reloj})</button>
+            <button type="button" id="btn-pw-pocion" class="btn-power" style="background: var(--bg); color: var(--text); border: 1px solid var(--borde); padding: 6px; font-size: var(--aventura-size-powerups, 0.85em); border-radius: 4px; cursor: pointer;">❤️ Poción (${estadoAventura.powerUps.pocion})</button>
+            <button type="button" id="btn-pw-pista" class="btn-power" style="background: var(--bg); color: var(--text); border: 1px solid var(--borde); padding: 6px; font-size: var(--aventura-size-powerups, 0.85em); border-radius: 4px; cursor: pointer;">👁️ Pista (${estadoAventura.powerUps.pista})</button>
+            <button type="button" id="btn-pw-reloj" class="btn-power" style="background: var(--bg); color: var(--text); border: 1px solid var(--borde); padding: 6px; font-size: var(--aventura-size-powerups, 0.85em); border-radius: 4px; cursor: pointer;">⏳ Reloj (${estadoAventura.powerUps.reloj})</button>
           </div>
         </div>
       </div>
@@ -739,42 +977,52 @@
     return `
       <style>
         .btn-opcion-rpg {
-          transition: background 150ms ease, color 150ms ease;
+          transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease;
+          font-size: var(--aventura-size-opciones, 0.9em);
+          box-shadow: 0 3px 8px rgba(0,0,0,0.15);
         }
         .btn-opcion-rpg:hover {
           background: var(--accent) !important;
           color: var(--bg) !important;
+          box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+        }
+        .btn-powerup-rpg3 {
+          font-size: var(--aventura-size-powerups, 0.8em);
+          box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        .btn-powerup-rpg3:hover {
+          box-shadow: 0 4px 10px rgba(0,0,0,0.25);
         }
       </style>
-      <div style="max-width: 650px; margin: 0 auto; background: var(--surface); color: var(--text); border: 3px solid var(--borde-fuerte); border-radius: 6px; padding: 14px; font-family: 'Press Start 2P', system-ui, sans-serif;">
-        <div style="display: flex; justify-content: space-between; border-bottom: 2px solid var(--borde-fuerte); padding-bottom: 6px; margin-bottom: 10px; font-size: 0.9em;">
+      <div style="max-width: 650px; margin: 0 auto; background: var(--surface); color: var(--text); border: 3px solid var(--borde-fuerte); border-radius: 6px; padding: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); font-family: var(--aventura-font, 'Press Start 2P', system-ui, sans-serif);">
+        <div style="display: flex; justify-content: space-between; border-bottom: 2px solid var(--borde-fuerte); padding-bottom: 6px; margin-bottom: 10px; font-size: 0.9em; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
           <div>PLAYER: <span id="hp-jugador">${estadoAventura.hpJugador}</span> HP</div>
           <div>TIME: <span id="span-tiempo">30</span>s</div>
           <div>ENEMY: <span id="hp-rival">${estadoAventura.hpRival}</span> HP</div>
         </div>
 
         <div style="display: flex; justify-content: space-around; align-items: center; border-bottom: 2px dashed var(--borde); padding-bottom: 10px; margin-bottom: 10px;">
-          <div style="border: 2px solid var(--borde-fuerte); padding: 8px 16px; text-align: center; font-size: 0.9em;">⚔️ ${estadoAventura.avatar.toUpperCase()}</div>
+          <div style="border: 2px solid var(--borde-fuerte); padding: 8px 16px; text-align: center; font-size: 0.9em; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">⚔️ ${estadoAventura.avatar.toUpperCase()}</div>
           <div style="font-weight: bold;">VS</div>
-          <div style="border: 2px solid var(--borde-fuerte); padding: 8px 16px; text-align: center; font-size: 0.9em;">🧙‍♂️ MAGO RIVAL</div>
+          <div style="border: 2px solid var(--borde-fuerte); padding: 8px 16px; text-align: center; font-size: 0.9em; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">👾 ${estadoAventura.avatarRival.toUpperCase()}</div>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg); padding: 6px 10px; border: 1px solid var(--borde); margin-bottom: 10px; font-size: 0.85em;">
+        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg); padding: 6px 10px; border: 1px solid var(--borde); margin-bottom: 10px; font-size: 0.85em; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
           <div>ITEMS:</div>
           <div style="display: flex; gap: 6px;">
-            <button type="button" id="btn-pw-pocion" style="background: var(--surface); color: var(--text); border: 1px solid var(--borde-fuerte); padding: 2px 6px; cursor: pointer;">[POT (${estadoAventura.powerUps.pocion})]</button>
-            <button type="button" id="btn-pw-pista" style="background: var(--surface); color: var(--text); border: 1px solid var(--borde-fuerte); padding: 2px 6px; cursor: pointer;">[HINT (${estadoAventura.powerUps.pista})]</button>
-            <button type="button" id="btn-pw-reloj" style="background: var(--surface); color: var(--text); border: 1px solid var(--borde-fuerte); padding: 2px 6px; cursor: pointer;">[TIME (${estadoAventura.powerUps.reloj})]</button>
+            <button type="button" id="btn-pw-pocion" class="btn-powerup-rpg3" style="background: var(--surface); color: var(--text); border: 1px solid var(--borde-fuerte); padding: 2px 6px; cursor: pointer;">[POT (${estadoAventura.powerUps.pocion})]</button>
+            <button type="button" id="btn-pw-pista" class="btn-powerup-rpg3" style="background: var(--surface); color: var(--text); border: 1px solid var(--borde-fuerte); padding: 2px 6px; cursor: pointer;">[HINT (${estadoAventura.powerUps.pista})]</button>
+            <button type="button" id="btn-pw-reloj" class="btn-powerup-rpg3" style="background: var(--surface); color: var(--text); border: 1px solid var(--borde-fuerte); padding: 2px 6px; cursor: pointer;">[TIME (${estadoAventura.powerUps.reloj})]</button>
           </div>
         </div>
 
-        <div style="border: 2px solid var(--borde-fuerte); background: var(--bg); padding: 12px; margin-bottom: 10px;">
-          <p style="margin: 0; font-size: 0.95em; color: var(--text);">* ${p.enunciado}</p>
+        <div style="border: 2px solid var(--borde-fuerte); background: var(--bg); padding: 12px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+          <p style="margin: 0; font-size: var(--aventura-size-pregunta, 0.95em); color: var(--text);">* ${p.enunciado}</p>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;" id="opciones-batalla">
           ${(p.opciones || []).map(function(op, idx) {
-            return '<button type="button" class="btn-opcion-rpg" data-idx="' + idx + '" style="background: var(--surface); color: var(--text); border: 2px solid var(--borde-fuerte); padding: 8px; cursor: pointer; text-align: left; font-family: inherit; font-size: 0.9em;">> ' + op.texto + '</button>';
+            return '<button type="button" class="btn-opcion-rpg" data-idx="' + idx + '" style="background: var(--surface); color: var(--text); border: 2px solid var(--borde-fuerte); padding: 8px; cursor: pointer; text-align: left; font-family: inherit; font-size: var(--aventura-size-opciones, 0.9em);">> ' + op.texto + '</button>';
           }).join('')}
         </div>
       </div>
@@ -791,9 +1039,25 @@
       estadoAventura.tiempoRestante--;
       if (spanTiempo) spanTiempo.textContent = estadoAventura.tiempoRestante;
 
+      if (ajustesAventura.danoTiempo === 'on') {
+        // 0.1% de 999 HP por segundo = 0.999 HP
+        estadoAventura.hpJugador -= 0.999;
+        if (estadoAventura.hpJugador < 0) estadoAventura.hpJugador = 0;
+        actualizarHPs(wrapper);
+        var barJugador = wrapper.querySelector('#bar-jugador');
+        if (barJugador) barJugador.style.width = ((estadoAventura.hpJugador / 999) * 100) + '%';
+      }
+
+      if (estadoAventura.hpJugador <= 0) {
+        clearInterval(estadoAventura.temporizador);
+        renderVictoriaDerrota(contenedor);
+        return;
+      }
+
       if (estadoAventura.tiempoRestante <= 0) {
         clearInterval(estadoAventura.temporizador);
-        aplicarDanoJugador(25);
+        var danoTimeout = Math.round((ajustesAventura.danPorcentaje / 100) * 999);
+        aplicarDanoJugador(danoTimeout);
         siguientePreguntaOVerificar(contenedor);
       }
     }, 1000);
@@ -806,10 +1070,11 @@
         clearInterval(estadoAventura.temporizador);
         var idx = parseInt(this.getAttribute('data-idx'));
         var opcionElegida = p.opciones[idx];
+        var danoCalculado = Math.round((ajustesAventura.danPorcentaje / 100) * 999);
 
         if (opcionElegida && opcionElegida.correcta) {
           if (Sonido && Sonido.reproducir) Sonido.reproducir('acierto');
-          estadoAventura.hpRival -= 35;
+          estadoAventura.hpRival -= danoCalculado;
           if (estadoAventura.hpRival < 0) estadoAventura.hpRival = 0;
           actualizarHPs(wrapper);
           
@@ -818,7 +1083,7 @@
             return;
           }
         } else {
-          aplicarDanoJugador(30);
+          aplicarDanoJugador(danoCalculado);
         }
 
         siguientePreguntaOVerificar(contenedor);
@@ -846,7 +1111,7 @@
       btnPocion.addEventListener('click', function () {
         if (estadoAventura.powerUps.pocion > 0) {
           estadoAventura.powerUps.pocion--;
-          estadoAventura.hpJugador = Math.min(100, estadoAventura.hpJugador + 30);
+          estadoAventura.hpJugador = Math.min(999, estadoAventura.hpJugador + 30);
           actualizarHPs(wrapper);
           if (Sonido && Sonido.reproducir) Sonido.reproducir('charm');
           this.textContent = this.textContent.replace(/\(\d+\)/, '(' + estadoAventura.powerUps.pocion + ')');
@@ -905,8 +1170,8 @@
   function actualizarHPs(wrapper) {
     var hpJ = wrapper.querySelector('#hp-jugador');
     var hpR = wrapper.querySelector('#hp-rival');
-    if (hpJ) hpJ.textContent = estadoAventura.hpJugador;
-    if (hpR) hpR.textContent = estadoAventura.hpRival;
+    if (hpJ) hpJ.textContent = Math.round(estadoAventura.hpJugador);
+    if (hpR) hpR.textContent = Math.round(estadoAventura.hpRival);
   }
 
   function siguientePreguntaOVerificar(contenedor) {
