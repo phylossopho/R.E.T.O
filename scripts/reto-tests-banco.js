@@ -193,6 +193,25 @@
   /* Cómo va la persona en cada test: { idTest: { total, nuevas, por_repasar,
      dominadas, temas_debiles } }. Una sola llamada para todos. */
   function resumenes(tests) {
+    if (esGitHubPages()) {
+      return Promise.all(tests.map(function (t) { return estados(t.id); })).then(function (todos) {
+        var res = {};
+        tests.forEach(function (t, i) {
+          var mapa = todos[i] || {};
+          var jugables = t.preguntas.filter(jugable);
+          var total = jugables.length;
+          var dominadas = 0, nuevas = 0, por_repasar = 0;
+          jugables.forEach(function (p) {
+            var e = mapa[p.id] || 0;
+            if (e >= 3) dominadas++;
+            else if (e === 0) nuevas++;
+            else por_repasar++;
+          });
+          res[t.id] = { total: total, nuevas: nuevas, por_repasar: por_repasar, dominadas: dominadas, temas_debiles: [] };
+        });
+        return res;
+      });
+    }
     return Promise.all(tests.map(function (t) { return estados(t.id); })).then(function (todos) {
       var carga = tests.map(function (t, i) {
         var qs = t.preguntas.filter(jugable);
@@ -246,8 +265,23 @@
 
   /* Registra una respuesta: pide el estado nuevo al servidor y lo guarda. */
   function registrarRespuesta(testId, qid, previo, acierto, seguridad) {
+    if (esGitHubPages()) {
+      return registrarRespuestaLocal(qid, previo, acierto, seguridad);
+    }
     return pedir('/registrar', { estado: previo || null, acierto: acierto, seguridad: seguridad || null })
       .then(function (d) { return guardarEstado(testId, qid, d.estado).then(function () { return d.estado; }); });
+  }
+
+  function registrarRespuestaLocal(qid, previo, acierto, seguridad) {
+    // Lógica simplificada de repaso (tipo Leitner): 
+    // estado 0=nueva, 1-2=aprendiendo, 3=dominada
+    var estado = previo || 0;
+    if (acierto) {
+      estado = Math.min(3, estado + 1);
+    } else {
+      estado = Math.max(0, estado - 1);
+    }
+    return Promise.resolve(estado);
   }
 
   window.RetoTestsBanco = {
