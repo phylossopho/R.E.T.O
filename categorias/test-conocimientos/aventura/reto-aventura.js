@@ -1939,14 +1939,8 @@ Promise.all(cargas).then(function (r) {
             aciertos_antes: aciertosAntes, entregados_antes: r[3], entregados_hoy: r[4]
           };
 
-          console.log('[Aventura] Llamando a llamarPve con cuerpo:', JSON.stringify(cuerpoPve).slice(0, 500));
+console.log('[Aventura] Llamando a llamarPve con cuerpo:', JSON.stringify(cuerpoPve).slice(0, 500));
           return llamarPve('POST', '/iniciar', cuerpoPve);
-            nombre: nombreDeAvatar(estadoAventura.avatar), clase: claseDeAvatar(estadoAventura.avatar),
-            enemigo: { nombre: nombreDeAvatar(estadoAventura.avatarRival), clase: claseDeAvatar(estadoAventura.avatarRival) },
-            preguntas: preguntasParaServidor(mazo), equipo: equipo, dano_base: ajustesAventura.danPorcentaje,
-            ventaja: 3, dificultad: ajustesAventura.dificultad, con_tiempo: conTiempo, segundos: 30,
-            aciertos_antes: aciertosAntes, entregados_antes: r[3], entregados_hoy: r[4]
-          });
         }).then(function (v) {
           estadoAventura.sesionPve = v.token;
           aplicarVista(v);
