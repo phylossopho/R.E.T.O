@@ -2568,6 +2568,9 @@
   window.addEventListener('online', actualizarModoOfflinePve);
   window.addEventListener('offline', actualizarModoOfflinePve);
 
+  // Ejecutar al cargar para detectar GitHub Pages
+  actualizarModoOfflinePve();
+
   function llamarPve(metodo, ruta, cuerpo) {
     actualizarModoOfflinePve();
 
