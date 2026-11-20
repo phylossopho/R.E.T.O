@@ -330,7 +330,7 @@
      =========================================================================== */
   function crearSala(codigo) {
     miId = generarId();
-    miCodigo = codigo.toUpperCase();
+    if (codigo) miCodigo = codigo.toUpperCase();
     miRol = 'creador';
     salaEstado = 'conectando';
 
