@@ -333,17 +333,20 @@
     } catch (e) {
       return Promise.reject(new Error('No pude leer la tarjeta. Copia el código completo o elige el archivo.'));
     }
-    // Validación local (sin servidor) usando la lógica de reto-rpg-logica.js
-    if (window.RetoRpg && window.RetoRpg.validarTarjeta) {
-      try {
-        var perfil = window.RetoRpg.validarTarjeta(tarjeta);
-        return Promise.resolve({ perfil: perfil, tarjeta: tarjeta });
-      } catch (e) {
-        return Promise.reject(new Error(e.message || 'Tarjeta inválida.'));
+    // Asegurar que el catálogo de powerups esté cargado antes de validar
+    return window.RetoRpg.catalogo().then(function () {
+      // Validación local (sin servidor) usando la lógica de reto-rpg-logica.js
+      if (window.RetoRpg && window.RetoRpg.validarTarjeta) {
+        try {
+          var perfil = window.RetoRpg.validarTarjeta(tarjeta);
+          return Promise.resolve({ perfil: perfil, tarjeta: tarjeta });
+        } catch (e) {
+          return Promise.reject(new Error(e.message || 'Tarjeta inválida.'));
+        }
       }
-    }
-    // Fallback: si no hay validación local, intentar con servidor (modo wifi local)
-    return post('/api/rpg/tarjeta/validar', { tarjeta: tarjeta }).then(function (p) { return { perfil: p, tarjeta: tarjeta }; });
+      // Fallback: si no hay validación local, intentar con servidor (modo wifi local)
+      return post('/api/rpg/tarjeta/validar', { tarjeta: tarjeta }).then(function (p) { return { perfil: p, tarjeta: tarjeta }; });
+    });
   }
 
   // Merge with existing RetoRpg (from reto-rpg-logica.js) instead of overwriting
