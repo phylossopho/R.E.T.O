@@ -43,6 +43,8 @@
 
   var fila = Promise.resolve();
   var cache = null;
+  var _cachePU = {};
+  var _cacheTXT = {};
 
   function encolar(fn) {
     var p = fila.then(fn, fn);
