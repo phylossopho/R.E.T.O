@@ -2551,8 +2551,13 @@
   var estadoPveLocal = null;
   var modoOfflinePve = false;
 
+  function esGitHubPages() {
+    var h = location.hostname;
+    return h.includes('github.io') || h.includes('github.dev');
+  }
+
   function actualizarModoOfflinePve() {
-    var offline = !navigator.onLine || (window.RetoOfflineCache && window.RetoOfflineCache.isOffline());
+    var offline = !navigator.onLine || (window.RetoOfflineCache && window.RetoOfflineCache.isOffline()) || esGitHubPages();
     if (offline !== modoOfflinePve) {
       modoOfflinePve = offline;
       document.documentElement.setAttribute('data-modo-offline-pve', modoOfflinePve ? '1' : '0');
