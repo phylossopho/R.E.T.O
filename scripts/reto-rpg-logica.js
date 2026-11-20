@@ -755,7 +755,7 @@
     var config = p.config || {}; if (typeof config !== 'object') config = {};
     var tpm = p.tiempo_por_modulo || {}; if (typeof tpm !== 'object') tpm = {};
     return { nombre: String(p.nombre || 'Jugador').slice(0, 24), puntos: Math.round(puntos * 10) / 10,
-      nivel: nivelDePuntos(puntos), inventario: inv, equipo: equipo, aciertos: aciertos, config: config, tiempo_por_modulo: tpm, creado: p.creado };
+      nivel: nivelDePuntos(puntos), inventario: inv, equipo: equipo, aciertos: aciertos, config: config, tiempo_por_modulo: tpm, creado: p.creado, usuario_id: p.usuario_id };
   }
 
   function _huella(perfil, fecha, version) {
