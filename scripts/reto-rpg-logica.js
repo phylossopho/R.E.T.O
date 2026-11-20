@@ -301,6 +301,10 @@
     estado.jugadores.j1 = makeJugador(spec1, mazo1, equipo1, pvMax1);
     estado.jugadores.j2 = makeJugador(spec2, mazo2, equipo2, pvMax2);
 
+    // Poblar preguntas en el mazo (después de crear los jugadores)
+    mazo1.forEach(function(p) { estado.jugadores.j1.mazo.preguntas[p.id] = p; });
+    mazo2.forEach(function(p) { estado.jugadores.j2.mazo.preguntas[p.id] = p; });
+
     // Configurar equipo con usos
     estado.jugadores.j1.equipo = {};
     equipo1.forEach(function(i) { estado.jugadores.j1.equipo[i] = USOS_POR_RAREZA[powerUps()[i].rareza]; });
