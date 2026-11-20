@@ -248,19 +248,19 @@
         if (!R || !R.leerTarjeta) { modal.querySelector('#importar-error').textContent = 'RetoRpg no disponible'; return; }
 R.leerTarjeta(t).then(function (res) {
             modal.close(); modal.remove();
-            if (window.RetoPerfil && window.RetoPerfil.actualizarConfig) {
-              var nuevoPerfil = Object.assign({}, res.perfil, { 
-                usuario_id: res.perfil.usuario_id || 'importado',
-                creado: res.tarjeta.fecha || new Date().toISOString().slice(0, 10)
+            if (window.RetoPerfil && window.RetoPerfil.obtener) {
+              window.RetoPerfil.obtener().then(function (perfilActual) {
+                var nuevoPerfil = Object.assign({}, perfilActual, res.perfil, { 
+                  usuario_id: res.perfil.usuario_id || perfilActual.usuario_id || 'importado',
+                  creado: res.tarjeta.fecha || perfilActual.creado || new Date().toISOString().slice(0, 10)
+                });
+                window.RetoDatos && window.RetoDatos.poner('reto-perfil-usuario', nuevoPerfil).then(function () {
+                  decir('Tarjeta importada: ' + res.perfil.nombre);
+                  setTimeout(renderTodo, 300);
+                });
               });
-              window.RetoPerfil.actualizarConfig(res.perfil.config || {}).then(function () {
-              window.RetoDatos && window.RetoDatos.poner('reto-perfil-usuario', nuevoPerfil).then(function () {
-                decir('Tarjeta importada: ' + res.perfil.nombre);
-                setTimeout(renderTodo, 300);
-              });
-            });
-          }
-        }).catch(function (e) { modal.querySelector('#importar-error').textContent = e.message; });
+            }
+          }).catch(function (e) { modal.querySelector('#importar-error').textContent = e.message; });
       };
       if (archivo) {
         var rd = new FileReader();
