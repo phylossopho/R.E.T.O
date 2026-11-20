@@ -360,7 +360,7 @@
 
   // Merge with existing RetoRpg (from reto-rpg-logica.js) instead of overwriting
   window.RetoRpg = Object.assign(window.RetoRpg || {}, {
-    perfil: perfil, crearTarjeta: crearTarjeta, aTexto: aTexto, leerTarjeta: leerTarjeta,
+    perfil: perfil, aTexto: aTexto, leerTarjeta: leerTarjeta,
     INVENTARIO_MAX: INVENTARIO_MAX, EQUIPO_MAX: EQUIPO_MAX, USOS: USOS, RAREZAS: RAREZAS,
     NOMBRES_RAREZA: NOMBRES_RAREZA, NOMBRES_CLASE: NOMBRES_CLASE,
     catalogo: catalogo, inventario: inventario, agregar: agregar, consumir: consumir, descartar: descartar,

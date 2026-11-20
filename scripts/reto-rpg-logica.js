@@ -787,7 +787,12 @@
 
   function aTexto(tarjeta) { return JSON.stringify(tarjeta); }
   function leerTarjeta(texto) {
-    return JSON.parse(texto).then(function(t) { return validarTarjeta(t); });
+    try {
+      var t = JSON.parse(texto);
+      return Promise.resolve(validarTarjeta(t));
+    } catch (e) {
+      return Promise.reject(e);
+    }
   }
 
   /* ===========================================================================
