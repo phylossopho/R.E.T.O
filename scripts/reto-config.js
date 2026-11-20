@@ -143,7 +143,9 @@
     exportar.addEventListener('click', function () {
       if (!R || !R.crearTarjeta || !R.aTexto) { decir('RetoRpg no disponible'); return; }
       var perfilCompleto = Object.assign({}, p, { config: cfg, tiempo_por_modulo: p.tiempo_por_modulo || {} });
-      R.crearTarjeta(perfilCompleto, new Date().toISOString().slice(0,10)).then(function (t) {
+      // Preservar fecha de creación original
+      if (p.creado) perfilCompleto.creado = p.creado;
+      R.crearTarjeta(perfilCompleto, p.creado || new Date().toISOString().slice(0,10)).then(function (t) {
         var codigo = R.aTexto(t);
         // Mostrar modal con ambas opciones
         var modal = document.createElement('dialog');
@@ -244,11 +246,14 @@
       if (!texto && !archivo) { modal.querySelector('#importar-error').textContent = 'Pega el código o elige un archivo'; return; }
       var procesar = function (t) {
         if (!R || !R.leerTarjeta) { modal.querySelector('#importar-error').textContent = 'RetoRpg no disponible'; return; }
-        R.leerTarjeta(t).then(function (res) {
-          modal.close(); modal.remove();
-          if (window.RetoPerfil && window.RetoPerfil.actualizarConfig) {
-            var nuevoPerfil = Object.assign({}, res.perfil, { usuario_id: res.perfil.usuario_id || 'importado' });
-            window.RetoPerfil.actualizarConfig(res.perfil.config || {}).then(function () {
+R.leerTarjeta(t).then(function (res) {
+            modal.close(); modal.remove();
+            if (window.RetoPerfil && window.RetoPerfil.actualizarConfig) {
+              var nuevoPerfil = Object.assign({}, res.perfil, { 
+                usuario_id: res.perfil.usuario_id || 'importado',
+                creado: res.tarjeta.fecha || new Date().toISOString().slice(0, 10)
+              });
+              window.RetoPerfil.actualizarConfig(res.perfil.config || {}).then(function () {
               window.RetoDatos && window.RetoDatos.poner('reto-perfil-usuario', nuevoPerfil).then(function () {
                 decir('Tarjeta importada: ' + res.perfil.nombre);
                 setTimeout(renderTodo, 300);
