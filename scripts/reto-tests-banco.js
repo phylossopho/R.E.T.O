@@ -815,7 +815,7 @@
   var fila = Promise.resolve();
   function encolar(fn) { var p = fila.then(fn, fn); fila = p.catch(function () {}); return p; }
   function indice() { return Datos().obtener('tests-indice').then(function (v) { return Array.isArray(v) ? v : []; }); }
-  function cargar() { return indice().then(function (ids) { return Promise.all(ids.map(function (id) { return Datos().obtener('tests-t-' + id); })).then(function (lista) { return lista.filter(function (t) { return t && typeof t === 'object' && t.id; }); }); }
+  function cargar() { return indice().then(function (ids) { return Promise.all(ids.map(function (id) { return Datos().obtener('tests-t-' + id); })).then(function (lista) { return lista.filter(function (t) { return t && typeof t === 'object' && t.id; }); }); }); }
   function guardar(test) { return encolar(function () { return indice().then(function (ids) { var escribir = Datos().poner('tests-t-' + test.id, test); if (ids.indexOf(test.id) < 0) { ids.push(test.id); return escribir.then(function () { return Datos().poner('tests-indice', ids); }); } return escribir; }); }); }
   function guardarVarios(tests) { return tests.reduce(function (p, t) { return p.then(function () { return guardar(t); }); }, Promise.resolve()); }
   function borrar(id) { return encolar(function () { return indice().then(function (ids) { var nuevos = ids.filter(function (x) { return x !== id; }); return Datos().poner('tests-indice', nuevos); }).then(function () { return Promise.all([Datos().poner('tests-t-' + id, null), Datos().poner('tests-estado-' + id, null), Datos().poner('tests-intentos-' + id, null), Datos().poner('tests-hecho-' + id, null)]); }); }); }
