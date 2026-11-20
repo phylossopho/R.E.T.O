@@ -451,9 +451,14 @@
   };
 
   // Auto-detectar signalingUrl desde meta tag si existe
-  document.addEventListener('DOMContentLoaded', function () {
+  function leerSignalingUrl() {
     var meta = document.querySelector('meta[name="reto-signaling-url"]');
     if (meta) CONFIG.signalingUrl = meta.content;
-  });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', leerSignalingUrl);
+  } else {
+    leerSignalingUrl();
+  }
 
 })(window);
