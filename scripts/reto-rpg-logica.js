@@ -14,8 +14,7 @@
   var _cacheTXT = null;
 
   function getBasePath() {
-    // GitHub Pages siempre usa /R.E.T.O/ como subpath
-    return '/R.E.T.O/';
+    return location.origin + '/R.E.T.O/';
   }
 
   function loadPowerUps() {
