@@ -248,14 +248,17 @@
         if (!R || !R.leerTarjeta) { modal.querySelector('#importar-error').textContent = 'RetoRpg no disponible'; return; }
 R.leerTarjeta(t).then(function (res) {
             modal.close(); modal.remove();
+            // res puede ser { perfil, tarjeta } o directamente el perfil (compatibilidad)
+            var perfilImportado = res.perfil || res;
+            var tarjetaFecha = (res.tarjeta && res.tarjeta.fecha) || (res.fecha) || null;
             if (window.RetoPerfil && window.RetoPerfil.obtener) {
               window.RetoPerfil.obtener().then(function (perfilActual) {
-                var nuevoPerfil = Object.assign({}, perfilActual, res.perfil, { 
-                  usuario_id: res.perfil.usuario_id || perfilActual.usuario_id || 'importado',
-                  creado: res.tarjeta.fecha || perfilActual.creado || new Date().toISOString().slice(0, 10)
+                var nuevoPerfil = Object.assign({}, perfilActual, perfilImportado, { 
+                  usuario_id: perfilImportado.usuario_id || perfilActual.usuario_id || 'importado',
+                  creado: tarjetaFecha || perfilActual.creado || new Date().toISOString().slice(0, 10)
                 });
                 window.RetoDatos && window.RetoDatos.poner('reto-perfil-usuario', nuevoPerfil).then(function () {
-                  decir('Tarjeta importada: ' + res.perfil.nombre);
+                  decir('Tarjeta importada: ' + perfilImportado.nombre);
                   setTimeout(renderTodo, 300);
                 });
               });
