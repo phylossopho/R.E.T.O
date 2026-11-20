@@ -227,7 +227,7 @@
         </div>\
         <div class="ajustes-campo" style="margin-top:var(--space-md);">\
           <label for="importar-archivo" style="display:block;margin-bottom:4px;font-weight:bold;">O elige archivo .json</label>\
-          <input type="file" id="importar-archivo" accept=".json,application/json" style="width:100%;">\
+          <input type="file" id="importar-archivo" accept=".json,application/json" style="width:100%;display:block;padding:var(--space-sm);border:2px dashed var(--borde);border-radius:var(--radius);background:var(--bg);cursor:pointer;">\
         </div>\
         <p id="importar-error" class="red-error" role="alert" style="min-height:1.2em;"></p>\
         <div style="display:flex;gap:var(--space-sm);justify-content:flex-end;margin-top:var(--space-lg);">\
