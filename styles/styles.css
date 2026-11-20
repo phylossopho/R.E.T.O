@@ -4086,6 +4086,27 @@ body.pantalla-juego main {
   html:not([data-anim="on"]) .memo-carta:hover { transform: none; }
 }
 
+/* --- MODO OFFLINE: indicador visual cuando no hay conexion
+   Se muestra una barra sutil arriba del tablero. */
+html[data-modo-offline="1"] .memo-tablero::before,
+html[data-modo-offline="1"] .mahjong-tablero::before {
+  content: '🌐 Modo práctica offline — sin conexión a internet';
+  display: block;
+  background: var(--accent);
+  color: var(--bg);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  border-radius: var(--radius) var(--radius) 0 0;
+  margin: calc(var(--memo-hueco) * -1) calc(var(--memo-hueco) * -1) var(--memo-hueco);
+  box-shadow: var(--sombra);
+}
+
+html[data-modo-offline="1"] .mahjong-tablero::before {
+  margin: calc(var(--mj-hueco, 0.5rem) * -1) calc(var(--mj-hueco, 0.5rem) * -1) var(--mj-hueco, 0.5rem);
+}
+
 /* --- EL MODAL DE CONFIGURAR EL JUEGO
    Los ajustes y las cuentas viven aqui adentro, no en la pagina. La pagina es
    el tablero y nada mas: quien esta jugando no necesita ver un "0" de intentos
@@ -7094,6 +7115,896 @@ body.pantalla-lectura[data-frases="1"] .frases-centro {
   transform-origin: left center;
   will-change: transform;
 }
+
+
+/* ==========================================================================
+   LOS MODULOS NUEVOS: PRUEBA DE VELOCIDAD, PACER (Y COLUMNAS) Y SKIMMING
+   --------------------------------------------------------------------------
+   Los tres pintan texto de verdad (parrafos), no una palabra en el centro, asi
+   que su escena es una region que SE DESPLAZA dentro del marco (que es fijo,
+   de borde a borde): el panel flotante queda encima, y por eso cada escena
+   reserva abajo lo que mide el panel (padding-bottom), para que el foco y el
+   final del texto nunca queden tapados (2.4.11).
+
+   Colores: SOLO los tokens del tema. El resaltado usa el mismo par que el boton
+   principal (fondo = acento, texto = fondo), que ya tiene el contraste probado
+   en todos los temas. Nada de colores sueltos.
+
+   Espaciado de texto (1.4.12): interlineado sin unidad y medidas en em/rem/ch,
+   sin alturas fijas. Texto a la izquierda, nunca justificado (1.4.8).
+
+   Lo que no se ve en los lectores de pantalla: lo decorativo (barra del tiempo,
+   reloj) lleva aria-hidden en el JS.
+   ========================================================================== */
+
+body.pantalla-lectura[data-pacer="1"],
+body.pantalla-lectura[data-skim="1"],
+body.pantalla-lectura[data-prueba="1"] {
+  background: var(--bg);
+}
+
+/* Los controles que no aplican a un modo se esconden (no se apagan): la
+   velocidad no tiene sentido en la prueba ni en el skimming, y el play de la
+   prueba no hace nada (se empieza con el boton de la pantalla). */
+body[data-modo="prueba"] .panel-velocidad,
+body[data-modo="prueba"] [data-leer],
+body[data-modo="skimming"] .panel-velocidad {
+  display: none;
+}
+
+.pacer-escena,
+.skim-escena,
+.prueba-escena {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: var(--space-md) var(--space-md) 9rem;
+  color: var(--text);
+  font-family: var(--font);
+  line-height: 1.8;
+  text-align: left;
+}
+
+.pacer-escena:focus-visible,
+.skim-cuerpo:focus-visible,
+.skim-referencia:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+}
+
+/* ------------------------------ PACER ------------------------------ */
+.pacer-aviso,
+.prueba-vivo {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0 0 var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
+  width: fit-content;
+  max-width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.pacer-aviso:empty,
+.prueba-vivo:empty { display: none; }
+
+.pacer-texto {
+  --ancho-col: 70ch;
+  margin: 0 auto;
+  max-inline-size: var(--ancho-col);
+  font-size: max(1rem, calc(var(--lectura-texto, 3rem) * 0.42));
+  line-height: 1.9;
+  text-align: left;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+/* Lectura en columnas: ancho en ch, nunca en px (1.4.10). */
+.pacer-texto[data-columna="1"] {
+  --ancho-col: calc(var(--palabras-col, 2) * 9ch);
+}
+
+@media (min-width: 900px) {
+  .pacer-texto[data-doble="1"] {
+    column-count: 2;
+    column-gap: 3rem;
+    max-inline-size: calc(var(--ancho-col) * 2 + 3rem);
+  }
+  .pacer-texto[data-doble="1"][data-columna="0"] {
+    max-inline-size: 100ch;
+  }
+}
+
+.pacer-parrafo { margin: 0 0 1.2em; break-inside: avoid-column; }
+.pacer-titulo { font-weight: 800; margin-top: 1.6em; }
+
+.pacer-p {
+  border-radius: 0.2em;
+  transition: background 0.12s ease, opacity 0.12s ease;
+}
+
+/* La guia: relleno + subrayado (no solo color). */
+.pacer-escena[data-guia="fondo"] .pacer-activo,
+.pacer-escena[data-guia="regla"] .pacer-activo {
+  background: var(--accent);
+  color: var(--bg);
+  box-shadow: 0 0.12em 0 var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 0.1em;
+  text-underline-offset: 0.18em;
+}
+
+.pacer-escena[data-guia="subrayado"] .pacer-activo {
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-thickness: 0.2em;
+  text-decoration-color: var(--accent);
+  text-underline-offset: 0.2em;
+}
+
+.pacer-escena[data-atenuar="1"] .pacer-p:not(.pacer-activo) {
+  opacity: var(--pacer-resto, 1);
+}
+
+/* Con movimiento reducido el resaltado salta, no se funde. */
+html[data-anim="off"] .pacer-p,
+html[data-anim="off"] .skim-barra-relleno { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-anim="on"]) .pacer-p,
+  html:not([data-anim="on"]) .skim-barra-relleno { transition: none; }
+}
+
+/* ------------------------------ SKIMMING ------------------------------ */
+.skim-escena { display: flex; flex-direction: column; gap: var(--space-sm); }
+
+.skim-aviso {
+  margin: 0;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.skim-barra {
+  height: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--borde-fuerte);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.skim-barra-relleno {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transform-origin: left center;
+  transition: transform 0.1s linear;
+}
+
+.skim-cuerpo {
+  max-inline-size: 70ch;
+  width: 100%;
+  margin: 0 auto;
+  font-size: max(1rem, calc(var(--lectura-texto, 3rem) * 0.42));
+  overflow-wrap: anywhere;
+}
+
+.skim-titulos { margin: 0; padding: 0; list-style: none; }
+.skim-titulo { margin: 0 0 0.6em; font-weight: 800; }
+.skim-nivel-2 { padding-inline-start: 1.2em; font-weight: 700; }
+.skim-nivel-3 { padding-inline-start: 2.4em; font-weight: 600; }
+.skim-nivel-4 { padding-inline-start: 3.6em; font-weight: 600; }
+
+.skim-frase,
+.skim-parrafo { margin: 0 0 1em; }
+.skim-frase { padding-inline-start: 0.8em; border-inline-start: 4px solid var(--accent); }
+
+/* La palabra clave: negrita + subrayado + fondo (el color nunca va solo). */
+.skim-clave {
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-thickness: 0.1em;
+  text-underline-offset: 0.18em;
+  background: var(--surface);
+  border-bottom: 2px solid var(--accent);
+  border-radius: 0.2em;
+  padding: 0 0.15em;
+}
+
+.skim-nota { margin: 0 0 var(--space-sm); color: var(--muted); font-size: 0.9em; }
+
+.skim-pie,
+.skim-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  justify-content: center;
+  margin: var(--space-sm) auto 0;
+}
+
+.skim-pie .boton,
+.skim-acciones .boton { min-height: 44px; min-width: 44px; }
+
+.skim-respuesta { width: 100%; box-sizing: border-box; margin: 0 0 var(--space-sm); font: inherit; }
+.skim-referencia { margin-top: var(--space-md); padding: var(--space-sm) var(--space-md); border: 1px solid var(--borde-fuerte); border-radius: var(--radius); }
+.skim-lista { margin: 0 0 var(--space-sm); padding-inline-start: 1.2em; }
+
+/* ------------------------------ PRUEBA ------------------------------ */
+.prueba-cuerpo { max-inline-size: 70ch; margin: 0 auto; font-size: max(1rem, calc(var(--lectura-texto, 3rem) * 0.42)); overflow-wrap: anywhere; }
+.prueba-titulo { margin: 0 0 var(--space-sm); font-size: 1.4em; }
+.prueba-subtitulo { margin: var(--space-md) 0 var(--space-xs); font-size: 1.1em; }
+.prueba-texto-ayuda { margin: 0 0 var(--space-sm); }
+.prueba-parrafo { margin: 0 0 1.2em; }
+.prueba-reloj { margin: 0 0 var(--space-sm); color: var(--muted); font-variant-numeric: tabular-nums; }
+.prueba-grande { display: block; min-height: 3.2rem; min-width: 12rem; margin: var(--space-md) auto 0; font-size: 1.1rem; }
+.prueba-pregunta { margin: 0 0 var(--space-md); padding: 0; border: 0; min-width: 0; }
+.prueba-pregunta legend { padding: 0; margin: 0 0 var(--space-xs); font-weight: 800; }
+.prueba-pregunta .opcion { margin: 0 0 var(--space-xs); }
+.prueba-numero { margin: 0 0 var(--space-sm); font-size: 1.2em; }
+.prueba-numero strong { font-size: 2.2em; }
+.prueba-datos { margin: 0 0 var(--space-sm); padding-inline-start: 1.2em; }
+.prueba-comparacion { margin: 0 0 var(--space-sm); font-weight: 700; }
+.prueba-nota { margin: 0 0 var(--space-sm); color: var(--muted); font-size: 0.9em; }
+.prueba-svg { width: 100%; max-width: 28rem; height: auto; }
+.prueba-linea { fill: none; stroke: var(--accent); stroke-width: 2; }
+.prueba-punto { fill: var(--surface); stroke: var(--accent); stroke-width: 2.5; }
+.prueba-punto--hoy { fill: var(--accent); stroke: var(--accent); }
+.prueba-tabla-caja { margin: 0 0 var(--space-sm); }
+.prueba-tabla { border-collapse: collapse; margin-top: var(--space-xs); }
+.prueba-tabla caption { text-align: left; font-weight: 700; margin-bottom: var(--space-xs); }
+.prueba-tabla th,
+.prueba-tabla td { padding: var(--space-xs) var(--space-sm); border: 1px solid var(--border); text-align: left; }
+
+/* Texto grande o celular chico: nada se sale (1.4.10). */
+@media (max-width: 480px) {
+  .pacer-escena,
+  .skim-escena,
+  .prueba-escena { padding-inline: var(--space-sm); }
+}
+
+/* ==========================================================================
+   66_vision.css - LOS EJERCICIOS PARA LA VISION
+   --------------------------------------------------------------------------
+   Las pantallas de ejercicio usan el mismo marco de pantalla completa de la
+   lectura (.lectura-marco, fijo, de borde a borde) y el panel flotante encima;
+   por eso cada pantalla reserva abajo lo que mide el panel (9rem) para que
+   nada importante quede tapado (2.4.11).
+
+   NADA SE MIDE EN PIXELES FIJOS: el JS calcula la unidad u = min(ancho, alto) / 100
+   del marco y la entrega como --u; los objetivos miden 6u o mas (--objetivo) y
+   las posiciones son porcentajes del marco. Colores: solo los tokens del tema
+   (el par fondo/texto/acento ya tiene su contraste probado en todos los temas).
+   El color nunca va solo: las figuras se distinguen por su forma.
+   ========================================================================== */
+
+.vision-marco { overflow: hidden; }
+
+.vision-escena {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  color: var(--text);
+}
+
+/* ------------------------------------------------ pantallas de texto */
+.vision-pantalla {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: var(--space-md) var(--space-md) 9rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: safe center;
+  gap: var(--space-sm);
+  color: var(--text);
+  line-height: 1.6;
+  /* El marco de la lectura pone la letra enorme y centrada (es para UNA palabra):
+     estas pantallas son de texto, asi que vuelven a la medida normal. */
+  font-size: calc(1.05rem * var(--letra-vision, 1));
+  font-weight: 400;
+  text-align: left;
+}
+
+.vision-pantalla > * { width: min(100%, 38rem); box-sizing: border-box; }
+
+.vision-titulo { margin: 0; font-size: 1.5rem; }
+
+.vision-aviso-medico {
+  margin: 0 0 var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--surface);
+  color: var(--text);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+}
+
+.vision-aviso-rapido {
+  margin: 0;
+  padding: var(--space-xs) var(--space-sm);
+  border-inline-start: 4px solid var(--aviso);
+  background: var(--surface);
+  font-size: 0.95rem;
+}
+
+.vision-instrucciones { margin: 0; }
+.vision-instrucciones dt { font-weight: 800; margin-top: var(--space-xs); }
+.vision-instrucciones dd { margin: 0; }
+
+.vision-acciones { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+.vision-grande { min-height: 3.2rem; min-width: 9rem; font-size: 1.1rem; }
+
+.vision-resumen { margin: 0; padding-inline-start: 1.2em; }
+.vision-descanso-texto { margin: 0; }
+.vision-error { margin: var(--space-md); color: var(--aviso); font-weight: 700; }
+
+.vision-contador {
+  margin: 0;
+  font-size: clamp(3rem, 18vmin, 8rem);
+  font-weight: 800;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------ el objetivo */
+.vision-punto {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: var(--objetivo, 3rem);
+  height: var(--objetivo, 3rem);
+  border-radius: 50%;
+  background: var(--text);
+  color: var(--bg);
+  font-size: calc(var(--objetivo, 3rem) * 0.6);
+  font-weight: 800;
+  line-height: 1;
+  /* El anillo claro + el centro oscuro: se ve sobre cualquier fondo y tema. */
+  box-shadow: 0 0 0 0.18em var(--bg), 0 0 0 0.34em var(--text);
+  will-change: transform;
+}
+
+.vision-punto--centro {
+  left: 50%;
+  top: 50%;
+  width: calc(var(--objetivo, 3rem) * 0.55);
+  height: calc(var(--objetivo, 3rem) * 0.55);
+  transform: translate(-50%, -50%);
+}
+
+.vision-punto--fijo { position: static; margin: var(--space-sm) auto; }
+
+.vision-punto--simbolo { width: calc(var(--objetivo, 3rem) * 1.4); height: calc(var(--objetivo, 3rem) * 1.4); }
+
+.vision-aparece { animation: vision-fundido 0.1s linear; }
+
+@keyframes vision-fundido { from { opacity: 0; } to { opacity: 1; } }
+
+/* Los estimulos entran y salen con un fundido de 100 ms (nunca un corte
+   brusco) y NUNCA alternan con blanco: WCAG 2.3.1. */
+.vision-estimulo,
+.vision-destello {
+  position: absolute;
+  opacity: 0;
+  transition: opacity 0.1s linear;
+  color: var(--text);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.vision-estimulo {
+  left: 0;
+  top: 0;
+  font-size: calc(var(--objetivo, 3rem) * 1.3 * var(--letra-vision, 1));
+}
+
+.vision-destello {
+  left: 50%;
+  top: 38%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5em 0.8em;
+  width: min(92%, 40rem);
+  font-size: calc(1.5rem * var(--letra-vision, 1));
+}
+
+.vision-item {
+  padding: 0.25em 0.6em;
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.vision-visible { opacity: 1; }
+
+/* ---------------------------------------------------- botones de respuesta */
+.vision-opciones {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding-inline: var(--space-sm);
+}
+
+.vision-opciones--abajo { bottom: 7.5rem; }
+
+.vision-opciones--lista {
+  top: 58%;
+  flex-direction: column;
+  align-items: center;
+}
+
+.vision-opcion {
+  min-width: 4.5rem;
+  min-height: 3.2rem;
+  font-size: calc(1.4rem * var(--letra-vision, 1));
+  font-weight: 700;
+}
+
+.vision-opcion--grupo { width: min(92%, 30rem); font-size: calc(1.05rem * var(--letra-vision, 1)); white-space: normal; }
+
+.vision-listo { position: absolute; bottom: 8rem; left: 50%; transform: translateX(-50%); }
+
+.vision-pregunta {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: var(--space-md);
+  background: var(--surface);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  text-align: center;
+}
+
+.vision-pregunta-texto { margin: 0 0 var(--space-sm); font-weight: 700; }
+.vision-pregunta .vision-opciones { position: static; }
+
+/* --------------------------------------------------------- siguiente en la fila */
+.vision-filas {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--simbolo, 3rem) * 0.4);
+  padding-bottom: 6rem;
+}
+
+.vision-fila { display: flex; flex-wrap: wrap; justify-content: center; }
+
+.vision-simbolo {
+  display: inline-grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: var(--simbolo, 3rem);
+  height: var(--simbolo, 3rem);
+  margin: calc(var(--simbolo, 3rem) * 0.1);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: calc(var(--simbolo, 3rem) * 0.6 * var(--letra-vision, 1));
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* El resaltado: relleno + borde grueso (no solo color). */
+.vision-activo {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--text);
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------ piramide de letras */
+.vision-piramide {
+  position: absolute;
+  inset: 0;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 6rem;
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+
+.vision-piramide-fila {
+  position: relative;
+  z-index: 1;
+  font-size: var(--piramide, 24px);
+  line-height: 1.55;
+  letter-spacing: 0.14em;
+  white-space: pre;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.vision-guia-central {
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  top: 5%;
+  bottom: 9rem;
+  width: 3px;
+  transform: translateX(-50%);
+  background: var(--accent);
+  box-shadow: 0 0 0 1px var(--bg);
+}
+
+.vision-otra { position: absolute; bottom: 7.5rem; left: 50%; transform: translateX(-50%); }
+
+/* ---------------------------------------- enfoque, pausa y parpadeo */
+.vision-enfoque { text-align: center; align-items: center; }
+.vision-enfoque-mensaje { margin: 0; font-size: calc(1.4rem * var(--letra-vision, 1)); font-weight: 700; text-align: center; }
+.vision-enfoque[data-fase="lejos"] .vision-contador { color: var(--accent); }
+
+.vision-ojo {
+  width: min(58vmin, 18rem);
+  height: min(58vmin, 18rem);
+  margin: var(--space-md) auto;
+  border: 0.4rem solid var(--text);
+  border-radius: 50%;
+  background: var(--surface);
+  transform-origin: center;
+}
+
+.vision-barra { width: min(100%, 28rem); height: 1.2rem; }
+
+/* -------------------------------------- el aviso de la pausa 20-20-20 */
+.descanso-banner {
+  position: fixed;
+  left: 50%;
+  bottom: 7.5rem;
+  transform: translateX(-50%);
+  z-index: 50;
+  box-sizing: border-box;
+  width: min(92vw, 32rem);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--surface);
+  color: var(--text);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  box-shadow: var(--sombra);
+}
+
+.descanso-texto { margin: 0 0 var(--space-xs); }
+.descanso-cuenta { margin: 0; font-size: 2rem; font-weight: 800; text-align: center; }
+.descanso-acciones { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.descanso-no { font-size: 0.85em; }
+
+/* ------------------------------------------- la portada de Vision */
+.vision-nivel { min-width: 5.5rem; text-align: center; }
+main > .vision-aviso-medico { max-width: 48rem; margin-inline: auto; margin-bottom: var(--space-md); }
+
+/* -------------------------------- SCHULTE: lo que se agrego al mudarlo */
+.schulte-celda[data-color="c1"], .schulte-simbolo[data-color="c1"] { color: var(--marca-1); }
+.schulte-celda[data-color="c2"], .schulte-simbolo[data-color="c2"] { color: var(--marca-2); }
+.schulte-celda[data-color="c3"], .schulte-simbolo[data-color="c3"] { color: var(--marca-3); }
+.schulte-celda[data-color="c4"], .schulte-simbolo[data-color="c4"] { color: var(--aviso); }
+.schulte-celda[data-estado="hecha"][data-color] { color: var(--acierto, var(--ayuda)); }
+.schulte-celda[data-estado="hecha"][data-desvanecer="1"][data-color] { color: transparent; }
+
+.schulte-objetivo { margin: var(--space-xs) 0; text-align: center; font-size: 1.15rem; font-weight: 700; }
+.schulte-objetivo[hidden] { display: none; }
+.schulte-simbolo { display: inline-block; margin-inline: 0.2em; font-size: 1.7em; line-height: 1; vertical-align: middle; }
+
+/* Acierto = marca que no depende del color: borde punteado + una paloma. */
+.schulte-celda[data-estado="hecha"] { border-style: dashed; }
+.schulte-celda[data-estado="hecha"]::after {
+  content: "\2713";
+  position: absolute;
+  top: 0.1em;
+  right: 0.2em;
+  font-size: 0.4em;
+  line-height: 1;
+  color: var(--acierto, var(--ayuda));
+  text-shadow: none;
+}
+
+.schulte-sacude { animation: schulte-sacude 0.3s ease; }
+@keyframes schulte-sacude { 20% { translate: -3px 0; } 40% { translate: 3px 0; } 60% { translate: -2px 0; } 80% { translate: 2px 0; } }
+
+/* Sin movimiento: ni sacudida ni deslizamientos (2.3.3). */
+html[data-anim="off"] .schulte-sacude,
+html[data-anim="off"] .vision-aparece { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-anim="on"]) .schulte-sacude,
+  html:not([data-anim="on"]) .vision-aparece { animation: none; }
+}
+
+@media (max-width: 480px) {
+  .vision-pantalla { padding-inline: var(--space-sm); }
+  .vision-opciones--lista { top: 54%; }
+}
+
+/* ==========================================================================
+   67_multijugador.css - LA PRUEBA DE CONEXION POR WIFI LOCAL
+   Solo tokens del tema; medidas relativas; nada se sale a 320 px.
+   ========================================================================== */
+.red-nota { max-width: 48rem; margin: 0 auto var(--space-md); }
+
+.red-pagina { max-width: 48rem; margin-inline: auto; }
+
+.red-caja {
+  margin: 0 0 var(--space-md);
+  padding: var(--space-md);
+  background: var(--surface);
+  color: var(--text);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+}
+
+.red-caja h2 { margin: 0 0 var(--space-sm); font-size: 1.2rem; }
+.red-estado { margin: 0 0 var(--space-sm); font-weight: 700; }
+
+.red-direcciones, .red-mensajes { margin: 0 0 var(--space-sm); padding: 0; list-style: none; }
+
+.red-direccion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.red-direccion code { overflow-wrap: anywhere; font-size: 1rem; }
+
+.red-mensaje {
+  margin-bottom: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow-wrap: anywhere;
+}
+
+/* Los tuyos se distinguen por el borde grueso del lado, no solo por el color. */
+.red-mensaje--mio { border-inline-start: 6px solid var(--accent); }
+.red-ip { color: var(--muted); }
+
+/* ------------------------------------------------------------ el duelo */
+.red-error { max-width: 48rem; margin: 0 auto var(--space-sm); color: var(--aviso); font-weight: 700; }
+.red-error:empty { display: none; }
+
+.duelo-codigo-grande { font-size: 1.6rem; margin: 0 0 var(--space-sm); }
+.duelo-codigo { text-transform: uppercase; letter-spacing: 0.2em; max-width: 8rem; font-size: 1.4rem; text-align: center; }
+.duelo-grande { min-height: 3.2rem; min-width: 11rem; font-size: 1.1rem; }
+
+.duelo-tablero { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--space-md); }
+.duelo-jugador { padding: var(--space-sm); border: 2px solid var(--border); border-radius: var(--radius); }
+/* Quien ataca se marca con borde grueso Y con el texto "ataca": no depende del color. */
+.duelo-jugador--ataca { border-color: var(--accent); border-width: 4px; }
+.duelo-nombre { margin: 0 0 var(--space-xs); overflow-wrap: anywhere; }
+.duelo-etiqueta { font-weight: 700; }
+.duelo-vida { margin: var(--space-xs) 0 0; font-variant-numeric: tabular-nums; }
+
+.duelo-barra { height: 1.1rem; background: var(--bg); border: 2px solid var(--borde-fuerte); border-radius: 999px; overflow: hidden; }
+.duelo-barra-relleno { display: block; height: 100%; background: var(--accent); transition: width 0.3s ease; }
+html[data-anim="off"] .duelo-barra-relleno { transition: none; }
+@media (prefers-reduced-motion: reduce) { html:not([data-anim="on"]) .duelo-barra-relleno { transition: none; } }
+
+.duelo-turno { margin: 0 0 var(--space-xs); font-weight: 800; }
+.duelo-tiempo { margin: 0 0 var(--space-xs); font-variant-numeric: tabular-nums; color: var(--muted); }
+.duelo-enunciado { font-size: 1.2rem; font-weight: 700; margin: 0 0 var(--space-sm); overflow-wrap: anywhere; }
+.duelo-oferta { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--space-xs); }
+.duelo-respuestas { display: grid; gap: var(--space-xs); }
+.duelo-opcion { width: 100%; min-height: 3rem; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+.duelo-tema { color: var(--muted); }
+.duelo-ultimo { margin: var(--space-sm) 0 0; font-weight: 700; }
+.duelo-power-ups { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-top: var(--space-sm); }
+.duelo-rendirse { margin-top: var(--space-sm); }
+.red-caja > .boton { margin: var(--space-xs) var(--space-xs) 0 0; }
+/* Que el panel flotante no tape las respuestas ni los botones del final. */
+.red-pagina { padding-bottom: 7.5rem; }
+
+/* ------------------------------------------------ inventario y equipo */
+.equipo-lista { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--space-sm); }
+.equipo-item { padding: var(--space-sm); border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); }
+.equipo-nombre, .equipo-texto { margin: 0 0 var(--space-xs); overflow-wrap: anywhere; }
+.equipo-descartar { margin-top: var(--space-xs); font-size: 0.9em; }
+
+/* ---- Ding! (quiz bowl por wifi local) ----------------------------------- */
+.ding-opcion { margin: var(--space-md) 0; padding: var(--space-sm) var(--space-md); border: 2px solid var(--borde); border-radius: var(--radius); background: var(--bg); }
+.ding-opcion h3 { margin: 0 0 var(--space-xs); font-size: 1.05rem; }
+.ding-test { display: block; margin: var(--space-xs) 0; padding: var(--space-xs) 0; min-height: 44px; cursor: pointer; }
+.ding-test input, .ding-interruptor input { width: 22px; height: 22px; vertical-align: middle; cursor: pointer; }
+.ding-interruptor { margin: var(--space-xs) 0; min-height: 44px; }
+.ding-codigo { margin: var(--space-sm) 0; font-family: 'Roboto Mono', monospace; font-size: clamp(3rem, 12vw, 6rem); font-weight: 800; letter-spacing: 0.25em; text-align: center; color: var(--accent); }
+.ding-escena { text-align: center; }
+.ding-progreso { margin: 0 0 var(--space-xs); font-weight: 700; color: var(--muted); }
+.red-caja .ding-enunciado { margin: var(--space-sm) 0 var(--space-md); font-size: clamp(1.6rem, 4.5vw, 3rem); line-height: 1.25; overflow-wrap: anywhere; }
+.red-caja .ding-enunciado--chico { font-size: clamp(1.1rem, 3.5vw, 1.5rem); }
+.ding-estado { margin: var(--space-sm) 0; font-size: clamp(1.1rem, 2.5vw, 1.6rem); font-weight: 700; }
+.ding-marcador { margin: var(--space-md) auto 0; max-width: 34rem; text-align: left; }
+.ding-marcador h3 { margin: 0 0 var(--space-xs); font-size: 1rem; }
+.ding-boton { display: block; width: 100%; min-height: 40vh; margin: var(--space-md) 0; padding: var(--space-md); border: 4px solid var(--borde-fuerte); border-radius: 24px; background: var(--accent); color: var(--bg); font: inherit; font-size: clamp(2.5rem, 12vw, 5rem); font-weight: 800; cursor: pointer; touch-action: manipulation; }
+.ding-boton:disabled { background: var(--surface); color: var(--muted); border-style: dashed; cursor: not-allowed; }
+.ding-rejilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--space-sm); margin: var(--space-md) 0; }
+.ding-opcion-boton { min-height: 5rem; padding: var(--space-sm) var(--space-md); border: 3px solid var(--borde-fuerte); border-radius: var(--radius); background: var(--surface); color: var(--text); font: inherit; font-size: clamp(1.2rem, 4vw, 1.8rem); font-weight: 700; cursor: pointer; touch-action: manipulation; }
+.ding-opcion-boton:disabled { opacity: 0.6; cursor: wait; }
+.ding-opciones-reveladas { list-style: none; margin: var(--space-sm) auto; padding: 0; max-width: 34rem; text-align: left; font-size: 1.2rem; }
+.ding-opciones-reveladas li { margin: var(--space-xs) 0; padding: var(--space-xs) var(--space-sm); border: 2px solid var(--borde); border-radius: var(--radius); }
+.ding-opciones-reveladas li.ding-correcta { border: 4px solid var(--accent); font-weight: 800; }
+.ding-explicacion { margin: var(--space-sm) auto; max-width: 34rem; padding: var(--space-sm); border: 2px dashed var(--borde-fuerte); border-radius: var(--radius); text-align: left; }
+.ding-explicacion p { margin: var(--space-xs) 0; font-family: 'Roboto Mono', monospace; }
+
+/* ---- El duelo con la interfaz de batalla -------------------------------------
+   Mismo escenario que la aventura: fondo al azar de imagenes/fondos/, el nombre y la vida
+   (en numeros grandes, DEBAJO de la barra) de cada quien, y las preguntas que se pueden
+   mandar en el lugar de las respuestas. Del rival solo se ve su nombre. */
+.escena-duelo { max-width: 1100px; margin: 0 auto; border: 2px solid var(--borde-fuerte); border-radius: calc(var(--radius) * 1.5); background: var(--bg); overflow: hidden; }
+.escena-pantalla { position: relative; min-height: clamp(280px, 46vw, 420px); overflow: hidden; isolation: isolate; background: radial-gradient(120% 100% at 50% 0%, var(--surface) 0%, var(--bg) 100%); }
+.escena-pantalla::before { content: ''; position: absolute; inset: 0; z-index: 0; background-image: var(--escena-fondo, none); background-size: cover; background-position: center; image-rendering: pixelated; opacity: 0.6; pointer-events: none; }
+.escena-hud { position: absolute; z-index: 10; width: min(330px, 62%); padding: 10px 14px; border: 1px solid var(--borde); border-radius: var(--radius); background-color: color-mix(in srgb, var(--surface) 88%, transparent); box-shadow: var(--sombra); }
+.escena-hud--rival { top: 14px; left: 14px; }
+.escena-hud--yo { bottom: 14px; right: 14px; }
+.escena-hud--ataca { outline: 3px solid var(--accent); outline-offset: 2px; }
+.escena-nombre { margin: 0 0 var(--space-xs); font-size: 0.95rem; overflow-wrap: anywhere; }
+.escena-hp { margin: 4px 0 0; font-size: clamp(1.8rem, 5vw, 2.4rem); font-weight: 800; line-height: 1; text-align: right; }
+.escena-hp small { margin-left: 4px; font-size: 0.4em; font-weight: 700; color: var(--muted); }
+.escena-sprite { position: absolute; z-index: 2; width: clamp(110px, 22vw, 200px); height: clamp(110px, 22vw, 200px); pointer-events: none; }
+.escena-sprite img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center bottom; image-rendering: pixelated; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.28)); }
+.escena-sprite--rival { top: 12px; right: 7%; display: flex; align-items: center; justify-content: center; }
+.escena-sprite--yo { bottom: 8px; left: 6%; }
+.escena-incognita { font-size: clamp(4rem, 12vw, 7rem); font-weight: 800; color: var(--text); opacity: 0.55; text-shadow: 0 2px 0 var(--bg); }
+.escena-caja { padding: var(--space-sm) var(--space-md); }
+.escena-caja p { margin: var(--space-xs) 0; }
+.escena-pregunta { padding: var(--space-xs) var(--space-sm); border: 1px solid var(--borde); border-radius: var(--radius); }
+.escena-opciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: var(--space-xs); padding: 0 var(--space-md) var(--space-sm); }
+.escena-opcion { display: block; min-height: 44px; margin: 0; padding: var(--space-xs) var(--space-sm); text-align: left; line-height: 1.5; font-size: 1rem; }
+.escena--tam-peq .escena-opcion:not(.escena-opcion--respuesta) { font-size: 0.875rem; }
+.escena--tam-med .escena-opcion:not(.escena-opcion--respuesta) { font-size: 1.1rem; }
+.escena--tam-gra .escena-opcion:not(.escena-opcion--respuesta) { font-size: 1.4rem; }
+.escena-opcion .duelo-tema { display: block; margin-top: 2px; font-weight: 400; opacity: 0.9; }
+.escena-tam { margin: var(--space-sm) 0; }
+@media (max-width: 520px) { .escena-hud { width: 70%; padding: 8px 10px; } .escena-sprite { opacity: 0.9; } }
+
+/* ---- Sprites de la batalla (scripts/reto-sprites.js) ---------------------------------------
+   Pose y animacion por estado: espera (respira), ataque (embiste hacia el rival) y herido (se
+   sacude). Usan la propiedad `translate`, que no choca con el `transform` del reflejo ni con el
+   editor de layout. Con el interruptor de animaciones apagado (data-anim="off") o con
+   prefers-reduced-motion solo cambia la pose: no hay movimiento y nada parpadea.
+   --spr-dir: hacia donde esta el rival (-1 a la izquierda, 1 a la derecha). */
+.sprite-legacy-volteado { transform: scaleX(-1); }
+.sprite-oponente-rpg1, .rpg2-escena { --spr-dir: -1; }
+.sprite-jugador-rpg1, .escena-sprite--yo { --spr-dir: 1; }
+.spr-caja.spr-espera img { animation: spr-respira 2.6s ease-in-out infinite; }
+.spr-caja.spr-ataque img { animation: spr-embiste 0.6s ease-out 1; }
+.spr-caja.spr-herido img { animation: spr-golpe 0.5s linear 1; }
+@keyframes spr-respira { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }
+@keyframes spr-embiste { 0% { translate: 0 0; } 35% { translate: calc(var(--spr-dir, -1) * 34px) -4px; } 100% { translate: 0 0; } }
+@keyframes spr-golpe { 0%, 100% { translate: 0 0; } 20% { translate: calc(var(--spr-dir, -1) * -8px) 0; } 40% { translate: calc(var(--spr-dir, -1) * 6px) 0; } 60% { translate: calc(var(--spr-dir, -1) * -4px) 0; } 80% { translate: calc(var(--spr-dir, -1) * 2px) 0; } }
+@media (prefers-reduced-motion: reduce) { html:not([data-anim="on"]) .spr-caja img { animation: none !important; } }
+html[data-anim="off"] .spr-caja img { animation: none !important; }
+
+/* ---- Configuracion de la aventura: el cuerpo se desplaza y el FAB queda en la esquina inferior derecha del modal ---- */
+dialog.cfg-aventura[open] { display: flex; flex-direction: column; max-height: 88vh; overflow: hidden; }
+.cfg-aventura .cfg-cuerpo { flex: 1; min-height: 0; overflow-y: auto; padding: var(--space-lg); padding-bottom: 92px; }
+.cfg-aventura .cfg-fab { position: absolute; right: 14px; bottom: 14px; z-index: 5; width: 56px; height: 56px; padding: 0; border-radius: 50%; border: 3px solid #fff; background: #2e7d32; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35); }
+.cfg-aventura .cfg-legend:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* ---- Resultado de una respuesta: numero grande, verde al acertar y naranja al fallar ---- */
+.num-dano { position: absolute; z-index: 50; top: 6%; left: 50%; translate: -50% 0; font-size: clamp(3rem, 11vw, 5.5rem); font-weight: 800; line-height: 1; white-space: nowrap; pointer-events: none; -webkit-text-stroke: 5px #fff; paint-order: stroke fill; animation: num-sube 1.4s ease-out forwards; }
+.num-dano--acierto { color: #2e7d32; }
+.num-dano--fallo { color: #e65100; }
+.num-dano--izq { left: 24%; top: auto; bottom: 14%; }
+.num-dano--der { left: 76%; }
+@keyframes num-sube { 0% { opacity: 0; translate: -50% 14px; } 15% { opacity: 1; translate: -50% 0; } 80% { opacity: 1; translate: -50% -6px; } 100% { opacity: 0; translate: -50% -34px; } }
+@media (prefers-reduced-motion: reduce) { html:not([data-anim="on"]) .num-dano { animation: none !important; } }
+html[data-anim="off"] .num-dano { animation: none !important; }
+html[data-batalla-anim="off"] .spr-caja img, html[data-batalla-anim="off"] .num-dano, html[data-batalla-anim="off"] .est-destello,
+html[data-batalla-anim="off"] .est-con-favor::before, html[data-batalla-anim="off"] .est-con-contra::after { animation: none !important; }
+
+/* ---- Respuestas de la batalla: lista o cuadricula 2x2 que se ajusta al ancho de su contenedor (editor de layout) ---- */
+[data-lay="answers"][data-modo="lista"] { display: flex !important; flex-direction: column !important; gap: 6px; }
+[data-lay="answers"][data-modo="grid"] { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(clamp(8rem, 45%, 100%), 1fr)) !important; gap: 6px; }
+[data-lay="answers"][data-modo] > button { width: 100%; box-sizing: border-box; }
+
+/* ---- El numero de vida junto al HP: naranja si se pierde y verde solo si se gana (un power up de curar). Misma letra que el HP. ---- */
+.num-hp { display: inline-block; font-weight: 800; line-height: 1; white-space: nowrap; margin: 0 0.3em; pointer-events: none; animation: num-hp-sube 1.5s ease-out forwards; }
+.num-hp--dano { color: #e65100; }
+.num-hp--cura { color: #2e7d32; }
+@keyframes num-hp-sube { 0% { opacity: 0; translate: 0 0.35em; } 15% { opacity: 1; translate: 0 0; } 85% { opacity: 1; translate: 0 -0.1em; } 100% { opacity: 0; translate: 0 -0.5em; } }
+@media (prefers-reduced-motion: reduce) { html:not([data-anim="on"]) .num-hp { animation: none !important; } }
+html[data-anim="off"] .num-hp, html[data-batalla-anim="off"] .num-hp { animation: none !important; }
+.escena-hp { display: flex; justify-content: flex-end; align-items: baseline; gap: 4px; }
+
+/* ---- Ding! (nuevo flujo): pregunta a pantalla completa en el presentador; solo opciones en los celulares ---- */
+.ding-palabra { display: inline-block; white-space: nowrap; }
+.ding-letra { display: inline-block; white-space: pre; }
+.ding-ef-maquina { animation: ding-tecla 0.01s steps(1) both; }
+.ding-ef-caen { animation: ding-cae 0.45s ease-out both; }
+.ding-ef-giran { animation: ding-gira 0.5s ease-out both; }
+.ding-ef-aparecen { animation: ding-aparece 0.4s ease-out both; }
+@keyframes ding-tecla { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ding-cae { from { opacity: 0; translate: 0 -1.2em; } to { opacity: 1; translate: 0 0; } }
+@keyframes ding-gira { from { opacity: 0; rotate: -200deg; scale: 0.3; } to { opacity: 1; rotate: 0deg; scale: 1; } }
+@keyframes ding-aparece { from { opacity: 0; scale: 0.4; } to { opacity: 1; scale: 1; } }
+body.ding-en-juego header, body.ding-en-juego .red-nota { display: none; }
+body.ding-en-juego main, body.ding-en-juego .red-pagina { max-width: none; margin: 0; padding: 0; }
+.ding-pantalla { height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; padding: 2vmin 3vmin; box-sizing: border-box; }
+.ding-pregunta-caja { flex: 1 1 auto; min-height: 25vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.ding-pregunta-texto { width: 100%; text-align: center; font-weight: 800; line-height: 1.15; }
+.ding-pantalla .ding-opciones-reveladas { max-width: 60rem; width: 100%; margin-inline: auto; font-size: clamp(1.1rem, 3vmin, 2rem); }
+.ding-pantalla .ding-explicacion { max-width: 60rem; width: 100%; font-size: clamp(1rem, 2.4vmin, 1.5rem); }
+.ding-siguiente { margin: 0.5rem 0; text-align: center; font-size: clamp(1.1rem, 3vmin, 1.8rem); font-weight: 700; }
+.ding-base { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding-top: 0.5rem; opacity: 0.8; }
+.ding-terminar { min-height: 44px; font-size: 0.85rem; }
+.ding-progreso { font-weight: 700; }
+.ding-ganador { font-size: clamp(2rem, 8vw, 4rem); text-align: center; }
+.ding-celu { display: flex; flex-direction: column; min-height: calc(100vh - 2rem); min-height: calc(100dvh - 2rem); }
+.ding-mis-puntos { margin: 0; text-align: right; font-weight: 700; opacity: 0.85; }
+.ding-mira { flex: 1; display: flex; align-items: center; justify-content: center; margin: 0; font-size: clamp(2rem, 9vw, 4rem); font-weight: 800; text-align: center; }
+.ding-opciones-celu { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(clamp(8rem, 45%, 100%), 1fr)); grid-auto-rows: minmax(7rem, 1fr); gap: 10px; margin: 8px 0; }
+.ding-op { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.6rem; border: 4px solid var(--borde-fuerte); border-radius: var(--radius); background: var(--surface); color: var(--text); font: inherit; font-size: clamp(1.2rem, 5vw, 2rem); font-weight: 700; cursor: pointer; touch-action: manipulation; overflow-wrap: anywhere; }
+.ding-op:disabled { opacity: 0.45; border-style: dashed; cursor: not-allowed; }
+.ding-op-letra { width: 2.2em; height: 2.2em; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--accent); color: var(--bg); font-size: 0.8em; }
+.ding-gana { flex: 1; display: flex; align-items: center; justify-content: center; font-size: clamp(5rem, 32vw, 12rem); font-weight: 800; color: #2e7d32; -webkit-text-stroke: 4px var(--bg); paint-order: stroke fill; animation: ding-entra 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) both; }
+.ding-gana span { display: inline-block; animation: ding-salta 0.9s ease-in-out 4; animation-delay: calc(var(--i) * 0.08s + 0.4s); }
+@keyframes ding-entra { from { scale: 0.2; opacity: 0; rotate: -20deg; } to { scale: 1; opacity: 1; rotate: 0deg; } }
+@keyframes ding-salta { 0%, 100% { translate: 0 0; rotate: 0deg; } 30% { translate: 0 -0.25em; rotate: -8deg; } 60% { translate: 0 0.04em; rotate: 6deg; } }
+@media (prefers-reduced-motion: reduce) { html:not([data-anim="on"]) .ding-letra, html:not([data-anim="on"]) .ding-gana, html:not([data-anim="on"]) .ding-gana span { animation: none !important; } }
+html[data-anim="off"] .ding-letra, html[data-anim="off"] .ding-gana, html[data-anim="off"] .ding-gana span { animation: none !important; }
+dialog.ding-config { max-width: 600px; width: 92%; padding: 0; background: var(--surface); color: var(--text); border: 3px solid var(--borde-fuerte); border-radius: var(--radius); }
+dialog.ding-config[open] { display: flex; flex-direction: column; max-height: 90vh; overflow: hidden; }
+.ding-config-cuerpo { flex: 1; min-height: 0; overflow-y: auto; padding: var(--space-lg); padding-bottom: 92px; }
+.ding-grupo { margin: 0 0 var(--space-md); padding: var(--space-sm) var(--space-md); border: 2px solid var(--borde); border-radius: var(--radius); }
+.ding-grupo legend { padding: 0 6px; font-weight: 700; }
+.ding-campo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: var(--space-xs) 0; }
+.ding-campo input[type="number"], .ding-campo select { min-height: 44px; padding: 4px 8px; font: inherit; }
+.ding-campo .ayuda { flex-basis: 100%; margin: 0; }
+.ding-fab { position: absolute; right: 14px; bottom: 14px; z-index: 5; width: 56px; height: 56px; padding: 0; border-radius: 50%; border: 3px solid #fff; background: #2e7d32; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35); }
+
+/* ---- Estados de los power ups (scripts/reto-estados.js) ---------------------------------------------
+   Aura detras del personaje y etiquetas con lo que hace cada efecto y lo que le queda. El color no es la unica
+   señal: las etiquetas llevan ▲ (a favor) o ▼ (en contra) y texto. Con las animaciones apagadas el aura se
+   queda fija y se sigue viendo. */
+.est-caja { isolation: isolate; }
+.est-caja::before, .est-caja::after { content: ''; position: absolute; inset: 4%; border-radius: 50%; z-index: -1; pointer-events: none; opacity: 0; }
+.est-con-favor::before { opacity: 1; background: radial-gradient(circle, color-mix(in srgb, var(--aura-favor, #2e7d32) 60%, transparent) 0%, transparent 70%); animation: est-halo 2.4s ease-in-out infinite; }
+.est-con-contra::after { opacity: 1; background: radial-gradient(circle, color-mix(in srgb, var(--aura-contra, #e65100) 60%, transparent) 0%, transparent 70%); animation: est-halo 2.4s ease-in-out 1.2s infinite; }
+@keyframes est-halo { 0%, 100% { scale: 0.94; opacity: 0.75; } 50% { scale: 1.06; opacity: 1; } }
+.est-fila { position: absolute; left: 50%; bottom: 4px; translate: -50% 0; z-index: 6; display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; width: max(100%, 170px); pointer-events: none; }
+.est-fila[hidden] { display: none; }
+.est-fila--texto { position: static; translate: none; width: auto; justify-content: flex-start; margin: 4px 0; pointer-events: auto; }
+.est-chip { padding: 2px 8px; border: 2px solid var(--borde-fuerte); border-radius: 999px; background-color: color-mix(in srgb, var(--surface) 94%, transparent); color: var(--text); font-size: 0.72rem; font-weight: 800; line-height: 1.3; white-space: nowrap; }
+.est-chip--favor { border-color: #2e7d32; }
+.est-chip--contra { border-color: #e65100; }
+.est-destello { position: absolute; z-index: 60; left: 50%; top: 18%; translate: -50% 0; font-size: clamp(2rem, 7vw, 3.2rem); font-weight: 800; line-height: 1; white-space: nowrap; pointer-events: none; -webkit-text-stroke: 3px var(--bg); paint-order: stroke fill; color: var(--text); animation: num-sube 1.4s ease-out forwards; }
+.rpg2-enemigo-caja { position: relative; display: inline-block; }
+@media (prefers-reduced-motion: reduce) { html:not([data-anim="on"]) .est-con-favor::before, html:not([data-anim="on"]) .est-con-contra::after, html:not([data-anim="on"]) .est-destello { animation: none !important; } }
+html[data-anim="off"] .est-con-favor::before, html[data-anim="off"] .est-con-contra::after, html[data-anim="off"] .est-destello { animation: none !important; }
+
+/* ---- Pagina de ayuda de la aventura ---- */
+.ayuda-aventura { max-width: 60rem; margin-inline: auto; }
+.ayuda-indice { columns: 2 14rem; column-gap: var(--space-lg); margin: 0 0 var(--space-md); padding-left: 1.4rem; }
+.ayuda-indice a { display: inline-block; padding: 2px 0; min-height: 24px; }
+.ayuda-seccion { margin: 0 0 var(--space-lg); padding: var(--space-md); border: 2px solid var(--borde); border-radius: var(--radius); background: var(--surface); scroll-margin-top: var(--space-md); }
+.ayuda-seccion h2 { margin: 0 0 var(--space-sm); font-size: 1.3rem; }
+.ayuda-seccion ul, .ayuda-seccion ol { padding-left: 1.4rem; }
+.ayuda-seccion li { margin: 0 0 var(--space-xs); line-height: 1.55; }
+.ayuda-tabla-caja { overflow-x: auto; }
+.ayuda-tabla { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+.ayuda-tabla th, .ayuda-tabla td { padding: 6px 10px; border: 1px solid var(--borde); text-align: left; vertical-align: top; }
+.ayuda-tabla thead th { background: var(--bg); }
+.ayuda-seccion code { padding: 1px 5px; border-radius: 4px; background: var(--bg); font-size: 0.9em; overflow-wrap: anywhere; }
 /* =========================================================================
    R.E.T.O. - 70 TESTS
    -------------------------------------------------------------------------
@@ -8123,6 +9034,39 @@ html[data-fondo="liso"] body {
   background-size: var(--deco-tamano);
   background-color: var(--bg);
 }
+
+/* ==========================================================================
+   12_fuente_interfaz.css - LA LETRA DE TODA LA INTERFAZ
+   --------------------------------------------------------------------------
+   Configuracion > Interfaz deja elegir la letra de TODO el sitio. La eleccion se
+   guarda en localStorage ('fuente_ui'), reto-panel-prefs.js la pone como
+   atributo data-fuente-ui en <html> en cuanto carga la pagina (antes de
+   pintar), y aqui cada valor cambia la variable --font, que es la que usa el
+   resto de las hojas. Nunito es la del sitio y no necesita regla.
+
+   Las fuentes son AUTOALOJADAS (styles/fuentes/lectura/, licencia OFL en
+   LICENCIAS.txt): ninguna se pide a un tercero, asi que el sitio funciona sin
+   internet y sin mandar la direccion de nadie a otro servidor. Un @font-face no
+   descarga nada por estar aqui: el navegador baja el archivo solo cuando
+   alguna letra de la pagina lo usa.
+
+   Todas cubren el espanol (n con tilde, acentos, u con dieresis y los signos de
+   apertura). Si la elegida no carga, el texto cae a Nunito y no a una cualquiera.
+   ========================================================================== */
+
+@font-face { font-family: 'Atkinson Hyperlegible'; font-style: normal; font-weight: 400; font-display: swap; src: url('fuentes/lectura/atkinson-hyperlegible-400.woff2') format('woff2'); }
+@font-face { font-family: 'Atkinson Hyperlegible'; font-style: normal; font-weight: 700; font-display: swap; src: url('fuentes/lectura/atkinson-hyperlegible-700.woff2') format('woff2'); }
+@font-face { font-family: 'Lexend'; font-style: normal; font-weight: 400; font-display: swap; src: url('fuentes/lectura/lexend-400.woff2') format('woff2'); }
+@font-face { font-family: 'Lexend'; font-style: normal; font-weight: 700; font-display: swap; src: url('fuentes/lectura/lexend-700.woff2') format('woff2'); }
+@font-face { font-family: 'OpenDyslexic'; font-style: normal; font-weight: 400; font-display: swap; src: url('fuentes/lectura/opendyslexic-400.woff2') format('woff2'); }
+@font-face { font-family: 'OpenDyslexic'; font-style: normal; font-weight: 700; font-display: swap; src: url('fuentes/lectura/opendyslexic-700.woff2') format('woff2'); }
+@font-face { font-family: 'Roboto Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('fuentes/lectura/roboto-mono-400.woff2') format('woff2'); }
+@font-face { font-family: 'Roboto Mono'; font-style: normal; font-weight: 700; font-display: swap; src: url('fuentes/lectura/roboto-mono-700.woff2') format('woff2'); }
+
+html[data-fuente-ui="atkinson"] { --font: "Atkinson Hyperlegible", "Nunito", system-ui, sans-serif; }
+html[data-fuente-ui="lexend"] { --font: "Lexend", "Nunito", system-ui, sans-serif; }
+html[data-fuente-ui="opendyslexic"] { --font: "OpenDyslexic", "Nunito", system-ui, sans-serif; }
+html[data-fuente-ui="roboto-mono"] { --font: "Roboto Mono", "Nunito", ui-monospace, monospace; }
 
 html[data-anim-panel="elastico"]:not([data-anim="off"]) .panel-flotante {
   transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 200ms ease;

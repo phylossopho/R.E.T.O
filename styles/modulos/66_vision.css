@@ -1,0 +1,369 @@
+/* ==========================================================================
+   66_vision.css - LOS EJERCICIOS PARA LA VISION
+   --------------------------------------------------------------------------
+   Las pantallas de ejercicio usan el mismo marco de pantalla completa de la
+   lectura (.lectura-marco, fijo, de borde a borde) y el panel flotante encima;
+   por eso cada pantalla reserva abajo lo que mide el panel (9rem) para que
+   nada importante quede tapado (2.4.11).
+
+   NADA SE MIDE EN PIXELES FIJOS: el JS calcula la unidad u = min(ancho, alto) / 100
+   del marco y la entrega como --u; los objetivos miden 6u o mas (--objetivo) y
+   las posiciones son porcentajes del marco. Colores: solo los tokens del tema
+   (el par fondo/texto/acento ya tiene su contraste probado en todos los temas).
+   El color nunca va solo: las figuras se distinguen por su forma.
+   ========================================================================== */
+
+.vision-marco { overflow: hidden; }
+
+.vision-escena {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  color: var(--text);
+}
+
+/* ------------------------------------------------ pantallas de texto */
+.vision-pantalla {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: var(--space-md) var(--space-md) 9rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: safe center;
+  gap: var(--space-sm);
+  color: var(--text);
+  line-height: 1.6;
+  /* El marco de la lectura pone la letra enorme y centrada (es para UNA palabra):
+     estas pantallas son de texto, asi que vuelven a la medida normal. */
+  font-size: calc(1.05rem * var(--letra-vision, 1));
+  font-weight: 400;
+  text-align: left;
+}
+
+.vision-pantalla > * { width: min(100%, 38rem); box-sizing: border-box; }
+
+.vision-titulo { margin: 0; font-size: 1.5rem; }
+
+.vision-aviso-medico {
+  margin: 0 0 var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--surface);
+  color: var(--text);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+}
+
+.vision-aviso-rapido {
+  margin: 0;
+  padding: var(--space-xs) var(--space-sm);
+  border-inline-start: 4px solid var(--aviso);
+  background: var(--surface);
+  font-size: 0.95rem;
+}
+
+.vision-instrucciones { margin: 0; }
+.vision-instrucciones dt { font-weight: 800; margin-top: var(--space-xs); }
+.vision-instrucciones dd { margin: 0; }
+
+.vision-acciones { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+.vision-grande { min-height: 3.2rem; min-width: 9rem; font-size: 1.1rem; }
+
+.vision-resumen { margin: 0; padding-inline-start: 1.2em; }
+.vision-descanso-texto { margin: 0; }
+.vision-error { margin: var(--space-md); color: var(--aviso); font-weight: 700; }
+
+.vision-contador {
+  margin: 0;
+  font-size: clamp(3rem, 18vmin, 8rem);
+  font-weight: 800;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------ el objetivo */
+.vision-punto {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: var(--objetivo, 3rem);
+  height: var(--objetivo, 3rem);
+  border-radius: 50%;
+  background: var(--text);
+  color: var(--bg);
+  font-size: calc(var(--objetivo, 3rem) * 0.6);
+  font-weight: 800;
+  line-height: 1;
+  /* El anillo claro + el centro oscuro: se ve sobre cualquier fondo y tema. */
+  box-shadow: 0 0 0 0.18em var(--bg), 0 0 0 0.34em var(--text);
+  will-change: transform;
+}
+
+.vision-punto--centro {
+  left: 50%;
+  top: 50%;
+  width: calc(var(--objetivo, 3rem) * 0.55);
+  height: calc(var(--objetivo, 3rem) * 0.55);
+  transform: translate(-50%, -50%);
+}
+
+.vision-punto--fijo { position: static; margin: var(--space-sm) auto; }
+
+.vision-punto--simbolo { width: calc(var(--objetivo, 3rem) * 1.4); height: calc(var(--objetivo, 3rem) * 1.4); }
+
+.vision-aparece { animation: vision-fundido 0.1s linear; }
+
+@keyframes vision-fundido { from { opacity: 0; } to { opacity: 1; } }
+
+/* Los estimulos entran y salen con un fundido de 100 ms (nunca un corte
+   brusco) y NUNCA alternan con blanco: WCAG 2.3.1. */
+.vision-estimulo,
+.vision-destello {
+  position: absolute;
+  opacity: 0;
+  transition: opacity 0.1s linear;
+  color: var(--text);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.vision-estimulo {
+  left: 0;
+  top: 0;
+  font-size: calc(var(--objetivo, 3rem) * 1.3 * var(--letra-vision, 1));
+}
+
+.vision-destello {
+  left: 50%;
+  top: 38%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5em 0.8em;
+  width: min(92%, 40rem);
+  font-size: calc(1.5rem * var(--letra-vision, 1));
+}
+
+.vision-item {
+  padding: 0.25em 0.6em;
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.vision-visible { opacity: 1; }
+
+/* ---------------------------------------------------- botones de respuesta */
+.vision-opciones {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding-inline: var(--space-sm);
+}
+
+.vision-opciones--abajo { bottom: 7.5rem; }
+
+.vision-opciones--lista {
+  top: 58%;
+  flex-direction: column;
+  align-items: center;
+}
+
+.vision-opcion {
+  min-width: 4.5rem;
+  min-height: 3.2rem;
+  font-size: calc(1.4rem * var(--letra-vision, 1));
+  font-weight: 700;
+}
+
+.vision-opcion--grupo { width: min(92%, 30rem); font-size: calc(1.05rem * var(--letra-vision, 1)); white-space: normal; }
+
+.vision-listo { position: absolute; bottom: 8rem; left: 50%; transform: translateX(-50%); }
+
+.vision-pregunta {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: var(--space-md);
+  background: var(--surface);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  text-align: center;
+}
+
+.vision-pregunta-texto { margin: 0 0 var(--space-sm); font-weight: 700; }
+.vision-pregunta .vision-opciones { position: static; }
+
+/* --------------------------------------------------------- siguiente en la fila */
+.vision-filas {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--simbolo, 3rem) * 0.4);
+  padding-bottom: 6rem;
+}
+
+.vision-fila { display: flex; flex-wrap: wrap; justify-content: center; }
+
+.vision-simbolo {
+  display: inline-grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: var(--simbolo, 3rem);
+  height: var(--simbolo, 3rem);
+  margin: calc(var(--simbolo, 3rem) * 0.1);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: calc(var(--simbolo, 3rem) * 0.6 * var(--letra-vision, 1));
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* El resaltado: relleno + borde grueso (no solo color). */
+.vision-activo {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--text);
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------ piramide de letras */
+.vision-piramide {
+  position: absolute;
+  inset: 0;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 6rem;
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+
+.vision-piramide-fila {
+  position: relative;
+  z-index: 1;
+  font-size: var(--piramide, 24px);
+  line-height: 1.55;
+  letter-spacing: 0.14em;
+  white-space: pre;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.vision-guia-central {
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  top: 5%;
+  bottom: 9rem;
+  width: 3px;
+  transform: translateX(-50%);
+  background: var(--accent);
+  box-shadow: 0 0 0 1px var(--bg);
+}
+
+.vision-otra { position: absolute; bottom: 7.5rem; left: 50%; transform: translateX(-50%); }
+
+/* ---------------------------------------- enfoque, pausa y parpadeo */
+.vision-enfoque { text-align: center; align-items: center; }
+.vision-enfoque-mensaje { margin: 0; font-size: calc(1.4rem * var(--letra-vision, 1)); font-weight: 700; text-align: center; }
+.vision-enfoque[data-fase="lejos"] .vision-contador { color: var(--accent); }
+
+.vision-ojo {
+  width: min(58vmin, 18rem);
+  height: min(58vmin, 18rem);
+  margin: var(--space-md) auto;
+  border: 0.4rem solid var(--text);
+  border-radius: 50%;
+  background: var(--surface);
+  transform-origin: center;
+}
+
+.vision-barra { width: min(100%, 28rem); height: 1.2rem; }
+
+/* -------------------------------------- el aviso de la pausa 20-20-20 */
+.descanso-banner {
+  position: fixed;
+  left: 50%;
+  bottom: 7.5rem;
+  transform: translateX(-50%);
+  z-index: 50;
+  box-sizing: border-box;
+  width: min(92vw, 32rem);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--surface);
+  color: var(--text);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+  box-shadow: var(--sombra);
+}
+
+.descanso-texto { margin: 0 0 var(--space-xs); }
+.descanso-cuenta { margin: 0; font-size: 2rem; font-weight: 800; text-align: center; }
+.descanso-acciones { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.descanso-no { font-size: 0.85em; }
+
+/* ------------------------------------------- la portada de Vision */
+.vision-nivel { min-width: 5.5rem; text-align: center; }
+main > .vision-aviso-medico { max-width: 48rem; margin-inline: auto; margin-bottom: var(--space-md); }
+
+/* -------------------------------- SCHULTE: lo que se agrego al mudarlo */
+.schulte-celda[data-color="c1"], .schulte-simbolo[data-color="c1"] { color: var(--marca-1); }
+.schulte-celda[data-color="c2"], .schulte-simbolo[data-color="c2"] { color: var(--marca-2); }
+.schulte-celda[data-color="c3"], .schulte-simbolo[data-color="c3"] { color: var(--marca-3); }
+.schulte-celda[data-color="c4"], .schulte-simbolo[data-color="c4"] { color: var(--aviso); }
+.schulte-celda[data-estado="hecha"][data-color] { color: var(--acierto, var(--ayuda)); }
+.schulte-celda[data-estado="hecha"][data-desvanecer="1"][data-color] { color: transparent; }
+
+.schulte-objetivo { margin: var(--space-xs) 0; text-align: center; font-size: 1.15rem; font-weight: 700; }
+.schulte-objetivo[hidden] { display: none; }
+.schulte-simbolo { display: inline-block; margin-inline: 0.2em; font-size: 1.7em; line-height: 1; vertical-align: middle; }
+
+/* Acierto = marca que no depende del color: borde punteado + una paloma. */
+.schulte-celda[data-estado="hecha"] { border-style: dashed; }
+.schulte-celda[data-estado="hecha"]::after {
+  content: "\2713";
+  position: absolute;
+  top: 0.1em;
+  right: 0.2em;
+  font-size: 0.4em;
+  line-height: 1;
+  color: var(--acierto, var(--ayuda));
+  text-shadow: none;
+}
+
+.schulte-sacude { animation: schulte-sacude 0.3s ease; }
+@keyframes schulte-sacude { 20% { translate: -3px 0; } 40% { translate: 3px 0; } 60% { translate: -2px 0; } 80% { translate: 2px 0; } }
+
+/* Sin movimiento: ni sacudida ni deslizamientos (2.3.3). */
+html[data-anim="off"] .schulte-sacude,
+html[data-anim="off"] .vision-aparece { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-anim="on"]) .schulte-sacude,
+  html:not([data-anim="on"]) .vision-aparece { animation: none; }
+}
+
+@media (max-width: 480px) {
+  .vision-pantalla { padding-inline: var(--space-sm); }
+  .vision-opciones--lista { top: 54%; }
+}

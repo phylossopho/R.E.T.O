@@ -44,6 +44,21 @@
   var API = '/api/mahjong';
   var PREFIJO = 'mahjong-';
 
+  /* Estado offline */
+  var modoOffline = false;
+
+  function actualizarModoOffline() {
+    var offline = !navigator.onLine || (window.RetoOfflineCache && window.RetoOfflineCache.isOffline());
+    if (offline !== modoOffline) {
+      modoOffline = offline;
+      document.documentElement.setAttribute('data-modo-offline', modoOffline ? '1' : '0');
+    }
+    return modoOffline;
+  }
+
+  window.addEventListener('online', function () { actualizarModoOffline(); });
+  window.addEventListener('offline', function () { actualizarModoOffline(); });
+
   /* ---------------------------------------------------------------------
      LOS AJUSTES Y SUS VALORES DE FÁBRICA
 
@@ -776,6 +791,39 @@
     limpiarTemporizadores();
     estado = 'cargando';
     accionEl.hidden = true;
+
+    actualizarModoOffline();
+
+    // MODO OFFLINE: usar RetoMahjong local
+    if (modoOffline && window.RetoMahjong) {
+      try {
+        var r = window.RetoMahjong.nueva_partida(ajustes.nivel);
+        todas = r.fichas;
+        nivelJugado = r.nivel;
+        fuera = {};
+        pilas = [];
+        elegida = null;
+        pistaIds = [];
+        foco = null;
+        pistas = 0;
+        deshechos = 0;
+        revueltas = 0;
+        estado = 'jugando';
+        accionEl.textContent = 'Revolver las fichas';
+        accionEl.setAttribute('data-que', 'revolver');
+        armarTablero();
+        actualizar();
+        var n = nivelActual();
+        decir('Partida nueva (offline): ' + n.nombre + ', ' + n.pisos + ' pisos y ' +
+              n.fichas + ' fichas. Progreso guardado localmente.');
+        return Promise.resolve();
+      } catch (e) {
+        console.warn('[Mahjong] Error offline nuevaPartida:', e);
+        // Caer a online
+      }
+    }
+
+    // MODO ONLINE
     return pedir('/nueva', { nivel: ajustes.nivel }).then(function (d) {
       todas = d.fichas;
       nivelJugado = d.nivel;
@@ -788,8 +836,6 @@
       deshechos = 0;
       revueltas = 0;
       estado = 'jugando';
-      /* El botón de la partida sirve para tres cosas (revolver, jugar otra vez
-         y reintentar): al empezar vuelve a ser el de revolver. */
       accionEl.textContent = 'Revolver las fichas';
       accionEl.setAttribute('data-que', 'revolver');
       armarTablero();
@@ -806,6 +852,34 @@
     if (estado !== 'jugando' && estado !== 'atascado') return Promise.resolve();
     var rest = restantes();
     if (rest.length < 2) return Promise.resolve();
+
+    actualizarModoOffline();
+
+    // MODO OFFLINE: usar RetoMahjong local
+    if (modoOffline && window.RetoMahjong) {
+      try {
+        var nuevas = window.RetoMahjong.revolver(rest);
+        var nuevasMap = {};
+        nuevas.forEach(function (n) { nuevasMap[n.id] = n.t; });
+        todas.forEach(function (f) { if (!fuera[f.id]) f.t = nuevasMap[f.id]; });
+        pilas = [];
+        elegida = null;
+        pistaIds = [];
+        revueltas++;
+        estado = 'jugando';
+        accionEl.hidden = true;
+        armarTablero();
+        actualizar();
+        decir('Las fichas se repartieron de nuevo (offline). Ahora sí hay parejas.');
+        ponerFoco();
+        return Promise.resolve();
+      } catch (e) {
+        console.warn('[Mahjong] Error offline revolver:', e);
+        // Caer a online
+      }
+    }
+
+    // MODO ONLINE
     return pedir('/revolver', { fichas: rest }).then(function (d) {
       var nuevas = {};
       d.fichas.forEach(function (n) { nuevas[n.id] = n.t; });
@@ -1524,6 +1598,27 @@
      primera partida. Es aparte de iniciar() para poder reintentarlo si el
      servidor no estaba abierto, sin volver a conectar los botones. */
   function arrancar() {
+    actualizarModoOffline();
+
+    // MODO OFFLINE: usar catálogos locales
+    if (modoOffline && window.RetoMahjong) {
+      try {
+        cat = window.RetoMahjong.catalogos();
+        catalogoLocal = cat;
+        return cargarAjustes().then(function () {
+          aplicarColores();
+          aplicarForma();
+          avanceCajaEl.hidden = ajustes.avance !== 'on';
+          if (window.RetoSonido && window.RetoSonido.precargar) window.RetoSonido.precargar();
+          return nuevaPartida();
+        });
+      } catch (e) {
+        console.warn('[Mahjong] Error offline catalogos:', e);
+        // Caer a online
+      }
+    }
+
+    // MODO ONLINE
     pedir('/catalogos').then(function (c) {
       cat = c;
       return cargarAjustes();
@@ -1531,8 +1626,6 @@
       aplicarColores();
       aplicarForma();
       avanceCajaEl.hidden = ajustes.avance !== 'on';
-      /* Los sonidos se descargan al entrar y no al primer toque: si se
-         descargaran al tocar, el primer aviso llegaría tarde. */
       if (window.RetoSonido && window.RetoSonido.precargar) window.RetoSonido.precargar();
       return nuevaPartida();
     }).catch(falloDeRed);

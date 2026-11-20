@@ -309,7 +309,48 @@
   /* El boton de leer: el dibujito y el texto cambian con el estado. El
      "aria-label" tambien, para que el lector de pantalla no diga "reproducir"
      cuando lo que va a hacer es pausar. */
+  /* LA SESION DE LECTURA, PARA EL NIVEL DE PRACTICA.
+     La lectura SI cuenta (regla acordada). Se suma el tiempo en que estado.leyendo
+     estuvo en true, entre pausas, y se avisa a RetoProgreso cuando junta un
+     minuto o mas (la sesion minima: entrar y salir no infla nada). Se hace en
+     pintarEstado porque TODOS los motores pasan por ahi cada vez que empiezan o
+     se paran. Las palabras son una estimacion (minutos x velocidad): cada motor
+     cuenta distinto lo que "una posicion" significa. La prueba de velocidad y
+     el skimming se registran solos, asi que aqui no se cuentan dos veces. */
+  var SESION_PROPIA = { prueba: true, skimming: true };
+  var sesionLectura = { desde: null, ms: 0 };
+
+  function volcarSesion(forzar) {
+    if (SESION_PROPIA[estado.motor] || !window.RetoProgreso) return;
+    if (sesionLectura.desde !== null) {
+      sesionLectura.ms += performance.now() - sesionLectura.desde;
+      sesionLectura.desde = estado.leyendo ? performance.now() : null;
+    }
+    var minutos = sesionLectura.ms / 60000;
+    if (minutos < 1 && !forzar) return;
+    if (minutos < 1) return;       // aun con "forzar": menos de un minuto no suma
+    sesionLectura.ms = 0;
+    try {
+      window.RetoProgreso.registrarSesion({
+        tipo: 'lectura', motor: estado.motor,
+        minutos: minutos, palabras: Math.round(minutos * estado.wpm)
+      });
+    } catch (e) {}
+  }
+
+  function seguirSesion() {
+    if (estado.leyendo && sesionLectura.desde === null) sesionLectura.desde = performance.now();
+    else if (!estado.leyendo && sesionLectura.desde !== null) { volcarSesion(false); sesionLectura.desde = null; }
+  }
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) { volcarSesion(true); sesionLectura.desde = null; }
+    else if (estado.leyendo) sesionLectura.desde = performance.now();
+  });
+  window.addEventListener('pagehide', function () { volcarSesion(true); });
+
   function pintarEstado() {
+    seguirSesion();
     if (!botonLeer) return;
     if (dibujoPlay && dibujoPausa) {
       if (estado.leyendo) {
@@ -1499,11 +1540,13 @@ limpiar: function () {
      titulos (t:'n') con hijos y parrafos (t:'p'); aqui se aplana en orden, y
      los titulos se quedan como un parrafo mas, en negrita, para que se note
      donde cambia el capitulo. */
-  function aplanarArbol(nodos, salida) {
+  function aplanarArbol(nodos, salida, nivel) {
+    nivel = nivel || 1;
     (nodos || []).forEach(function (nodo) {
       if (nodo.t === 'n') {
-        if (nodo.titulo) salida.push({ texto: nodo.titulo, titulo: true });
-        aplanarArbol(nodo.hijos, salida);
+        // El nivel ([N1] a [N4]) es lo hondo que esta el titulo; lo usa el skimming.
+        if (nodo.titulo) salida.push({ texto: nodo.titulo, titulo: true, nivel: Math.min(4, nivel) });
+        aplanarArbol(nodo.hijos, salida, nivel + 1);
       } else if (nodo.txt) {
         salida.push({ texto: nodo.txt });
       }
@@ -1514,9 +1557,30 @@ limpiar: function () {
   /* Pedirle el plan a Python. Las reglas (cuantas palabras, que se descarta,
      cuando un texto es demasiado grande) viven alla; aqui solo se manda y se
      recibe. Si el sitio se abrio sin servidor, no hay plan y se dice. */
-  function pedirPlan(parrafos, nombre, tamano_grupo) {
+  function pedirPlan(parrafos, nombre, tamano_grupo, extras) {
     var body = { motor: nombre, parrafos: parrafos.map(function (x) { return x.texto; }) };
+    // El skimming necesita saber cuales son titulos y de que nivel ([N1]-[N4]).
+    if (nombre === 'skimming') {
+      body.parrafos = parrafos.map(function (x) {
+        return { texto: x.texto, titulo: !!x.titulo, nivel: x.nivel || 0 };
+      });
+    }
     if (tamano_grupo) body.tamano_grupo = tamano_grupo;
+    if (extras) Object.keys(extras).forEach(function (k) { body[k] = extras[k]; });
+
+    // MODO OFFLINE: usar RetoLecturaVeloz local
+    if (window.RetoOfflineCache && window.RetoOfflineCache.isOffline() && window.RetoLecturaVeloz) {
+      try {
+        var plan = window.RetoLecturaVeloz['plan' + nombre.charAt(0).toUpperCase() + nombre.slice(1)];
+        if (plan) {
+          return Promise.resolve(plan(parrafos.map(function (x) { return x.texto; })));
+        }
+      } catch (e) {
+        console.warn('[Lectura] Error offline:', e);
+      }
+    }
+
+    // MODO ONLINE
     return fetch('/api/lectura/plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1527,6 +1591,35 @@ limpiar: function () {
         return datos;
       });
     });
+  }
+
+  /* LOS MOTORES QUE VIVEN EN OTROS ARCHIVOS.
+     reto-lectura-registro.js crea window.RetoLecturaMotores y cada archivo
+     (prueba, pacer, skimming) anota ahi su fabrica. Se pregunta aqui, cada vez,
+     y no se guarda: asi el orden en que cargan los scripts no importa. */
+  function motoresNuevos() { return window.RetoLecturaMotores || null; }
+
+  function esMotorConocido(nombre) {
+    return nombre === 'galactico' || nombre === 'palabra' || nombre === 'grupo' ||
+           nombre === 'frases' || !!(motoresNuevos() && motoresNuevos().existe(nombre));
+  }
+
+  /* Lo que se les entrega a los motores de otros archivos: el estado y lo
+     poco que necesitan de este. No ven nada mas de aqui. */
+  function contextoMotores() {
+    return {
+      estado: estado,
+      marco: marco,
+      decir: decir,
+      pintarEstado: pintarEstado,
+      guardar: guardar,
+      recuperar: recuperar,
+      pedirPlan: pedirPlan,
+      ponerVelocidad: ponerVelocidad,
+      /* El motor avisa que se acabo: la lectura se para y el boton vuelve a
+         ser un play. */
+      detener: function () { estado.leyendo = false; pintarEstado(); }
+    };
   }
 
   /* Prepara el motor que pide la direccion: pide el plan a Python y monta el
@@ -1571,6 +1664,12 @@ limpiar: function () {
           // Frases completas: cada oracion con su peso. Sin modal de ajustes
           // ni toggle de grupo: lo unico que se elige es la velocidad y la letra.
           motor = crearFrases(plan);
+        } else if (motoresNuevos() && motoresNuevos().existe(nombre)) {
+          // Prueba de velocidad, pacer, columnas y skimming: viven en sus
+          // propios archivos (reto-lectura-*.js) y se anotan en
+          // window.RetoLecturaMotores. Aqui solo se les da el contexto.
+          document.body.setAttribute('data-modo', nombre);
+          motor = motoresNuevos().fabricas[nombre](contextoMotores(), plan);
         } else {
           motor = crearPalabra(plan);
         }
@@ -1636,7 +1735,8 @@ limpiar: function () {
      modal lo dice (ver reto-lectura-ajustes.js): avisa, no falla en silencio.
      El nombre del boton tambien cambia con el modo, porque no es lo mismo lo
      que ajusta cada uno, y quien usa un lector de pantalla oye el texto. */
-  var MODOS_CON_AJUSTES = { galactico: true, palabra: true, grupo: true, frases: true };
+  var MODOS_CON_AJUSTES = { galactico: true, palabra: true, grupo: true, frases: true,
+                            pacer: true, columnas: true, skimming: true };
 
   function mostrarAjustes() {
     var b = document.querySelector('[data-ajustes]');
@@ -1645,7 +1745,10 @@ limpiar: function () {
     var nombre = { galactico: 'Ajustes de la animación y la fuente',
                  palabra:   'Ajustes de la lectura',
                  grupo:     'Ajustes de la lectura',
-                 frases:    'Ajustes de la lectura' }[estado.motor] || 'Ajustes';
+                 frases:    'Ajustes de la lectura',
+                 pacer:     'Ajustes de la guía de lectura',
+                 columnas:  'Ajustes de la lectura en columnas',
+                 skimming:  'Ajustes de la lectura diagonal' }[estado.motor] || 'Ajustes';
     b.setAttribute('aria-label', nombre);
     b.setAttribute('title', nombre);
   }
@@ -1836,12 +1939,10 @@ limpiar: function () {
     if (!motor) {
       // Hay texto pero no hay motor: o este modo todavia no existe, o el
       // texto aun se esta preparando. No se finge que lee.
-      if (estado.motor !== 'galactico' && estado.motor !== 'palabra' &&
-          estado.motor !== 'grupo' && estado.motor !== 'frases') {
+      if (!esMotorConocido(estado.motor)) {
         window.RetoDialogo.informar({
           titulo: 'Este modo todavía no está listo',
-          texto: 'Por ahora solo funcionan Palabra por palabra, Grupos, ' +
-                 'Frases y el modo Galáctico. Vuelve y elige uno de los cuatro.'
+          texto: 'Vuelve y elige uno de los modos de lectura que sí funcionan.'
         });
       }
       return;
@@ -2131,6 +2232,13 @@ limpiar: function () {
   }
 
   document.addEventListener('DOMContentLoaded', function () {
+    // Detectar modo offline
+    if (window.RetoOfflineCache) {
+      window.RetoOfflineCache.installFetchInterceptor();
+    }
+    window.addEventListener('online', function () { document.documentElement.setAttribute('data-modo-offline', '0'); });
+    window.addEventListener('offline', function () { document.documentElement.setAttribute('data-modo-offline', '1'); });
+
     leerDeLaDireccion();
     pintarEstado();
     /* Los botones que dependen del modo salen ya, sin esperar al plan: el modo
@@ -2143,9 +2251,7 @@ limpiar: function () {
       // letra definitiva. Si la fuente falla, la lectura sigue con la del sitio.
       return pintarFuente().catch(function () {});
     }).then(function () {
-      var hayMotor = estado.motor === 'galactico' || estado.motor === 'palabra' ||
-                     estado.motor === 'grupo' || estado.motor === 'frases';
-      if (hayMotor && estado.textoId) cargarMotor(estado.motor);
+      if (esMotorConocido(estado.motor) && estado.textoId) cargarMotor(estado.motor);
     });
   });
 })();

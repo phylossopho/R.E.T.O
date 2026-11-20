@@ -15,3 +15,121 @@
 /test_*.js
 /_*.py
 /_*.js
+
+# =============================================================================
+# Archivos solo para desarrollo local / servidor Python (no para GitHub Pages)
+# =============================================================================
+
+# Servidor Python local (solo para modo wifi local, no para GitHub Pages)
+server.py
+wsgi.py
+servidor.cmd
+logica/*.py
+logica/__init__.py
+
+# Configuración local / scripts de utilidad (no para producción)
+ejemplos/
+CONTEXTO-PROYECTO.md
+multijugador.md
+vision.md
+lectura-veloz.md
+rpg.md
+configuracion-*.html
+pokemon_educational_rpg_battle.html
+rpg01.html
+
+# Signaling worker (se deploya por separado en Cloudflare Workers)
+signaling-worker/
+
+# Archivos de configuración local de Wrangler
+.wrangler/
+*.toml.local
+
+# =============================================================================
+# Archivos de sistema y IDE
+# =============================================================================
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Dependencias (si se usa npm localmente)
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Variables de entorno
+.env
+.env.local
+.env.*.local
+
+# Cobertura de pruebas
+coverage/
+.nyc_output/
+
+# Cachés de bundlers/builders
+.dist/
+.build/
+.cache/
+
+# Archivos temporales
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# EditorConfig
+.editorconfig
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Profiling
+*.prof
+
+# Benchmark
+benchmark/
+
+# Archivos de respaldo
+*.bak
+*.backup
+*.old
+
+# Archivos de certificado/key locales
+*.key
+*.crt
+*.csr
+
+# Archivos de base de datos locales
+*.db
+*.sqlite
+*.sqlite3
+
+# Archivos de configuración de Docker
+docker-compose.override.yml
+.docker/
+
+# Archivos de Vagrant
+.vagrant/
+
+# Archivos de Terraform
+*.tfstate
+*.tfstate.backup
+.terraform/
+
+# Archivos de certificado de desarrollo
+localhost.pem
+localhost-key.pem

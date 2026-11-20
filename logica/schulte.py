@@ -64,7 +64,45 @@ CONTENIDOS = {
                  "y no un número.",
         "muestra": "M",
     },
+    "emojis": {
+        "nombre": "Dibujos",
+        "ayuda": "Dibujos de todos los días. La pantalla te dice cuál buscar.",
+        "muestra": "🍎",
+    },
+    "colores": {
+        "nombre": "Colores con forma",
+        "ayuda": "Formas de colores. Cada una se distingue por su forma y por su "
+                 "color, así que sirve también si te cuesta distinguir colores.",
+        "muestra": "▲-c1",
+    },
 }
+
+# LOS DOS CONTENIDOS NUEVOS NO TIENEN ORDEN NATURAL (no hay un "despues del
+# manzana"), asi que el orden de busqueda es una mezcla que decide el servidor y
+# el tablero trae `mostrar_objetivo`: la pantalla dice en cada momento cual
+# buscar. La regla de las vecinas "consecutivas" y la de la esquina se aplican
+# sobre ESE orden, igual que con los numeros.
+CON_OBJETIVO = ("emojis", "colores")
+
+# Veinticinco dibujos, los que cubre un 5x5. Cada uno con el nombre que lee el
+# lector de pantalla. Solo emojis sencillos y sin selector de variacion: se ven
+# igual en todos los sistemas.
+DIBUJOS = [
+    ("🍎", "manzana"), ("🍌", "plátano"), ("🍇", "uvas"), ("🍓", "fresa"),
+    ("🍒", "cerezas"), ("🍋", "limón"), ("🍉", "sandía"), ("🥕", "zanahoria"),
+    ("🌽", "maíz"), ("🍄", "hongo"), ("🌻", "girasol"), ("🌳", "árbol"),
+    ("🐶", "perro"), ("🐱", "gato"), ("🐟", "pez"), ("🐢", "tortuga"),
+    ("🦋", "mariposa"), ("🐝", "abeja"), ("🚗", "coche"), ("🚲", "bicicleta"),
+    ("⚽", "balón"), ("🔔", "campana"), ("🔑", "llave"), ("🎈", "globo"),
+    ("🏠", "casa"),
+]
+
+# Formas y colores: 7 formas x 4 colores = 28 combinaciones, mas que las 25
+# casillas del 5x5. Los colores son CLAVES del tema (la pagina las pinta con las
+# variables del sitio, no con colores sueltos) y se llaman por su tono.
+FORMAS_COLOR = [("▲", "triángulo"), ("●", "círculo"), ("■", "cuadrado"),
+                ("◆", "rombo"), ("★", "estrella"), ("✚", "cruz"), ("▼", "triángulo invertido")]
+COLORES_TEMA = [("c1", "azul"), ("c2", "verde"), ("c3", "rosa"), ("c4", "naranja")]
 
 # EL ABECEDARIO, Y POR QUÉ SE QUEDAN FUERA LA Y Y LA Z
 # El abecedario español tiene 27 letras: las 26 del A al Z más la Ñ, que es una
@@ -131,6 +169,14 @@ def _simbolos(contenido, total):
         return [str(n) for n in range(1, total + 1)]
     if contenido == "letras":
         return list(ABECEDARIO[:total])
+    if contenido == "emojis":
+        return [e for e, _ in DIBUJOS[:total]]
+    if contenido == "colores":
+        # Con i % 7 y i % 4 las 28 parejas son distintas (7 y 4 no comparten
+        # divisores) Y las primeras N ya mezclan todos los colores: en un 3x3 no
+        # salen nueve formas del mismo azul.
+        combos = [(FORMAS_COLOR[i % 7], COLORES_TEMA[i % 4]) for i in range(28)]
+        return ["%s-%s" % (f[0], c[0]) for f, c in combos[:total]]
     raise ValueError("contenido desconocido: %r" % (contenido,))
 
 
@@ -207,6 +253,24 @@ def _tablero_limpio(celdas, columnas, filas, orden_natural):
     return not _es_esquina(fila, columna, filas, columnas)
 
 
+def _detalle(valor, contenido):
+    """Lo que la pantalla necesita para pintar y nombrar un simbolo nuevo."""
+    if contenido == "emojis":
+        nombres = dict(DIBUJOS)
+        return {"texto": valor, "nombre": nombres[valor]}
+    forma, color = valor.split("-")
+    nombre_forma = dict(FORMAS_COLOR)[forma]
+    nombre_color = dict(COLORES_TEMA)[color]
+    return {"texto": forma, "color": color, "nombre": "%s %s" % (nombre_forma, nombre_color)}
+
+
+def _celda(indice, valor, contenido):
+    celda = {"id": indice, "valor": valor}
+    if contenido in CON_OBJETIVO:
+        celda.update(_detalle(valor, contenido))
+    return celda
+
+
 def nueva_tabla(tamano="5x5", contenido="numeros", semilla=None):
     """Arma un tablero nuevo.
 
@@ -235,6 +299,9 @@ def nueva_tabla(tamano="5x5", contenido="numeros", semilla=None):
     base = _simbolos(contenido, total)
 
     rng = random.Random(semilla)
+    if contenido in CON_OBJETIVO:
+        # Sin orden natural: el orden de busqueda lo decide una mezcla.
+        _barajar(base, rng)
     mejor = None
     for _ in range(INTENTOS):
         celdas = _barajar(base.copy(), rng)
@@ -248,7 +315,8 @@ def nueva_tabla(tamano="5x5", contenido="numeros", semilla=None):
         "columnas": columnas,
         "filas": filas,
         "total": total,
-        "celdas": [{"id": i, "valor": v} for i, v in enumerate(mejor)],
+        "celdas": [_celda(i, v, contenido) for i, v in enumerate(mejor)],
+        "mostrar_objetivo": contenido in CON_OBJETIVO,
         # EL ORDEN, PARA QUE EL NAVEGADOR NO LO ADIVINE
         # La lista de símbolos en su orden natural. El navegador la necesita
         # para saber cuál es el siguiente que hay que buscar, y no puede
@@ -257,5 +325,9 @@ def nueva_tabla(tamano="5x5", contenido="numeros", semilla=None):
         # El abecedario español, con su Ñ entre la N y la O, vive en este
         # archivo y en ningún otro sitio.
         "orden": list(base),
+        # El detalle de cada simbolo en el orden de busqueda (solo en los
+        # contenidos con objetivo): lo que la pantalla muestra como "Busca: ...".
+        "orden_detalle": ([_detalle(v, contenido) for v in base]
+                          if contenido in CON_OBJETIVO else []),
         "semilla": semilla,
     }

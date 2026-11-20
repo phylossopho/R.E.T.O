@@ -6,7 +6,7 @@
 <title>Schulte - Mini juegos - R.E.T.O.</title>
 <link rel="preload" href="../../../styles/fuentes/nunito.css" as="style">
 <link rel="stylesheet" href="../../../styles/fuentes/nunito.css">
-<link rel="stylesheet" href="../../../styles/styles.css?v=c85-flexfix">
+<link rel="stylesheet" href="../../../styles/styles.css?v=c103-ding3">
 <script>
 // El tema y el interruptor de animaciones se aplican aqui, en el head, y no al
 // final del body: si se hiciera despues, el navegador pintaria primero el
@@ -45,7 +45,7 @@
   } catch (e) {}
 })();
 </script>
-<script src="../../../scripts/reto-panel-prefs.js?v=c01-0f3ddb54"></script>
+<script src="../../../scripts/reto-panel-prefs.js?v=c02-fuente-ui"></script>
 </head>
 <body>
 <h1 class="oculto-a-la-vista">Schulte</h1>
@@ -85,6 +85,7 @@
     -->
     <div class="schulte-avance">
       <p class="schulte-cuenta" id="cuentas">0 de 9</p>
+      <p class="schulte-objetivo" id="objetivo" hidden></p>
       <p class="schulte-reloj" id="reloj" hidden>0.00</p>
       <div class="schulte-barra" aria-hidden="true">
         <div class="schulte-barra-relleno" id="avance"></div>
@@ -97,8 +98,8 @@
 
 </main>
 <div class="panel-flotante" data-panel>
-  <a class="panel-boton" data-salir href="../mini-juegos.html"
-     aria-label="Volver a Mini juegos" title="Volver a Mini juegos">
+  <a class="panel-boton" data-salir href="../vision.html"
+     aria-label="Volver a Visión" title="Volver a Visión">
     <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8592;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></span>
   </a>
   <a class="panel-boton" href="../../../index.html"
@@ -134,8 +135,10 @@
 <script src="../../../scripts/reto-datos.js?v=c19-c6fe548d"></script>
 <script src="../../../scripts/reto-sonido.js?v=c02-b552a4e7"></script>
 <script src="../../../scripts/reto-dialogo.js?v=c08-ae075893"></script>
+<script src="../../../scripts/reto-progreso.js?v=n2"></script>
 <script src="../../../scripts/reto-panel.js?v=c04-f73a0fa9"></script>
 <script src="../../../scripts/reto-schulte.js?v=c04-932e48d4"></script>
+<script src="../../../scripts/reto-descanso.js?v=n1"></script>
 <script src="../../../scripts/reto-debug.js?v=c25-5ac10ea0"></script>
 </body>
 </html>

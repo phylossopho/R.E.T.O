@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="papel">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visión - R.E.T.O.</title>
+<link rel="preload" href="../../styles/fuentes/nunito.css" as="style">
+<link rel="stylesheet" href="../../styles/fuentes/nunito.css">
+<link rel="stylesheet" href="../../styles/styles.css?v=c103-ding3">
+<script>
+// El tema y el interruptor de animaciones se aplican aqui, en el head, y no al
+// final del body: si se hiciera despues, el navegador pintaria primero el
+// estado por defecto y luego lo cambiaria, y se veria un destello en cada carga.
+(function () {
+  var t = localStorage.getItem('tema');
+  if (t) { document.documentElement.setAttribute('data-theme', t); }
+  // Las animaciones tienen tres estados, y el atributo es el que manda:
+  //   "on"   la persona las prendio, y gana su eleccion sobre el sistema
+  //   "off"  las apago, y se quedan apagadas siempre
+  //   nada   todavia no ha decidido, y decide el sistema operativo
+  // Por eso el "on" se escribe explicitamente: sin el, las reglas del sistema
+  // lo volvian a apagar y el interruptor no servia para nada.
+  var a = localStorage.getItem('animaciones');
+  if (a === 'off' || a === 'on') { document.documentElement.setAttribute('data-anim', a); }
+
+  // Las tarjetas se animan solo la primera vez de cada sesion. CSS no tiene
+  // memoria, asi que el aviso se deja aqui, en el head, antes de pintar: si se
+  // hiciera al final del body, las tarjetas alcanzarian a animarse y despues se
+  // congelarian, que se ve como un salto.
+  //
+  // Con try/catch porque en algunos modos de privacidad el almacenamiento
+  // lanza al escribir. Si eso pasa, el atributo no se pone, la animacion se
+  // repite y no se rompe nada: es como estaba antes.
+  try {
+    // ?anim=1 fuerza la entrada de las tarjetas aunque esta sesion ya las haya
+    // visto. Sin esto no habria forma de comprobar que la animacion funciona:
+    // solo se veria una vez al abrir el navegador, y no se sabria si a la
+    // segunda ya no aparece por decision o porque dejo de funcionar.
+    var forzar = /[?&]anim=1/.test(location.search);
+    if (sessionStorage.getItem('reto_anim_tarjetas') && !forzar) {
+      document.documentElement.setAttribute('data-anim-tarjetas', 'off');
+    } else {
+      sessionStorage.setItem('reto_anim_tarjetas', '1');
+    }
+  } catch (e) {}
+})();
+</script>
+<script src="../../scripts/reto-panel-prefs.js?v=c02-fuente-ui"></script>
+</head>
+<body>
+<header>
+<h1>Visión</h1>
+</header>
+<main>
+<p class="vision-aviso-medico" role="note">Son ejercicios de práctica y descanso visual, no un tratamiento médico. Si sientes mareo, dolor de cabeza, dolor en los ojos o molestias que no se van, para y consulta a un optometrista u oftalmólogo. Haz sesiones cortas, con descanso.</p>
+<ul class="rejilla" data-zona-arrastre>
+<li>
+<a class="tarjeta tarjeta-nav" href="schulte/schulte.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">&#9638;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg></span>
+<h2 class="tarjeta-titulo">Tablas de Schulte</h2>
+<p class="tarjeta-texto">Busca los símbolos en orden, mirando al centro</p>
+</a>
+</li>
+<li>
+<a class="tarjeta tarjeta-nav" href="seguimiento/seguimiento.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">&#9679;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M3 12h3M18 12h3"/></svg></span>
+<h2 class="tarjeta-titulo">Seguimiento suave</h2>
+<p class="tarjeta-texto">Sigue un punto que se mueve, solo con los ojos</p>
+</a>
+</li>
+<li>
+<a class="tarjeta tarjeta-nav" href="sacadas/sacadas.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">&#8644;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16M16 4l4 4-4 4M20 16H4M8 12l-4 4 4 4"/></svg></span>
+<h2 class="tarjeta-titulo">Sacadas</h2>
+<p class="tarjeta-texto">Saltos de la mirada, como al leer</p>
+</a>
+</li>
+<li>
+<a class="tarjeta tarjeta-nav" href="fila/fila.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">&#9654;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h4M10 6h4M16 6h4M4 12h4M10 12h4M16 12h4M4 18h4M10 18h4M16 18h4"/></svg></span>
+<h2 class="tarjeta-titulo">Siguiente en la fila</h2>
+<p class="tarjeta-texto">Pasa de un símbolo al siguiente, fila por fila</p>
+</a>
+</li>
+<li>
+<a class="tarjeta tarjeta-nav" href="periferico/periferico.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">&#9673;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><circle cx="12" cy="12" r="9"/></svg></span>
+<h2 class="tarjeta-titulo">Punto central y periferia</h2>
+<p class="tarjeta-texto">Mira al centro y descubre lo que aparece en los bordes</p>
+</a>
+</li>
+<li>
+<a class="tarjeta tarjeta-nav" href="piramide/piramide.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">&#9650;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 20h18L12 3z"/></svg></span>
+<h2 class="tarjeta-titulo">Pirámide de letras</h2>
+<p class="tarjeta-texto">Capta cada fila entera de un vistazo</p>
+</a>
+</li>
+<li>
+<a class="tarjeta tarjeta-nav" href="destello/destello.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">&#9889;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
+<h2 class="tarjeta-titulo">Destello breve</h2>
+<p class="tarjeta-texto">Memoria visual: grupos que se ven un instante</p>
+</a>
+</li>
+<li>
+<a class="tarjeta tarjeta-nav" href="enfoque/enfoque.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">&#128302;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg></span>
+<h2 class="tarjeta-titulo">Enfoque cerca y lejos</h2>
+<p class="tarjeta-texto">Alterna entre la pantalla y un objeto lejano</p>
+</a>
+</li>
+<li>
+<a class="tarjeta tarjeta-nav" href="descanso/descanso.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">&#128564;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span>
+<h2 class="tarjeta-titulo">Pausa 20-20-20 y parpadeo</h2>
+<p class="tarjeta-texto">Descansa la vista y parpadea con calma</p>
+</a>
+</li>
+</ul>
+</main>
+<div class="panel-flotante" data-panel>
+  <a class="panel-boton" href="../../index.html"
+     aria-label="Volver a la portada" title="Volver a la portada">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8592;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></span>
+  </a>
+  <a class="panel-boton" href="../../index.html"
+     aria-label="Ir a la portada" title="Ir a la portada">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8962;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 3l9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/><path d="M10 21v-6h4v6"/></svg></span>
+  </a>
+</div>
+<footer hidden>
+<p>R.E.T.O.</p>
+</footer>
+<script src="../../scripts/reto-arrastrar.js"></script>
+<script src="../../scripts/reto-panel.js?v=c04-f73a0fa9"></script>
+<script src="../../scripts/reto-debug.js?v=c25-5ac10ea0"></script>
+</body>
+</html>
+
+
+
+
+

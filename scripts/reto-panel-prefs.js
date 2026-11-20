@@ -55,13 +55,21 @@
     enlace('apple-touch-icon', 'pwa/icon-192.png');
     meta('theme-color', '#16445a');
     meta('apple-mobile-web-app-capable', 'yes');
+    meta('mobile-web-app-capable', 'yes');
     meta('apple-mobile-web-app-title', 'R.E.T.O.');
 
-    if ('serviceWorker' in navigator && window.isSecureContext) {
+    function esContextoSeguro() {
+      // localhost y 127.0.0.1 son seguros para desarrollo aunque usen HTTP o cert autofirmado
+      var host = location.hostname;
+      if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return true;
+      return window.isSecureContext === true;
+    }
+
+    if ('serviceWorker' in navigator && esContextoSeguro()) {
       window.addEventListener('load', function () {
-        navigator.serviceWorker.register(new URL('sw.js', raiz).href, {
-          scope: raiz.pathname
-        }).then(function (registration) {
+        // Scope relativo: funciona tanto en raíz como en subpath (GitHub Pages)
+        var swUrl = new URL('sw.js', location.href).href;
+        navigator.serviceWorker.register(swUrl, { scope: '.' }).then(function (registration) {
           registration.addEventListener('updatefound', function () {
             var installingWorker = registration.installing;
             if (installingWorker) {
@@ -84,7 +92,8 @@
 
       var refreshing = false;
       navigator.serviceWorker.addEventListener('controllerchange', function () {
-        if (!refreshing) {
+        // Solo recargar si YA había un controller (actualización), no en la primera carga
+        if (navigator.serviceWorker.controller && !refreshing) {
           refreshing = true;
           window.location.reload();
         }
@@ -108,7 +117,8 @@
     animHover: ['estandar', 'flotacion-3d', 'pulso-ludico'],
     animAccion: ['estandar', 'rebote'],
     animPanel: ['estandar', 'elastico', 'giro'],
-    fondoEstilo: ['liso', 'puntos', 'diagonales']
+    fondoEstilo: ['liso', 'puntos', 'diagonales'],
+    fuenteUi: ['nunito', 'atkinson', 'lexend', 'opendyslexic', 'roboto-mono']
   };
 
   function leer(clave, defecto) {
@@ -133,6 +143,7 @@
   var animAccion = unoDe('anim_accion', VALORES.animAccion, 'estandar');
   var animPanel = unoDe('anim_panel', VALORES.animPanel, 'estandar');
   var fondoEstilo = unoDe('fondo_estilo', VALORES.fondoEstilo, 'liso');
+  var fuenteUi = unoDe('fuente_ui', VALORES.fuenteUi, 'nunito');
 
   var op = parseFloat(leer('panel_op'));
   if (isNaN(op)) op = POR_DEFECTO.op;
@@ -151,5 +162,6 @@
   h.setAttribute('data-anim-accion', animAccion);
   h.setAttribute('data-anim-panel', animPanel);
   h.setAttribute('data-fondo', fondoEstilo);
+  h.setAttribute('data-fuente-ui', fuenteUi);
   h.style.setProperty('--panel-op', String(op));
 })();

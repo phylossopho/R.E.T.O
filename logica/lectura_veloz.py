@@ -721,3 +721,343 @@ def plan_frases(parrafos: Iterable[Any]) -> Dict[str, Any]:
         "cuenta_seg": CUENTA_SEG,
         "wpm": {"min": WPM_MIN, "max": WPM_MAX, "paso": WPM_PASO},
     }
+
+
+# ===========================================================================
+# LOS MODULOS QUE SE AGREGARON DESPUES: PRUEBA DE VELOCIDAD, PACER Y SKIMMING
+# ===========================================================================
+#
+# Misma regla que los cuatro motores de arriba: Python decide QUE se muestra y
+# CUANTO pesa; el navegador pinta, cronometra y maneja el teclado. La lectura en
+# columnas NO tiene plan propio: es el pacer con otro ancho (plan_pacer).
+# ===========================================================================
+
+# --- Prueba de velocidad base ---
+MIN_PALABRAS_PRUEBA = 100     # con menos, el cronometro mide el reflejo y no la lectura
+MAX_PALABRAS_PRUEBA = 600     # con mas, la prueba deja de ser una prueba
+PPM_BRUTAS_MAX = 1500         # arriba de esto no se leyo: se salto el texto
+PREGUNTAS_PRUEBA = {"min": 3, "max": 5, "defecto": 4}
+
+
+def plan_prueba(parrafos: Iterable[Any]) -> Dict[str, Any]:
+    """El texto de la prueba de velocidad: entre 100 y 600 palabras.
+
+    Si el texto es mas largo se toman los primeros parrafos que quepan en 600
+    palabras (nunca un parrafo cortado a la mitad, salvo que el primero solo ya
+    pase de 600) y `recortado` lo dice, para que la pantalla lo avise. Los
+    parrafos salen limpios y las palabras que se miden son las de ESTA lista:
+    la pantalla no cuenta de nuevo.
+    """
+    textos: List[str] = []
+    total = 0
+    recortado = False
+    for par in _leer_parrafos(parrafos):
+        palabras = par["palabras"]
+        if total + len(palabras) > MAX_PALABRAS_PRUEBA:
+            recortado = True
+            if not textos:
+                palabras = palabras[:MAX_PALABRAS_PRUEBA]
+                textos.append(" ".join(palabras))
+                total = len(palabras)
+            break
+        textos.append(par["texto"])
+        total += len(palabras)
+    if total < MIN_PALABRAS_PRUEBA:
+        raise ValueError(
+            "Este texto es muy corto para medir la velocidad (necesita al menos "
+            "%d palabras). Elige uno más largo." % MIN_PALABRAS_PRUEBA
+        )
+    return {
+        "motor": "prueba",
+        "parrafos": textos,
+        "total_palabras": total,
+        "recortado": recortado,
+        "preguntas": dict(PREGUNTAS_PRUEBA),
+        "ppm_brutas_max": PPM_BRUTAS_MAX,
+    }
+
+
+def calcular_velocidad(palabras: Any, segundos: Any, aciertos: Any, preguntas: Any) -> Dict[str, Any]:
+    """La velocidad de una prueba: bruta, comprension y efectiva.
+
+        ppm_brutas    = palabras / minutos
+        comprension   = aciertos / preguntas          (0 a 1)
+        ppm_efectivas = ppm_brutas x comprension
+
+    Un minimo de 1 segundo, para no dividir entre cero. Si no hubo preguntas, la
+    comprension y la velocidad efectiva son None (no se inventa un 0 ni un 1) y
+    la medicion NO entra al historial: la grafica usa solo la efectiva.
+    Mas de PPM_BRUTAS_MAX palabras por minuto se marca `saltada`: eso no es leer
+    y tampoco entra al historial.
+
+    Lanza ValueError con un mensaje mostrable si los datos no son numeros o
+    no tienen sentido.
+    """
+    try:
+        n_palabras = int(palabras)
+        n_segundos = float(segundos)
+        n_aciertos = int(aciertos)
+        n_preguntas = int(preguntas)
+    except (TypeError, ValueError):
+        raise ValueError("Faltan datos para calcular la velocidad.")
+    if n_palabras <= 0 or n_segundos < 0 or n_preguntas < 0 or n_aciertos < 0:
+        raise ValueError("Los datos de la prueba no tienen sentido.")
+    n_aciertos = min(n_aciertos, n_preguntas)
+    minutos = max(n_segundos, 1.0) / 60
+    brutas = n_palabras / minutos
+    if n_preguntas:
+        comprension = round(n_aciertos / n_preguntas, 2)
+        efectivas = round(brutas * (n_aciertos / n_preguntas))
+    else:
+        comprension = None
+        efectivas = None
+    saltada = brutas > PPM_BRUTAS_MAX
+    return {
+        "ppm_brutas": round(brutas),
+        "comprension": comprension,
+        "ppm_efectivas": efectivas,
+        "saltada": saltada,
+        "entra_al_historial": (not saltada) and n_preguntas > 0,
+    }
+
+
+# --- Pacer (y lectura en columnas, que es el mismo motor con otro ancho) ---
+MAX_PALABRAS_PACER = 12_000   # el texto se pinta de una vez: un libro entero no cabe
+TRAMOS_PACER = (1, 2, 3)
+TRAMO_PACER_POR_DEFECTO = 3
+PPM_SUGERIDA_PACER = 250
+PAUSA_PARRAFO_MS = 750        # lo que pesa la ultima palabra de un parrafo (mas que un punto)
+
+
+def plan_pacer(parrafos: Iterable[Any], palabras_por_tramo: int = TRAMO_PACER_POR_DEFECTO) -> Dict[str, Any]:
+    """El plan del pacer: el texto entero y la guia que lo recorre.
+
+    Devuelve, en listas paralelas (una posicion por palabra):
+
+        palabras   la palabra tal cual, en NFC
+        pausa      su pausa en ms MEDIDA A 300 PPM (ver PAUSA_MS); la ultima de
+                   cada parrafo pesa PAUSA_PARRAFO_MS
+
+    `parrafo_inicio`: el indice de la primera palabra de cada parrafo.
+    `tramos`: {desde, hasta, pausa, peso}, con desde/hasta INCLUIDOS. Un tramo
+    nunca cruza un parrafo ni un fin de oracion (se agrupa con la misma regla
+    que el modo grupos). `pausa` es la suma de las pausas de sus palabras y
+    `peso` es esa suma contra lo que pesarian sus palabras "normales"
+    (1.0 = ritmo normal; mas, tras coma, punto o parrafo). La duracion de un
+    tramo es la misma cuenta de los demas modos:
+
+        (60 000 / ppm) x (pausa / pausa_base_ms)
+
+    Python NO sabe donde cae cada renglon (depende del ancho de la pantalla):
+    la opcion "por linea" la arma el navegador midiendo, y por eso el plan
+    entrega la pausa de cada palabra.
+    """
+    n = palabras_por_tramo if palabras_por_tramo in TRAMOS_PACER else TRAMO_PACER_POR_DEFECTO
+    palabras: List[str] = []
+    pausa: List[int] = []
+    inicios: List[int] = []
+    tramos: List[Dict[str, Any]] = []
+    recortado = False
+    for par in _leer_parrafos(parrafos):
+        lista = [unicodedata.normalize("NFC", p) for p in par["palabras"]]
+        if len(palabras) + len(lista) > MAX_PALABRAS_PACER:
+            recortado = True
+            if palabras:
+                break
+            lista = lista[:MAX_PALABRAS_PACER]
+        pesos = [pausa_ms(p) for p in lista]
+        pesos[-1] = max(pesos[-1], PAUSA_PARRAFO_MS)
+        base = len(palabras)
+        inicios.append(base)
+        palabras.extend(lista)
+        pausa.extend(pesos)
+        desde = base
+        for grupo in _agrupar_palabras(lista, n):
+            hasta = desde + len(grupo) - 1
+            suma = sum(pausa[desde:hasta + 1])
+            tramos.append({
+                "desde": desde,
+                "hasta": hasta,
+                "pausa": suma,
+                "peso": round(suma / (len(grupo) * PAUSA_BASE_MS), 2),
+            })
+            desde = hasta + 1
+    return {
+        "motor": "pacer",
+        "palabras": palabras,
+        "pausa": pausa,
+        "parrafo_inicio": inicios,
+        "tramos": tramos,
+        "palabras_por_tramo": n,
+        "total_palabras": len(palabras),
+        "recortado": recortado,
+        "ppm_sugerida": PPM_SUGERIDA_PACER,
+        "pausa_base_ms": PAUSA_BASE_MS,
+        "cuenta_seg": CUENTA_SEG,
+        "wpm": {"min": WPM_MIN, "max": WPM_MAX, "paso": WPM_PASO},
+    }
+
+
+# --- Skimming (lectura diagonal) ---
+MAX_PALABRAS_SKIM = 8_000
+LETRAS_CLAVE_MIN = 7          # una palabra clave tiene al menos 7 letras...
+REPETICIONES_CLAVE_MIN = 2    # ...y aparece al menos 2 veces
+MAX_CLAVES = 40
+MAX_PALABRAS_PRIMERA_FRASE = 28
+SEGUNDOS_PASADA = {"min": 5, "max": 120, "defecto": 20}
+
+# Palabras largas que se repiten en cualquier texto y no dicen de que trata.
+_NO_CLAVE = frozenset({
+    "también", "después", "entonces", "mientras", "además", "durante", "aunque",
+    "nosotros", "ustedes", "algunos", "muchos", "siempre", "porque", "cuando",
+    "tambien", "despues", "ademas", "través", "hacia", "sobre", "dentro",
+    "ninguno", "alguna", "algunas", "bastante", "cualquier", "estaba", "estaban",
+    "pueden", "podemos", "tienen", "tiene", "hemos", "había", "habían",
+})
+
+
+def _nucleo(palabra: str) -> str:
+    """La palabra sin signos, en minusculas y NFC: para contar repeticiones."""
+    return unicodedata.normalize("NFC", "".join(c for c in palabra if c.isalnum())).lower()
+
+
+def _primera_frase(palabras: List[str]) -> str:
+    """La primera oracion de un parrafo, con un tope de palabras."""
+    salida: List[str] = []
+    for p in palabras:
+        salida.append(p)
+        if tipo_de_pausa(p) == "oracion":
+            break
+        if len(salida) >= MAX_PALABRAS_PRIMERA_FRASE:
+            salida[-1] = salida[-1].rstrip(",;:") + "…"
+            break
+    return " ".join(salida)
+
+
+def _leer_estructura(parrafos: Iterable[Any]) -> List[Dict[str, Any]]:
+    """Los parrafos de skimming: cada uno {texto, palabras, titulo, nivel}.
+
+    Acepta texto suelto (un parrafo normal) o {"texto", "titulo": bool,
+    "nivel": 1 a 4}, que es como el navegador manda lo que marco [N1] a [N4].
+    """
+    if parrafos is None or isinstance(parrafos, (str, bytes)):
+        raise ValueError("Falta la lista de parrafos.")
+    salida: List[Dict[str, Any]] = []
+    total = 0
+    for crudo in parrafos:
+        titulo, nivel = False, 0
+        if isinstance(crudo, dict):
+            titulo = bool(crudo.get("titulo"))
+            try:
+                nivel = min(4, max(1, int(crudo.get("nivel") or 1))) if titulo else 0
+            except (TypeError, ValueError):
+                nivel = 1 if titulo else 0
+            crudo = crudo.get("texto")
+        texto = limpiar_parrafo(crudo)
+        if not texto:
+            continue
+        palabras = partir_palabras(texto)
+        total += len(palabras)
+        if total > MAX_PALABRAS_SKIM:
+            break
+        salida.append({"texto": texto, "palabras": palabras, "titulo": titulo, "nivel": nivel})
+    if not salida:
+        raise ValueError("No hay nada que leer en este texto.")
+    return salida
+
+
+def plan_skimming(parrafos: Iterable[Any]) -> Dict[str, Any]:
+    """Las pasadas de la lectura diagonal.
+
+    Pasada 1: los titulos (solo si el texto trae [N1]-[N4]).
+    Pasada 2: la primera oracion de cada parrafo.
+    Pasada 3: el texto con las palabras clave marcadas (largas y repetidas).
+    Pasada 4: leer con el pacer (la pantalla ofrece el enlace; no hay items).
+
+    Devuelve {"pasadas": [{"pasada", "clave", "titulo", "aviso", "segundos",
+    "items"}], ...}. Los `items` de la pasada 3 son parrafos partidos en
+    "partes": [texto, es_clave], para que el navegador no vuelva a buscar nada.
+    No hay IA: las claves salen de contar (ver LETRAS_CLAVE_MIN).
+    """
+    estructura = _leer_estructura(parrafos)
+    cuerpo = [p for p in estructura if not p["titulo"]]
+    if not cuerpo:
+        # Un texto de puros titulos: se trata como cuerpo para poder mostrarse.
+        cuerpo = estructura
+        titulos: List[Dict[str, Any]] = []
+    else:
+        titulos = [p for p in estructura if p["titulo"]]
+
+    # Palabras clave: largas y repetidas; si no hay ninguna repetida, las mas largas.
+    cuenta: Dict[str, int] = {}
+    for par in cuerpo:
+        for p in par["palabras"]:
+            n = _nucleo(p)
+            if len(n) >= LETRAS_CLAVE_MIN and n.isalpha() and n not in _NO_CLAVE:
+                cuenta[n] = cuenta.get(n, 0) + 1
+    repetidas = sorted((k for k, v in cuenta.items() if v >= REPETICIONES_CLAVE_MIN),
+                       key=lambda k: (-cuenta[k], k))
+    sin_repeticion = False
+    if repetidas:
+        claves = repetidas[:MAX_CLAVES]
+    else:
+        sin_repeticion = True
+        claves = sorted(cuenta, key=lambda k: (-len(k), k))[:8]
+    claves_set = set(claves)
+
+    pasadas: List[Dict[str, Any]] = []
+
+    def _segundos(palabras_de_la_pasada: int) -> int:
+        estimado = -(-palabras_de_la_pasada // 4)       # ~240 ppm, de un vistazo
+        return max(15, min(30, estimado))
+
+    if titulos:
+        pasadas.append({
+            "clave": "titulos", "titulo": "Títulos",
+            "segundos": _segundos(sum(len(t["palabras"]) for t in titulos)),
+            "items": [{"texto": t["texto"], "nivel": t["nivel"]} for t in titulos],
+        })
+    frases = [_primera_frase(p["palabras"]) for p in cuerpo]
+    pasadas.append({
+        "clave": "primeras", "titulo": "Primeras frases",
+        "segundos": _segundos(sum(len(f.split()) for f in frases)),
+        "items": [{"texto": f} for f in frases],
+    })
+    items3: List[Dict[str, Any]] = []
+    for par in cuerpo:
+        partes: List[List[Any]] = []
+        buffer: List[str] = []
+        for p in par["palabras"]:
+            if _nucleo(p) in claves_set:
+                if buffer:
+                    partes.append([" ".join(buffer) + " ", False])
+                    buffer = []
+                partes.append([p, True])
+                partes.append([" ", False])
+            else:
+                buffer.append(p)
+        if buffer:
+            partes.append([" ".join(buffer), False])
+        items3.append({"partes": partes})
+    pasadas.append({
+        "clave": "claves", "titulo": "Palabras clave",
+        "segundos": _segundos(sum(len(p["palabras"]) for p in cuerpo) // 3),
+        "items": items3,
+    })
+    pasadas.append({"clave": "pacer", "titulo": "Lectura con el pacer", "segundos": 0, "items": []})
+
+    total = len(pasadas)
+    for i, pasada in enumerate(pasadas, start=1):
+        pasada["pasada"] = i
+        pasada["aviso"] = "Pasada %d de %d: %s" % (i, total, pasada["titulo"].lower())
+
+    return {
+        "motor": "skimming",
+        "pasadas": pasadas,
+        "total_pasadas": total,
+        "claves": claves,
+        "claves_sin_repeticion": sin_repeticion,
+        "primeras_frases": frases,
+        "total_palabras": sum(len(p["palabras"]) for p in estructura),
+        "segundos_pasada": dict(SEGUNDOS_PASADA),
+    }

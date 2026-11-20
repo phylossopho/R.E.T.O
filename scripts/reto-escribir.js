@@ -607,6 +607,12 @@
       ? 'Las escribiste todas bien, sin ver opciones. Para fijarlo, vuelve a intentarlo otro día.'
       : 'Lo que falló te dice qué mirar. No es una nota: es un mapa de lo que conviene repasar.'));
 
+    /* Los tests tambien dan power ups (cada 10 aciertos acumulados, maximo 10 al dia). Una sola vez por ronda. */
+    if (window.RetoRpg && !resultados._premiado) {
+      resultados._premiado = true;
+      window.RetoRpg.mostrarPremiosDeTest(col, aciertos);
+    }
+
     var ol = el('ol', 'esc-resumen');
     resultados.forEach(function (r) {
       var li = el('li', 'esc-resumen-fila');

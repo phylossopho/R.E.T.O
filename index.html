@@ -2,11 +2,12 @@
 <html lang="es" data-theme="papel">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>R.E.T.O.</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="reto-signaling-url" content="https://reto-signaling.TU_SUBDOMINIO.workers.dev">
+  <title>R.E.T.O.</title>
 <link rel="preload" href="styles/fuentes/nunito.css" as="style">
 <link rel="stylesheet" href="styles/fuentes/nunito.css">
-<link rel="stylesheet" href="styles/styles.css?v=c85-flexfix">
+<link rel="stylesheet" href="styles/styles.css?v=c103-ding3">
 <script>
 // El tema y el interruptor de animaciones se aplican aqui, en el head, y no al
 // final del body: si se hiciera despues, el navegador pintaria primero el
@@ -45,7 +46,7 @@
   } catch (e) {}
 })();
 </script>
-<script src="scripts/reto-panel-prefs.js?v=c01-0f3ddb54"></script>
+<script src="scripts/reto-panel-prefs.js?v=c02-fuente-ui"></script>
 </head>
 <body>
 <header>
@@ -60,6 +61,20 @@
 <p class="tarjeta-texto">Practica y aumenta tu velocidad de lectura</p>
 </a>
 </li>
+<li>
+<a class="tarjeta tarjeta-nav" href="categorias/vision/vision.html">
+<span class="tarjeta-icono"><span class="reserva" aria-hidden="true">&#128065;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span>
+<h2 class="tarjeta-titulo">Visión</h2>
+<p class="tarjeta-texto">Ejercicios para descansar y entrenar la vista</p>
+</a>
+</li>
+<li>
+        <a class="tarjeta tarjeta-nav" href="categorias/multijugador/multijugador.html">
+        <span class="tarjeta-icono"><span class="reserva" aria-hidden="true">&#129309;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15 14.5c3 0 6 1.5 6 5"/></svg></span>
+        <h2 class="tarjeta-titulo">Multijugador</h2>
+        <p class="tarjeta-texto">Duelos y quiz bowls online (Firebase) o por wifi local</p>
+        </a>
+        </li>
 <li>
 <a class="tarjeta tarjeta-nav" href="categorias/test-conocimientos/test-conocimientos.html">
 <span class="tarjeta-icono"><span class="reserva" aria-hidden="true">&#9989;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" rx="1" ry="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="m9 14 2 2 4-4" /></svg></span>
@@ -100,8 +115,38 @@
 <footer hidden>
 <p>R.E.T.O.</p>
 </footer>
+<script src="scripts/reto-datos.js?v=c19-c6fe548d"></script>
+<script src="scripts/reto-perfil.js?v=n1"></script>
 <script src="scripts/reto-panel.js?v=c04-f73a0fa9"></script>
 <script src="scripts/reto-debug.js?v=c25-5ac10ea0"></script>
+
+  <!-- Firebase SDK (para PvP online - Duelo y Ding!) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+  <!-- Módulos Firebase R.E.T.O. -->
+  <script src="scripts/reto-firebase.js"></script>
+  <script src="scripts/reto-salas.js"></script>
+  <script src="scripts/reto-firebase-sync.js"></script>
+  <script src="scripts/reto-duelo-firebase.js"></script>
+  <script src="scripts/reto-ding-firebase.js"></script>
+
+  <script>
+  (function () {
+    'use strict';
+    if (window.RetoPerfil && window.RetoPerfil.hayPerfil) {
+      window.RetoPerfil.hayPerfil().then(function (existe) {
+        if (!existe) {
+          var destino = 'categorias/bienvenida/bienvenida.html';
+          if (location.search) destino += location.search;
+          if (location.hash) destino += location.hash;
+          window.location.href = destino;
+        }
+      });
+    }
+  })();
+  </script>
 </body>
 </html>
 

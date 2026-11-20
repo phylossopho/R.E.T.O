@@ -1,0 +1,271 @@
+/* ==========================================================================
+   67_multijugador.css - LA PRUEBA DE CONEXION POR WIFI LOCAL
+   Solo tokens del tema; medidas relativas; nada se sale a 320 px.
+   ========================================================================== */
+.red-nota { max-width: 48rem; margin: 0 auto var(--space-md); }
+
+.red-pagina { max-width: 48rem; margin-inline: auto; }
+
+.red-caja {
+  margin: 0 0 var(--space-md);
+  padding: var(--space-md);
+  background: var(--surface);
+  color: var(--text);
+  border: 2px solid var(--borde-fuerte);
+  border-radius: var(--radius);
+}
+
+.red-caja h2 { margin: 0 0 var(--space-sm); font-size: 1.2rem; }
+.red-estado { margin: 0 0 var(--space-sm); font-weight: 700; }
+
+.red-direcciones, .red-mensajes { margin: 0 0 var(--space-sm); padding: 0; list-style: none; }
+
+.red-direccion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.red-direccion code { overflow-wrap: anywhere; font-size: 1rem; }
+
+.red-mensaje {
+  margin-bottom: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow-wrap: anywhere;
+}
+
+/* Los tuyos se distinguen por el borde grueso del lado, no solo por el color. */
+.red-mensaje--mio { border-inline-start: 6px solid var(--accent); }
+.red-ip { color: var(--muted); }
+
+/* ------------------------------------------------------------ el duelo */
+.red-error { max-width: 48rem; margin: 0 auto var(--space-sm); color: var(--aviso); font-weight: 700; }
+.red-error:empty { display: none; }
+
+.duelo-codigo-grande { font-size: 1.6rem; margin: 0 0 var(--space-sm); }
+.duelo-codigo { text-transform: uppercase; letter-spacing: 0.2em; max-width: 8rem; font-size: 1.4rem; text-align: center; }
+.duelo-grande { min-height: 3.2rem; min-width: 11rem; font-size: 1.1rem; }
+
+.duelo-tablero { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--space-md); }
+.duelo-jugador { padding: var(--space-sm); border: 2px solid var(--border); border-radius: var(--radius); }
+/* Quien ataca se marca con borde grueso Y con el texto "ataca": no depende del color. */
+.duelo-jugador--ataca { border-color: var(--accent); border-width: 4px; }
+.duelo-nombre { margin: 0 0 var(--space-xs); overflow-wrap: anywhere; }
+.duelo-etiqueta { font-weight: 700; }
+.duelo-vida { margin: var(--space-xs) 0 0; font-variant-numeric: tabular-nums; }
+
+.duelo-barra { height: 1.1rem; background: var(--bg); border: 2px solid var(--borde-fuerte); border-radius: 999px; overflow: hidden; }
+.duelo-barra-relleno { display: block; height: 100%; background: var(--accent); transition: width 0.3s ease; }
+html[data-anim="off"] .duelo-barra-relleno { transition: none; }
+@media (prefers-reduced-motion: reduce) { html:not([data-anim="on"]) .duelo-barra-relleno { transition: none; } }
+
+.duelo-turno { margin: 0 0 var(--space-xs); font-weight: 800; }
+.duelo-tiempo { margin: 0 0 var(--space-xs); font-variant-numeric: tabular-nums; color: var(--muted); }
+.duelo-enunciado { font-size: 1.2rem; font-weight: 700; margin: 0 0 var(--space-sm); overflow-wrap: anywhere; }
+.duelo-oferta { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--space-xs); }
+.duelo-respuestas { display: grid; gap: var(--space-xs); }
+.duelo-opcion { width: 100%; min-height: 3rem; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+.duelo-tema { color: var(--muted); }
+.duelo-ultimo { margin: var(--space-sm) 0 0; font-weight: 700; }
+.duelo-power-ups { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-top: var(--space-sm); }
+.duelo-rendirse { margin-top: var(--space-sm); }
+.red-caja > .boton { margin: var(--space-xs) var(--space-xs) 0 0; }
+/* Que el panel flotante no tape las respuestas ni los botones del final. */
+.red-pagina { padding-bottom: 7.5rem; }
+
+/* ------------------------------------------------ inventario y equipo */
+.equipo-lista { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--space-sm); }
+.equipo-item { padding: var(--space-sm); border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); }
+.equipo-nombre, .equipo-texto { margin: 0 0 var(--space-xs); overflow-wrap: anywhere; }
+.equipo-descartar { margin-top: var(--space-xs); font-size: 0.9em; }
+
+/* ---- Ding! (quiz bowl por wifi local) ----------------------------------- */
+.ding-opcion { margin: var(--space-md) 0; padding: var(--space-sm) var(--space-md); border: 2px solid var(--borde); border-radius: var(--radius); background: var(--bg); }
+.ding-opcion h3 { margin: 0 0 var(--space-xs); font-size: 1.05rem; }
+.ding-test { display: block; margin: var(--space-xs) 0; padding: var(--space-xs) 0; min-height: 44px; cursor: pointer; }
+.ding-test input, .ding-interruptor input { width: 22px; height: 22px; vertical-align: middle; cursor: pointer; }
+.ding-interruptor { margin: var(--space-xs) 0; min-height: 44px; }
+.ding-codigo { margin: var(--space-sm) 0; font-family: 'Roboto Mono', monospace; font-size: clamp(3rem, 12vw, 6rem); font-weight: 800; letter-spacing: 0.25em; text-align: center; color: var(--accent); }
+.ding-escena { text-align: center; }
+.ding-progreso { margin: 0 0 var(--space-xs); font-weight: 700; color: var(--muted); }
+.red-caja .ding-enunciado { margin: var(--space-sm) 0 var(--space-md); font-size: clamp(1.6rem, 4.5vw, 3rem); line-height: 1.25; overflow-wrap: anywhere; }
+.red-caja .ding-enunciado--chico { font-size: clamp(1.1rem, 3.5vw, 1.5rem); }
+.ding-estado { margin: var(--space-sm) 0; font-size: clamp(1.1rem, 2.5vw, 1.6rem); font-weight: 700; }
+.ding-marcador { margin: var(--space-md) auto 0; max-width: 34rem; text-align: left; }
+.ding-marcador h3 { margin: 0 0 var(--space-xs); font-size: 1rem; }
+.ding-boton { display: block; width: 100%; min-height: 40vh; margin: var(--space-md) 0; padding: var(--space-md); border: 4px solid var(--borde-fuerte); border-radius: 24px; background: var(--accent); color: var(--bg); font: inherit; font-size: clamp(2.5rem, 12vw, 5rem); font-weight: 800; cursor: pointer; touch-action: manipulation; }
+.ding-boton:disabled { background: var(--surface); color: var(--muted); border-style: dashed; cursor: not-allowed; }
+.ding-rejilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--space-sm); margin: var(--space-md) 0; }
+.ding-opcion-boton { min-height: 5rem; padding: var(--space-sm) var(--space-md); border: 3px solid var(--borde-fuerte); border-radius: var(--radius); background: var(--surface); color: var(--text); font: inherit; font-size: clamp(1.2rem, 4vw, 1.8rem); font-weight: 700; cursor: pointer; touch-action: manipulation; }
+.ding-opcion-boton:disabled { opacity: 0.6; cursor: wait; }
+.ding-opciones-reveladas { list-style: none; margin: var(--space-sm) auto; padding: 0; max-width: 34rem; text-align: left; font-size: 1.2rem; }
+.ding-opciones-reveladas li { margin: var(--space-xs) 0; padding: var(--space-xs) var(--space-sm); border: 2px solid var(--borde); border-radius: var(--radius); }
+.ding-opciones-reveladas li.ding-correcta { border: 4px solid var(--accent); font-weight: 800; }
+.ding-explicacion { margin: var(--space-sm) auto; max-width: 34rem; padding: var(--space-sm); border: 2px dashed var(--borde-fuerte); border-radius: var(--radius); text-align: left; }
+.ding-explicacion p { margin: var(--space-xs) 0; font-family: 'Roboto Mono', monospace; }
+
+/* ---- El duelo con la interfaz de batalla -------------------------------------
+   Mismo escenario que la aventura: fondo al azar de imagenes/fondos/, el nombre y la vida
+   (en numeros grandes, DEBAJO de la barra) de cada quien, y las preguntas que se pueden
+   mandar en el lugar de las respuestas. Del rival solo se ve su nombre. */
+.escena-duelo { max-width: 1100px; margin: 0 auto; border: 2px solid var(--borde-fuerte); border-radius: calc(var(--radius) * 1.5); background: var(--bg); overflow: hidden; }
+.escena-pantalla { position: relative; min-height: clamp(280px, 46vw, 420px); overflow: hidden; isolation: isolate; background: radial-gradient(120% 100% at 50% 0%, var(--surface) 0%, var(--bg) 100%); }
+.escena-pantalla::before { content: ''; position: absolute; inset: 0; z-index: 0; background-image: var(--escena-fondo, none); background-size: cover; background-position: center; image-rendering: pixelated; opacity: 0.6; pointer-events: none; }
+.escena-hud { position: absolute; z-index: 10; width: min(330px, 62%); padding: 10px 14px; border: 1px solid var(--borde); border-radius: var(--radius); background-color: color-mix(in srgb, var(--surface) 88%, transparent); box-shadow: var(--sombra); }
+.escena-hud--rival { top: 14px; left: 14px; }
+.escena-hud--yo { bottom: 14px; right: 14px; }
+.escena-hud--ataca { outline: 3px solid var(--accent); outline-offset: 2px; }
+.escena-nombre { margin: 0 0 var(--space-xs); font-size: 0.95rem; overflow-wrap: anywhere; }
+.escena-hp { margin: 4px 0 0; font-size: clamp(1.8rem, 5vw, 2.4rem); font-weight: 800; line-height: 1; text-align: right; }
+.escena-hp small { margin-left: 4px; font-size: 0.4em; font-weight: 700; color: var(--muted); }
+.escena-sprite { position: absolute; z-index: 2; width: clamp(110px, 22vw, 200px); height: clamp(110px, 22vw, 200px); pointer-events: none; }
+.escena-sprite img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center bottom; image-rendering: pixelated; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.28)); }
+.escena-sprite--rival { top: 12px; right: 7%; display: flex; align-items: center; justify-content: center; }
+.escena-sprite--yo { bottom: 8px; left: 6%; }
+.escena-incognita { font-size: clamp(4rem, 12vw, 7rem); font-weight: 800; color: var(--text); opacity: 0.55; text-shadow: 0 2px 0 var(--bg); }
+.escena-caja { padding: var(--space-sm) var(--space-md); }
+.escena-caja p { margin: var(--space-xs) 0; }
+.escena-pregunta { padding: var(--space-xs) var(--space-sm); border: 1px solid var(--borde); border-radius: var(--radius); }
+.escena-opciones { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: var(--space-xs); padding: 0 var(--space-md) var(--space-sm); }
+.escena-opcion { display: block; min-height: 44px; margin: 0; padding: var(--space-xs) var(--space-sm); text-align: left; line-height: 1.5; font-size: 1rem; }
+.escena--tam-peq .escena-opcion:not(.escena-opcion--respuesta) { font-size: 0.875rem; }
+.escena--tam-med .escena-opcion:not(.escena-opcion--respuesta) { font-size: 1.1rem; }
+.escena--tam-gra .escena-opcion:not(.escena-opcion--respuesta) { font-size: 1.4rem; }
+.escena-opcion .duelo-tema { display: block; margin-top: 2px; font-weight: 400; opacity: 0.9; }
+.escena-tam { margin: var(--space-sm) 0; }
+@media (max-width: 520px) { .escena-hud { width: 70%; padding: 8px 10px; } .escena-sprite { opacity: 0.9; } }
+
+/* ---- Sprites de la batalla (scripts/reto-sprites.js) ---------------------------------------
+   Pose y animacion por estado: espera (respira), ataque (embiste hacia el rival) y herido (se
+   sacude). Usan la propiedad `translate`, que no choca con el `transform` del reflejo ni con el
+   editor de layout. Con el interruptor de animaciones apagado (data-anim="off") o con
+   prefers-reduced-motion solo cambia la pose: no hay movimiento y nada parpadea.
+   --spr-dir: hacia donde esta el rival (-1 a la izquierda, 1 a la derecha). */
+.sprite-legacy-volteado { transform: scaleX(-1); }
+.sprite-oponente-rpg1, .rpg2-escena { --spr-dir: -1; }
+.sprite-jugador-rpg1, .escena-sprite--yo { --spr-dir: 1; }
+.spr-caja.spr-espera img { animation: spr-respira 2.6s ease-in-out infinite; }
+.spr-caja.spr-ataque img { animation: spr-embiste 0.6s ease-out 1; }
+.spr-caja.spr-herido img { animation: spr-golpe 0.5s linear 1; }
+@keyframes spr-respira { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }
+@keyframes spr-embiste { 0% { translate: 0 0; } 35% { translate: calc(var(--spr-dir, -1) * 34px) -4px; } 100% { translate: 0 0; } }
+@keyframes spr-golpe { 0%, 100% { translate: 0 0; } 20% { translate: calc(var(--spr-dir, -1) * -8px) 0; } 40% { translate: calc(var(--spr-dir, -1) * 6px) 0; } 60% { translate: calc(var(--spr-dir, -1) * -4px) 0; } 80% { translate: calc(var(--spr-dir, -1) * 2px) 0; } }
+@media (prefers-reduced-motion: reduce) { html:not([data-anim="on"]) .spr-caja img { animation: none !important; } }
+html[data-anim="off"] .spr-caja img { animation: none !important; }
+
+/* ---- Configuracion de la aventura: el cuerpo se desplaza y el FAB queda en la esquina inferior derecha del modal ---- */
+dialog.cfg-aventura[open] { display: flex; flex-direction: column; max-height: 88vh; overflow: hidden; }
+.cfg-aventura .cfg-cuerpo { flex: 1; min-height: 0; overflow-y: auto; padding: var(--space-lg); padding-bottom: 92px; }
+.cfg-aventura .cfg-fab { position: absolute; right: 14px; bottom: 14px; z-index: 5; width: 56px; height: 56px; padding: 0; border-radius: 50%; border: 3px solid #fff; background: #2e7d32; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35); }
+.cfg-aventura .cfg-legend:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* ---- Resultado de una respuesta: numero grande, verde al acertar y naranja al fallar ---- */
+.num-dano { position: absolute; z-index: 50; top: 6%; left: 50%; translate: -50% 0; font-size: clamp(3rem, 11vw, 5.5rem); font-weight: 800; line-height: 1; white-space: nowrap; pointer-events: none; -webkit-text-stroke: 5px #fff; paint-order: stroke fill; animation: num-sube 1.4s ease-out forwards; }
+.num-dano--acierto { color: #2e7d32; }
+.num-dano--fallo { color: #e65100; }
+.num-dano--izq { left: 24%; top: auto; bottom: 14%; }
+.num-dano--der { left: 76%; }
+@keyframes num-sube { 0% { opacity: 0; translate: -50% 14px; } 15% { opacity: 1; translate: -50% 0; } 80% { opacity: 1; translate: -50% -6px; } 100% { opacity: 0; translate: -50% -34px; } }
+@media (prefers-reduced-motion: reduce) { html:not([data-anim="on"]) .num-dano { animation: none !important; } }
+html[data-anim="off"] .num-dano { animation: none !important; }
+
+/* ---- Estados de los power ups (scripts/reto-estados.js) ---------------------------------------------
+   Aura detras del personaje y etiquetas con lo que hace cada efecto y lo que le queda. El color no es la unica
+   señal: las etiquetas llevan ▲ (a favor) o ▼ (en contra) y texto. Con las animaciones apagadas el aura se
+   queda fija y se sigue viendo. */
+.est-caja { isolation: isolate; }
+.est-caja::before, .est-caja::after { content: ''; position: absolute; inset: 4%; border-radius: 50%; z-index: -1; pointer-events: none; opacity: 0; }
+.est-con-favor::before { opacity: 1; background: radial-gradient(circle, color-mix(in srgb, var(--aura-favor, #2e7d32) 60%, transparent) 0%, transparent 70%); animation: est-halo 2.4s ease-in-out infinite; }
+.est-con-contra::after { opacity: 1; background: radial-gradient(circle, color-mix(in srgb, var(--aura-contra, #e65100) 60%, transparent) 0%, transparent 70%); animation: est-halo 2.4s ease-in-out 1.2s infinite; }
+@keyframes est-halo { 0%, 100% { scale: 0.94; opacity: 0.75; } 50% { scale: 1.06; opacity: 1; } }
+.est-fila { position: absolute; left: 50%; bottom: 4px; translate: -50% 0; z-index: 6; display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; width: max(100%, 170px); pointer-events: none; }
+.est-fila[hidden] { display: none; }
+.est-fila--texto { position: static; translate: none; width: auto; justify-content: flex-start; margin: 4px 0; pointer-events: auto; }
+.est-chip { padding: 2px 8px; border: 2px solid var(--borde-fuerte); border-radius: 999px; background-color: color-mix(in srgb, var(--surface) 94%, transparent); color: var(--text); font-size: 0.72rem; font-weight: 800; line-height: 1.3; white-space: nowrap; }
+.est-chip--favor { border-color: #2e7d32; }
+.est-chip--contra { border-color: #e65100; }
+.est-destello { position: absolute; z-index: 60; left: 50%; top: 18%; translate: -50% 0; font-size: clamp(2rem, 7vw, 3.2rem); font-weight: 800; line-height: 1; white-space: nowrap; pointer-events: none; -webkit-text-stroke: 3px var(--bg); paint-order: stroke fill; color: var(--text); animation: num-sube 1.4s ease-out forwards; }
+.rpg2-enemigo-caja { position: relative; display: inline-block; }
+@media (prefers-reduced-motion: reduce) { html:not([data-anim="on"]) .est-con-favor::before, html:not([data-anim="on"]) .est-con-contra::after, html:not([data-anim="on"]) .est-destello { animation: none !important; } }
+html[data-anim="off"] .est-con-favor::before, html[data-anim="off"] .est-con-contra::after, html[data-anim="off"] .est-destello { animation: none !important; }
+
+/* ---- Pagina de ayuda de la aventura ---- */
+.ayuda-aventura { max-width: 60rem; margin-inline: auto; }
+.ayuda-indice { columns: 2 14rem; column-gap: var(--space-lg); margin: 0 0 var(--space-md); padding-left: 1.4rem; }
+.ayuda-indice a { display: inline-block; padding: 2px 0; min-height: 24px; }
+.ayuda-seccion { margin: 0 0 var(--space-lg); padding: var(--space-md); border: 2px solid var(--borde); border-radius: var(--radius); background: var(--surface); scroll-margin-top: var(--space-md); }
+.ayuda-seccion h2 { margin: 0 0 var(--space-sm); font-size: 1.3rem; }
+.ayuda-seccion ul, .ayuda-seccion ol { padding-left: 1.4rem; }
+.ayuda-seccion li { margin: 0 0 var(--space-xs); line-height: 1.55; }
+.ayuda-tabla-caja { overflow-x: auto; }
+.ayuda-tabla { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+.ayuda-tabla th, .ayuda-tabla td { padding: 6px 10px; border: 1px solid var(--borde); text-align: left; vertical-align: top; }
+.ayuda-tabla thead th { background: var(--bg); }
+.ayuda-seccion code { padding: 1px 5px; border-radius: 4px; background: var(--bg); font-size: 0.9em; overflow-wrap: anywhere; }
+html[data-batalla-anim="off"] .spr-caja img, html[data-batalla-anim="off"] .num-dano, html[data-batalla-anim="off"] .est-destello,
+html[data-batalla-anim="off"] .est-con-favor::before, html[data-batalla-anim="off"] .est-con-contra::after { animation: none !important; }
+
+/* ---- Respuestas de la batalla: lista o cuadricula 2x2 que se ajusta al ancho de su contenedor (editor de layout) ---- */
+[data-lay="answers"][data-modo="lista"] { display: flex !important; flex-direction: column !important; gap: 6px; }
+[data-lay="answers"][data-modo="grid"] { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(clamp(8rem, 45%, 100%), 1fr)) !important; gap: 6px; }
+[data-lay="answers"][data-modo] > button { width: 100%; box-sizing: border-box; }
+
+/* ---- El numero de vida junto al HP: naranja si se pierde y verde solo si se gana (un power up de curar). Misma letra que el HP. ---- */
+.num-hp { display: inline-block; font-weight: 800; line-height: 1; white-space: nowrap; margin: 0 0.3em; pointer-events: none; animation: num-hp-sube 1.5s ease-out forwards; }
+.num-hp--dano { color: #e65100; }
+.num-hp--cura { color: #2e7d32; }
+@keyframes num-hp-sube { 0% { opacity: 0; translate: 0 0.35em; } 15% { opacity: 1; translate: 0 0; } 85% { opacity: 1; translate: 0 -0.1em; } 100% { opacity: 0; translate: 0 -0.5em; } }
+@media (prefers-reduced-motion: reduce) { html:not([data-anim="on"]) .num-hp { animation: none !important; } }
+html[data-anim="off"] .num-hp, html[data-batalla-anim="off"] .num-hp { animation: none !important; }
+.escena-hp { display: flex; justify-content: flex-end; align-items: baseline; gap: 4px; }
+
+/* ---- Ding! (nuevo flujo): pregunta a pantalla completa en el presentador; solo opciones en los celulares ---- */
+.ding-palabra { display: inline-block; white-space: nowrap; }
+.ding-letra { display: inline-block; white-space: pre; }
+.ding-ef-maquina { animation: ding-tecla 0.01s steps(1) both; }
+.ding-ef-caen { animation: ding-cae 0.45s ease-out both; }
+.ding-ef-giran { animation: ding-gira 0.5s ease-out both; }
+.ding-ef-aparecen { animation: ding-aparece 0.4s ease-out both; }
+@keyframes ding-tecla { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ding-cae { from { opacity: 0; translate: 0 -1.2em; } to { opacity: 1; translate: 0 0; } }
+@keyframes ding-gira { from { opacity: 0; rotate: -200deg; scale: 0.3; } to { opacity: 1; rotate: 0deg; scale: 1; } }
+@keyframes ding-aparece { from { opacity: 0; scale: 0.4; } to { opacity: 1; scale: 1; } }
+body.ding-en-juego header, body.ding-en-juego .red-nota { display: none; }
+body.ding-en-juego main, body.ding-en-juego .red-pagina { max-width: none; margin: 0; padding: 0; }
+.ding-pantalla { height: 100vh; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; padding: 2vmin 3vmin; box-sizing: border-box; }
+.ding-pregunta-caja { flex: 1 1 auto; min-height: 25vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.ding-pregunta-texto { width: 100%; text-align: center; font-weight: 800; line-height: 1.15; }
+.ding-pantalla .ding-opciones-reveladas { max-width: 60rem; width: 100%; margin-inline: auto; font-size: clamp(1.1rem, 3vmin, 2rem); }
+.ding-pantalla .ding-explicacion { max-width: 60rem; width: 100%; font-size: clamp(1rem, 2.4vmin, 1.5rem); }
+.ding-siguiente { margin: 0.5rem 0; text-align: center; font-size: clamp(1.1rem, 3vmin, 1.8rem); font-weight: 700; }
+.ding-base { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding-top: 0.5rem; opacity: 0.8; }
+.ding-terminar { min-height: 44px; font-size: 0.85rem; }
+.ding-progreso { font-weight: 700; }
+.ding-ganador { font-size: clamp(2rem, 8vw, 4rem); text-align: center; }
+.ding-celu { display: flex; flex-direction: column; min-height: calc(100vh - 2rem); min-height: calc(100dvh - 2rem); }
+.ding-mis-puntos { margin: 0; text-align: right; font-weight: 700; opacity: 0.85; }
+.ding-mira { flex: 1; display: flex; align-items: center; justify-content: center; margin: 0; font-size: clamp(2rem, 9vw, 4rem); font-weight: 800; text-align: center; }
+.ding-opciones-celu { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(clamp(8rem, 45%, 100%), 1fr)); grid-auto-rows: minmax(7rem, 1fr); gap: 10px; margin: 8px 0; }
+.ding-op { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.6rem; border: 4px solid var(--borde-fuerte); border-radius: var(--radius); background: var(--surface); color: var(--text); font: inherit; font-size: clamp(1.2rem, 5vw, 2rem); font-weight: 700; cursor: pointer; touch-action: manipulation; overflow-wrap: anywhere; }
+.ding-op:disabled { opacity: 0.45; border-style: dashed; cursor: not-allowed; }
+.ding-op-letra { width: 2.2em; height: 2.2em; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--accent); color: var(--bg); font-size: 0.8em; }
+.ding-gana { flex: 1; display: flex; align-items: center; justify-content: center; font-size: clamp(5rem, 32vw, 12rem); font-weight: 800; color: #2e7d32; -webkit-text-stroke: 4px var(--bg); paint-order: stroke fill; animation: ding-entra 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) both; }
+.ding-gana span { display: inline-block; animation: ding-salta 0.9s ease-in-out 4; animation-delay: calc(var(--i) * 0.08s + 0.4s); }
+@keyframes ding-entra { from { scale: 0.2; opacity: 0; rotate: -20deg; } to { scale: 1; opacity: 1; rotate: 0deg; } }
+@keyframes ding-salta { 0%, 100% { translate: 0 0; rotate: 0deg; } 30% { translate: 0 -0.25em; rotate: -8deg; } 60% { translate: 0 0.04em; rotate: 6deg; } }
+@media (prefers-reduced-motion: reduce) { html:not([data-anim="on"]) .ding-letra, html:not([data-anim="on"]) .ding-gana, html:not([data-anim="on"]) .ding-gana span { animation: none !important; } }
+html[data-anim="off"] .ding-letra, html[data-anim="off"] .ding-gana, html[data-anim="off"] .ding-gana span { animation: none !important; }
+dialog.ding-config { max-width: 600px; width: 92%; padding: 0; background: var(--surface); color: var(--text); border: 3px solid var(--borde-fuerte); border-radius: var(--radius); }
+dialog.ding-config[open] { display: flex; flex-direction: column; max-height: 90vh; overflow: hidden; }
+.ding-config-cuerpo { flex: 1; min-height: 0; overflow-y: auto; padding: var(--space-lg); padding-bottom: 92px; }
+.ding-grupo { margin: 0 0 var(--space-md); padding: var(--space-sm) var(--space-md); border: 2px solid var(--borde); border-radius: var(--radius); }
+.ding-grupo legend { padding: 0 6px; font-weight: 700; }
+.ding-campo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: var(--space-xs) 0; }
+.ding-campo input[type="number"], .ding-campo select { min-height: 44px; padding: 4px 8px; font: inherit; }
+.ding-campo .ayuda { flex-basis: 100%; margin: 0; }
+.ding-fab { position: absolute; right: 14px; bottom: 14px; z-index: 5; width: 56px; height: 56px; padding: 0; border-radius: 50%; border: 3px solid #fff; background: #2e7d32; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35); }
+

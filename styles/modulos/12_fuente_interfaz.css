@@ -1,0 +1,32 @@
+/* ==========================================================================
+   12_fuente_interfaz.css - LA LETRA DE TODA LA INTERFAZ
+   --------------------------------------------------------------------------
+   Configuracion > Interfaz deja elegir la letra de TODO el sitio. La eleccion se
+   guarda en localStorage ('fuente_ui'), reto-panel-prefs.js la pone como
+   atributo data-fuente-ui en <html> en cuanto carga la pagina (antes de
+   pintar), y aqui cada valor cambia la variable --font, que es la que usa el
+   resto de las hojas. Nunito es la del sitio y no necesita regla.
+
+   Las fuentes son AUTOALOJADAS (styles/fuentes/lectura/, licencia OFL en
+   LICENCIAS.txt): ninguna se pide a un tercero, asi que el sitio funciona sin
+   internet y sin mandar la direccion de nadie a otro servidor. Un @font-face no
+   descarga nada por estar aqui: el navegador baja el archivo solo cuando
+   alguna letra de la pagina lo usa.
+
+   Todas cubren el espanol (n con tilde, acentos, u con dieresis y los signos de
+   apertura). Si la elegida no carga, el texto cae a Nunito y no a una cualquiera.
+   ========================================================================== */
+
+@font-face { font-family: 'Atkinson Hyperlegible'; font-style: normal; font-weight: 400; font-display: swap; src: url('fuentes/lectura/atkinson-hyperlegible-400.woff2') format('woff2'); }
+@font-face { font-family: 'Atkinson Hyperlegible'; font-style: normal; font-weight: 700; font-display: swap; src: url('fuentes/lectura/atkinson-hyperlegible-700.woff2') format('woff2'); }
+@font-face { font-family: 'Lexend'; font-style: normal; font-weight: 400; font-display: swap; src: url('fuentes/lectura/lexend-400.woff2') format('woff2'); }
+@font-face { font-family: 'Lexend'; font-style: normal; font-weight: 700; font-display: swap; src: url('fuentes/lectura/lexend-700.woff2') format('woff2'); }
+@font-face { font-family: 'OpenDyslexic'; font-style: normal; font-weight: 400; font-display: swap; src: url('fuentes/lectura/opendyslexic-400.woff2') format('woff2'); }
+@font-face { font-family: 'OpenDyslexic'; font-style: normal; font-weight: 700; font-display: swap; src: url('fuentes/lectura/opendyslexic-700.woff2') format('woff2'); }
+@font-face { font-family: 'Roboto Mono'; font-style: normal; font-weight: 400; font-display: swap; src: url('fuentes/lectura/roboto-mono-400.woff2') format('woff2'); }
+@font-face { font-family: 'Roboto Mono'; font-style: normal; font-weight: 700; font-display: swap; src: url('fuentes/lectura/roboto-mono-700.woff2') format('woff2'); }
+
+html[data-fuente-ui="atkinson"] { --font: "Atkinson Hyperlegible", "Nunito", system-ui, sans-serif; }
+html[data-fuente-ui="lexend"] { --font: "Lexend", "Nunito", system-ui, sans-serif; }
+html[data-fuente-ui="opendyslexic"] { --font: "OpenDyslexic", "Nunito", system-ui, sans-serif; }
+html[data-fuente-ui="roboto-mono"] { --font: "Roboto Mono", "Nunito", ui-monospace, monospace; }

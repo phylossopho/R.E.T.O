@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="papel">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ayuda - Aventura gráfica - R.E.T.O.</title>
+<link rel="preload" href="../../../styles/fuentes/nunito.css" as="style">
+<link rel="stylesheet" href="../../../styles/fuentes/nunito.css">
+<link rel="stylesheet" href="../../../styles/styles.css?v=c103-ding3">
+<script>
+// El tema y el interruptor de animaciones se aplican aqui, en el head, y no al
+// final del body: si se hiciera despues, el navegador pintaria primero el
+// estado por defecto y luego lo cambiaria, y se veria un destello en cada carga.
+(function () {
+  var t = localStorage.getItem('tema');
+  if (t) { document.documentElement.setAttribute('data-theme', t); }
+  // Las animaciones tienen tres estados, y el atributo es el que manda:
+  //   "on"   la persona las prendio, y gana su eleccion sobre el sistema
+  //   "off"  las apago, y se quedan apagadas siempre
+  //   nada   todavia no ha decidido, y decide el sistema operativo
+  // Por eso el "on" se escribe explicitamente: sin el, las reglas del sistema
+  // lo volvian a apagar y el interruptor no servia para nada.
+  var a = localStorage.getItem('animaciones');
+  if (a === 'off' || a === 'on') { document.documentElement.setAttribute('data-anim', a); }
+
+  // Las tarjetas se animan solo la primera vez de cada sesion. CSS no tiene
+  // memoria, asi que el aviso se deja aqui, en el head, antes de pintar: si se
+  // hiciera al final del body, las tarjetas alcanzarian a animarse y despues se
+  // congelarian, que se ve como un salto.
+  //
+  // Con try/catch porque en algunos modos de privacidad el almacenamiento
+  // lanza al escribir. Si eso pasa, el atributo no se pone, la animacion se
+  // repite y no se rompe nada: es como estaba antes.
+  try {
+    // ?anim=1 fuerza la entrada de las tarjetas aunque esta sesion ya las haya
+    // visto. Sin esto no habria forma de comprobar que la animacion funciona:
+    // solo se veria una vez al abrir el navegador, y no se sabria si a la
+    // segunda ya no aparece por decision o porque dejo de funcionar.
+    var forzar = /[?&]anim=1/.test(location.search);
+    if (sessionStorage.getItem('reto_anim_tarjetas') && !forzar) {
+      document.documentElement.setAttribute('data-anim-tarjetas', 'off');
+    } else {
+      sessionStorage.setItem('reto_anim_tarjetas', '1');
+    }
+  } catch (e) {}
+})();
+</script>
+<script src="../../../scripts/reto-panel-prefs.js?v=c02-fuente-ui"></script>
+</head>
+<body>
+<header>
+<h1>Ayuda de la aventura gráfica</h1>
+</header>
+<main class="red-pagina ayuda-aventura">
+<p class="red-nota">Aquí está todo lo que se ha diseñado para la aventura: cómo se juega, los personajes, los power ups, las pantallas y todo lo que puedes ajustar. <a href="aventura.html">Volver a la aventura</a>.</p>
+
+<nav aria-label="Índice de la ayuda">
+<ol class="ayuda-indice">
+<li><a href="#que-es">Qué es la aventura</a></li>
+<li><a href="#turno">Cómo es un turno</a></li>
+<li><a href="#personajes">Personajes, clases e incógnito</a></li>
+<li><a href="#dano">Daño y vida</a></li>
+<li><a href="#tiempo">El tiempo</a></li>
+<li><a href="#powerups">Power ups: cómo se ganan</a></li>
+<li><a href="#equipo">Inventario y equipo</a></li>
+<li><a href="#catalogo">Los 27 power ups</a></li>
+<li><a href="#estados">Efectos activos en pantalla</a></li>
+<li><a href="#interfaces">Las tres interfaces</a></li>
+<li><a href="#layout">Editar el layout</a></li>
+<li><a href="#configuracion">Configuración</a></li>
+<li><a href="#imagenes">Fondos, sprites y frases</a></li>
+<li><a href="#duelo">Duelo por wifi y Ding!</a></li>
+<li><a href="#nivel">Nivel de práctica</a></li>
+<li><a href="#accesibilidad">Accesibilidad y tus datos</a></li>
+</ol>
+</nav>
+
+<section id="que-es" class="ayuda-seccion">
+<h2>Qué es la aventura</h2>
+<p>Un juego de batallas por turnos donde <strong>las armas son las preguntas</strong>. Eliges un test, te enfrentas a un enemigo y contestas sus preguntas: si aciertas contraatacas y si fallas recibes el golpe. Ganas practicando: lo que aciertas te da power ups y sube tu nivel de práctica.</p>
+<p>La batalla termina cuando alguien se queda sin vida. Si se acaban las preguntas antes, gana quien tenga más vida (o es empate).</p>
+</section>
+
+<section id="turno" class="ayuda-seccion">
+<h2>Cómo es un turno</h2>
+<ol>
+<li>El enemigo presenta una pregunta con una <strong>frase propia de su personaje</strong> («El mago traza un círculo arcano y te lanza esta pregunta:»).</li>
+<li>Eliges una de las respuestas. Las reglas las decide el servidor: tu pantalla nunca conoce la respuesta correcta de la pregunta en curso.</li>
+<li><strong>Aciertas:</strong> contraatacas y el enemigo pierde vida. <strong>Fallas:</strong> recibes el golpe.</li>
+<li>Con el <em>número grande</em> activado (Configuración › Comportamiento de batalla), el resultado sale como un número <strong>junto al HP</strong> de quien pierde vida, con el mismo tamaño de letra que el HP: <strong style="color:#e65100">naranja</strong> siempre que alguien pierde vida (tú o el enemigo, en la aventura y en el duelo) y <strong style="color:#2e7d32">verde</strong> solo cuando se gana vida con un power up. Si lo apagas, sale el texto de siempre.</li>
+<li>Pasa a la siguiente pregunta. Un power up puede usarse mientras contestas.</li>
+</ol>
+</section>
+
+<section id="personajes" class="ayuda-seccion">
+<h2>Personajes, clases e incógnito</h2>
+<p>Hay <strong>12 personajes</strong>: 6 clases en versión hombre y mujer. Se eligen en un carrusel que se mueve con las flechas, tocando una tarjeta o <strong>arrastrando con el dedo o el ratón</strong>.</p>
+<table class="ayuda-tabla">
+<thead><tr><th scope="col">Clase</th><th scope="col">Tipo</th><th scope="col">Hombre</th><th scope="col">Mujer</th></tr></thead>
+<tbody>
+<tr><th scope="row">Guerrero</th><td>Cuerpo a cuerpo</td><td>Guerrero</td><td>Guerrera</td></tr>
+<tr><th scope="row">Caballero</th><td>Cuerpo a cuerpo</td><td>Caballero</td><td>Caballera</td></tr>
+<tr><th scope="row">Mago</th><td>Magia</td><td>Mago</td><td>Maga</td></tr>
+<tr><th scope="row">Clérigo</th><td>Magia</td><td>Clérigo</td><td>Sacerdotisa</td></tr>
+<tr><th scope="row">Asesino</th><td>Sigilo</td><td>Asesino</td><td>Asesina</td></tr>
+<tr><th scope="row">Arquero</th><td>Sigilo</td><td>Arquero</td><td>Arquera</td></tr>
+</tbody>
+</table>
+<p><strong>Ventaja de clase:</strong> cuerpo a cuerpo gana a magia, magia gana a sigilo y sigilo gana a cuerpo a cuerpo. Dentro del mismo tipo nadie tiene ventaja. La ventaja suma <strong>3 puntos</strong> al daño (no es un multiplicador).</p>
+<p><strong>Filtros:</strong> Todos, Hombre y Mujer. <strong>❓ Incógnito:</strong> el sistema elige al azar tu personaje entre los del filtro (6 hombres, 6 mujeres o los 12) y <em>lo descubres al empezar la batalla</em>. Mientras tanto el carrusel muestra un «?» grande; si dejas una imagen en <code>imagenes/incognito/</code> se usa en su lugar.</p>
+</section>
+
+<section id="dano" class="ayuda-seccion">
+<h2>Daño y vida</h2>
+<ul>
+<li><strong>Daño de un golpe</strong> = daño base + ventaja de clase (3 puntos). Nunca menos de 1.</li>
+<li>El <strong>daño por ataque o error</strong> (de 3 % a 10 %) y las <strong>preguntas por batalla</strong> (de 10 a 30) se ajustan en la configuración.</li>
+<li><strong>Dificultad del enemigo</strong> (su vida): Fácil 80, Normal 100, Difícil 120.</li>
+<li>La vida se ve <strong>debajo de la barra, en números grandes</strong>.</li>
+</ul>
+</section>
+
+<section id="tiempo" class="ayuda-seccion">
+<h2>El tiempo (opcional)</h2>
+<p>Se activa en Configuración › Comportamiento de batalla («Pérdida de HP por tiempo»). Sin tiempo, puedes pensar lo que quieras.</p>
+<ul>
+<li>Cada pregunta tiene <strong>30 segundos</strong>. El contador de segundos es grande y, en los últimos 5, se invierte de color para que se sienta la presión (sin parpadeos).</li>
+<li>Desde que aparece la pregunta pierdes <strong>0,3 % de tu vida máxima por cada segundo</strong> sin responder.</li>
+<li><strong>Si se acaba el tiempo</strong>, la pregunta cuenta como fallo: recibes el golpe del enemigo y pasas a otra pregunta con el reloj completo.</li>
+<li>Los power ups de tiempo mueven el reloj: «más tiempo» deja pasar segundos sin perder vida y «restar tiempo» se los cobra de golpe al rival.</li>
+</ul>
+</section>
+
+<section id="powerups" class="ayuda-seccion">
+<h2>Power ups: cómo se ganan</h2>
+<ul>
+<li>Se ganan <strong>acertando</strong> en la aventura y en los tests <em>asociar, escribir y resolver</em>. No dan power ups las tarjetas de estudio, los mini juegos ni el duelo.</li>
+<li>Cada <strong>10 aciertos acumulados</strong> (no tienen que ser seguidos) recibes <strong>1 o 2</strong> power ups al azar. Probabilidad por rareza: 60 % comunes, 25 % especiales, 10 % raros, 5 % muy raros.</li>
+<li><strong>Raro asegurado:</strong> el power up número 50, 100, 150… que recibes es siempre raro o muy raro.</li>
+<li><strong>Tope diario:</strong> máximo 10 power ups al día. Con el tope alcanzado puedes seguir practicando, pero esos aciertos no cuentan para el premio (así no pierdes progreso).</li>
+<li>Si abandonas una batalla a la mitad, no hay premios.</li>
+</ul>
+</section>
+
+<section id="equipo" class="ayuda-seccion">
+<h2>Inventario y equipo</h2>
+<ul>
+<li>Guardas hasta <strong>12</strong> power ups en tu inventario.</li>
+<li>A cada batalla llevas un <strong>equipo de hasta 6</strong>: 3 comunes, 2 especiales y 1 raro o muy raro. Se arma en <a href="equipo.html">Inventario y equipo</a>.</li>
+<li><strong>Usos por batalla:</strong> comunes 3, especiales 2, raros 1 y muy raros 1. Usarlos <strong>gasta una copia</strong> del inventario.</li>
+<li><strong>Sinergia:</strong> cada power up funciona mejor con una clase (última columna del catálogo). Cada clase tiene 6.</li>
+<li>Algunos solo sirven con tiempo activado (marcados en el catálogo).</li>
+</ul>
+</section>
+
+<section id="catalogo" class="ayuda-seccion">
+<h2>Los 27 power ups</h2>
+<div class="ayuda-tabla-caja" tabindex="0" role="region" aria-label="Catálogo de power ups (se desplaza)">
+<table class="ayuda-tabla">
+<thead><tr><th scope="col">Nombre</th><th scope="col">Rareza</th><th scope="col">Qué hace</th><th scope="col">Mejor con</th></tr></thead>
+<tbody>
+<tr><th scope="row">Poción menor</th><td>Común</td><td>Cura 20 puntos de vida.</td><td>Clérigo/Sacerdotisa</td></tr>
+<tr><th scope="row">Reloj de arena</th><td>Común</td><td>Te da 8 segundos más para responder. <em>(solo con tiempo)</em></td><td>Mago/a</td></tr>
+<tr><th scope="row">Filo afilado</th><td>Común</td><td>Tu próximo golpe hace un 20 % más de daño.</td><td>Guerrero/a</td></tr>
+<tr><th scope="row">Vista de águila</th><td>Común</td><td>Muestra el tema de la pregunta.</td><td>Arquero/a</td></tr>
+<tr><th scope="row">Escudo de madera</th><td>Común</td><td>Absorbe 10 puntos del próximo daño.</td><td>Caballero/a</td></tr>
+<tr><th scope="row">Daga rápida</th><td>Común</td><td>Si respondes en menos de la mitad del tiempo, tu golpe hace un 20 % más. <em>(solo con tiempo)</em></td><td>Asesino/a</td></tr>
+<tr><th scope="row">Segundo aliento</th><td>Común</td><td>Cura 15 puntos de vida.</td><td>Guerrero/a, Caballero/a</td></tr>
+<tr><th scope="row">Mente clara</th><td>Común</td><td>El próximo daño que recibas baja un 20 %.</td><td>Mago/a, Clérigo/Sacerdotisa</td></tr>
+<tr><th scope="row">Tiro certero</th><td>Común</td><td>Quita 8 puntos de vida al rival.</td><td>Asesino/a, Arquero/a</td></tr>
+<tr><th scope="row">Purificar</th><td>Especial</td><td>Devuelve los puntos del último daño recibido (hasta 30).</td><td>Clérigo/Sacerdotisa</td></tr>
+<tr><th scope="row">50/50</th><td>Especial</td><td>Quita 2 respuestas incorrectas.</td><td>Mago/a</td></tr>
+<tr><th scope="row">Grito de guerra</th><td>Especial</td><td>Anula tu desventaja de clase por 1 turno.</td><td>Guerrero/a</td></tr>
+<tr><th scope="row">Muralla</th><td>Especial</td><td>Absorbe el siguiente daño que recibas (hasta 30 puntos).</td><td>Caballero/a</td></tr>
+<tr><th scope="row">Zancadilla</th><td>Especial</td><td>El rival pierde 5 segundos en su próxima pregunta. <em>(solo con tiempo)</em></td><td>Asesino/a</td></tr>
+<tr><th scope="row">Atajo</th><td>Especial</td><td>Cambia la pregunta por otra, sin daño ni premio.</td><td>Arquero/a</td></tr>
+<tr><th scope="row">Embestida</th><td>Especial</td><td>Quita 20 puntos de vida al rival.</td><td>Guerrero/a, Caballero/a</td></tr>
+<tr><th scope="row">Aura</th><td>Especial</td><td>Los próximos 3 daños que recibas bajan un 25 %.</td><td>Mago/a, Clérigo/Sacerdotisa</td></tr>
+<tr><th scope="row">Segunda oportunidad</th><td>Especial</td><td>Si fallas, puedes elegir otra respuesta (1 vez).</td><td>Asesino/a, Arquero/a</td></tr>
+<tr><th scope="row">Gran sanación</th><td>Raro</td><td>Cura 60 puntos de vida.</td><td>Clérigo/Sacerdotisa</td></tr>
+<tr><th scope="row">Tormenta de ideas</th><td>Raro</td><td>Te da 20 segundos más para responder. <em>(solo con tiempo)</em></td><td>Mago/a</td></tr>
+<tr><th scope="row">Golpe doble</th><td>Raro</td><td>Tu próximo golpe hace el doble de daño.</td><td>Guerrero/a</td></tr>
+<tr><th scope="row">Fortaleza</th><td>Raro</td><td>Los próximos 3 daños que recibas se reducen a la mitad.</td><td>Caballero/a</td></tr>
+<tr><th scope="row">Ataque furtivo</th><td>Raro</td><td>Si respondes en menos de la mitad del tiempo, tu golpe hace el triple. <em>(solo con tiempo)</em></td><td>Asesino/a</td></tr>
+<tr><th scope="row">Lluvia de flechas</th><td>Raro</td><td>El rival pierde 8 puntos al inicio de sus próximos 3 turnos.</td><td>Arquero/a</td></tr>
+<tr><th scope="row">Furia imparable</th><td>Muy raro</td><td>Tus próximos 3 golpes hacen un 50 % más y el tiempo no te quita vida durante 3 turnos.</td><td>Guerrero/a, Caballero/a</td></tr>
+<tr><th scope="row">Milagro</th><td>Muy raro</td><td>Cura 100 puntos de vida (hasta el máximo).</td><td>Mago/a, Clérigo/Sacerdotisa</td></tr>
+<tr><th scope="row">Eclipse</th><td>Muy raro</td><td>El rival pierde su siguiente ataque y tu próximo golpe hace el doble.</td><td>Asesino/a, Arquero/a</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="estados" class="ayuda-seccion">
+<h2>Efectos activos en pantalla</h2>
+<p>Mientras un power up sigue haciendo efecto, <strong>se nota en el personaje que lo tiene</strong> y se queda hasta que el efecto pasa (se acaban los golpes o los turnos):</p>
+<ul>
+<li>Un <strong>aura</strong> suave detrás del personaje (azul para el escudo, naranja para el daño extra, etc.).</li>
+<li>Una <strong>etiqueta</strong> con lo que hace y lo que le queda, por ejemplo «▲ 🛡️ Escudo 30 · 1 golpe». Los efectos <em>a favor</em> llevan ▲ y los <em>en contra</em> llevan ▼ (sangrado, menos tiempo, pierdes el ataque): el color nunca es la única señal.</li>
+<li>Se ven también los efectos que <strong>el rival te puso</strong> y los suyos (su escudo, su reducción de daño).</li>
+<li>Al usar un power up sale un <strong>destello</strong> con su icono sobre quien recibe el efecto, y si cambia la vida, el número junto al HP (verde si curas).</li>
+</ul>
+<p>Con las animaciones apagadas el aura se queda fija, pero se sigue viendo.</p>
+</section>
+
+<section id="interfaces" class="ayuda-seccion">
+<h2>Las tres interfaces</h2>
+<ul>
+<li><strong>Modelo 1 – Clásico dividido:</strong> el escenario arriba con los dos personajes y sus barras de vida, la pregunta, las opciones 2×2, el tiempo y el inventario. Se puede editar el layout.</li>
+<li><strong>Modelo 2 – Jefe frontal:</strong> el enemigo grande de frente, la lista vertical de opciones y el inventario al lado. Se puede editar el layout.</li>
+<li><strong>Modelo 3 – Minimalista blanco y negro:</strong> solo texto, estilo terminal retro. Es la opción de poca estimulación, a propósito sin imágenes; su layout también se puede editar.</li>
+</ul>
+</section>
+
+<section id="layout" class="ayuda-seccion">
+<h2>Editar el layout</h2>
+<p>Con el lápiz del modal de Configuración puedes <strong>mover, redimensionar, escalar y ordenar en capas</strong> todos los elementos de la batalla, en los <strong>tres modelos</strong>. Funciona también en celular.</p>
+<ul>
+<li><strong>Mover y redimensionar:</strong> toca un elemento para seleccionarlo y arrástralo; los tiradores de las esquinas y los lados cambian el tamaño de su caja (en pantalla táctil son más grandes). Al cambiar un lado, <strong>el lado contrario no se mueve</strong>.</li>
+<li><strong>Escalar</strong> (distinto de redimensionar): el icono morado de flechas, debajo del elemento seleccionado, lo agranda o achica <em>entero</em> (texto, botones, animaciones, números de vida…) de 50 % a 300 %. También con los botones − y +, o con las teclas + y −. Un doble toque en el icono, o pulsar el porcentaje, vuelve a 100 %.</li>
+<li><strong>Capas:</strong> los botones ⏬ ⬇ ⬆ ⏫ mandan el elemento al fondo, una capa atrás, una capa adelante o al frente. Sirve, por ejemplo, para poner el escenario <em>detrás</em> de las barras de vida y el tiempo.</li>
+<li><strong>Respuestas:</strong> al seleccionar su contenedor eliges verlas como <strong>lista</strong> o como <strong>cuadrícula 2×2</strong>; la cuadrícula se ajusta sola al ancho de su contenedor (si se angosta, baja a una columna).</li>
+<li>Las <strong>líneas guía</strong> (imanes) ayudan a alinear; se pueden apagar. <strong>Guardar</strong>, <strong>Restablecer</strong> y <strong>Cancelar</strong> están en la barra del editor.</li>
+<li>Cada modelo guarda su propio layout, y hay uno para pantalla ancha y otro para pantalla chica (menos de 720 px).</li>
+<li>Elementos editables — <em>Modelo 1:</em> escenario, vida y nombre de cada quien, sus personajes, pregunta, respuestas, tiempo e inventario. <em>Modelo 2:</em> vida del jugador, tiempo, vida del rival, escenario (fondo), personaje y nombre del rival, pregunta, respuestas e inventario. <em>Modelo 3:</em> los mismos bloques de texto, incluidos los nombres y el VS.</li>
+</ul>
+</section>
+
+<section id="configuracion" class="ayuda-seccion">
+<h2>Configuración</h2>
+<p>El engrane abre el modal con secciones <strong>plegadas</strong> (se despliegan al tocarlas): Animaciones, Comportamiento de batalla, Sonidos, Textos y fuentes e Interfaz de la batalla. El botón verde con la palomita, abajo a la derecha del modal, lo cierra; los cambios ya se guardan al hacerlos.</p>
+<ul>
+<li><strong>Comportamiento de batalla:</strong> pérdida de HP por tiempo, número grande al acertar o fallar, daño por ataque, preguntas por batalla y dificultad.</li>
+<li><strong>Animaciones:</strong> un interruptor apaga las animaciones de la batalla (sprites, números, auras y destellos); entonces solo cambian las poses. Va aparte del interruptor general del sitio, que también se respeta.</li>
+<li><strong>Configuración separada por modelo:</strong> la apariencia (fuente, tamaños de texto, alto y ancho de la escena, tamaño de los sprites y posición de cada bloque) se guarda aparte para cada modelo de interfaz; lo que cambia cómo se juega (tiempo, daño, dificultad, número junto al HP, animaciones, diálogos) es común a los tres. El modal muestra de qué modelo son los ajustes que ves.</li>
+<li><strong>Sonido:</strong> solo suena el contestar bien.</li>
+<li><strong>Textos y fuentes:</strong> fuente, tamaño de la pregunta y <strong>diálogos de oponentes</strong> (las frases de cada personaje; se pueden apagar).</li>
+</ul>
+</section>
+
+<section id="imagenes" class="ayuda-seccion">
+<h2>Fondos, sprites y frases</h2>
+<ul>
+<li><strong>Fondos:</strong> cada batalla elige uno al azar de <code>imagenes/fondos/</code>. Para agregar uno basta con dejar la imagen en la carpeta.</li>
+<li><strong>Sprites:</strong> <code>imagenes/sprites/&lt;personaje&gt;/&lt;frente o espalda&gt;/&lt;espera, ataque o herido&gt;.webp</code>. El adversario se ve de frente y tú de espalda. Si falta una pose o un personaje se usa la imagen de siempre. Las poses cambian según lo que pasa: llega una pregunta (el enemigo ataca), aciertas (contraatacas y el enemigo queda herido) o fallas (recibes el golpe).</li>
+<li><strong>Frases:</strong> 15 por personaje (180 en total), con el género de cada uno.</li>
+<li>Las animaciones se apagan con el interruptor de animaciones del sitio o con la preferencia de movimiento reducido del sistema: entonces solo cambia la pose.</li>
+</ul>
+</section>
+
+<section id="duelo" class="ayuda-seccion">
+<h2>Duelo por wifi y Ding!</h2>
+<ul>
+<li><strong>Duelo:</strong> dos jugadores en la misma red, con sala de 4 letras, cada quien con su mazo de 24 a 30 preguntas. El atacante elige una de 4 preguntas de su mazo (en el lugar de las respuestas) y el otro contesta; si acierta, contraataca. <strong>La clase y el avatar del rival son secretos</strong>: solo ves su nombre y nivel. Se usa tu <em>tarjeta de jugador</em> para llevar nivel y power ups a un servidor ajeno, donde se usan sin gastarse.</li>
+<li><strong>Ding!:</strong> un quiz bowl para 2 a 4 jugadores con una persona que presenta su propio test. Está en la categoría Multijugador.</li>
+<li>Los power ups no se ganan en el duelo ni en Ding!.</li>
+</ul>
+</section>
+
+<section id="nivel" class="ayuda-seccion">
+<h2>Nivel de práctica</h2>
+<p>Es un número que refleja cuánto has practicado, para que dé gusto seguir. Suman la lectura y los ejercicios de visión (1 punto por minuto) y la aventura, el duelo y Ding! (5 por ronda más 0,5 por pregunta). Los mini juegos no suman. Hay un tope de 120 puntos por día, y el nivel crece cada vez más despacio.</p>
+</section>
+
+<section id="accesibilidad" class="ayuda-seccion">
+<h2>Accesibilidad y tus datos</h2>
+<ul>
+<li>Todo se puede usar con teclado, con foco visible; los avisos se anuncian a lectores de pantalla.</li>
+<li>El color nunca es la única señal (símbolos, texto y signos acompañan a verde, naranja y azul) y nada parpadea.</li>
+<li>Las animaciones se apagan con el interruptor del sitio o el movimiento reducido del sistema.</li>
+<li>Tus power ups, aciertos, equipo y ajustes viven <strong>en este navegador</strong> y entran en el respaldo de Configuración › Datos.</li>
+</ul>
+</section>
+</main>
+<div class="panel-flotante" data-panel>
+  <a class="panel-boton" href="aventura.html"
+     aria-label="Volver a la aventura" title="Volver a la aventura">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8592;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></span>
+  </a>
+  <a class="panel-boton" href="../../../index.html"
+     aria-label="Ir a la portada" title="Ir a la portada">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8962;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 3l9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/><path d="M10 21v-6h4v6"/></svg></span>
+  </a>
+</div>
+<footer hidden>
+<p>R.E.T.O.</p>
+</footer>
+<script src="../../../scripts/reto-arrastrar.js"></script>
+<script src="../../../scripts/reto-panel.js?v=c04-f73a0fa9"></script>
+<script src="../../../scripts/reto-debug.js?v=c25-5ac10ea0"></script>
+<script src="../../../scripts/reto-datos.js?v=c19-c6fe548d"></script>
+<script src="../../../scripts/reto-progreso.js?v=n2"></script>
+</body>
+</html>

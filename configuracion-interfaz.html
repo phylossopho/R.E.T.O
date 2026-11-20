@@ -6,8 +6,8 @@
 <title>Interfaz y Fondos - Configuración - R.E.T.O.</title>
 <link rel="preload" href="styles/fuentes/nunito.css" as="style">
 <link rel="stylesheet" href="styles/fuentes/nunito.css">
-<link rel="stylesheet" href="styles/styles.css?v=c85-flexfix">
-<script src="scripts/reto-panel-prefs.js?v=c01-0f3ddb54"></script>
+<link rel="stylesheet" href="styles/styles.css?v=c103-ding3">
+<script src="scripts/reto-panel-prefs.js?v=c02-fuente-ui"></script>
 <script>
 (function () {
   var t = localStorage.getItem('tema') || 'papel';
@@ -60,6 +60,37 @@ Elige un detalle sutil para el fondo de las interfaces que enriquezca la estéti
   Todas las texturas cumplen con WCAG 1.4.3 (contraste superior a 4.5:1 en textos sobre contenedores sólidos) y WCAG 2.3.1 (fondos completamente estáticos y sin parpadeo).
 </p>
 </fieldset>
+<fieldset>
+<legend id="titulo-fuente">Letra de toda la interfaz</legend>
+<p class="ayuda">
+Elige la letra con la que se escribe todo el sitio: botones, menús, textos y ejercicios. La de las lecturas, que se elige aparte dentro de cada lectura, no cambia. Todas están incluidas en el sitio (no se piden a internet) y traen la ñ, los acentos y los signos de apertura.
+</p>
+<div class="opciones" role="radiogroup" aria-labelledby="titulo-fuente">
+  <label class="opcion">
+    <input type="radio" name="fuente-ui" value="nunito" checked>
+    <span style="font-family: 'Nunito', system-ui, sans-serif;">Nunito (la del sitio): redonda y amable</span>
+  </label>
+  <label class="opcion">
+    <input type="radio" name="fuente-ui" value="atkinson">
+    <span style="font-family: 'Atkinson Hyperlegible', 'Nunito', sans-serif;">Atkinson Hyperlegible: cada letra se distingue de las otras</span>
+  </label>
+  <label class="opcion">
+    <input type="radio" name="fuente-ui" value="lexend">
+    <span style="font-family: 'Lexend', 'Nunito', sans-serif;">Lexend: letras abiertas, cómoda para leer</span>
+  </label>
+  <label class="opcion">
+    <input type="radio" name="fuente-ui" value="opendyslexic">
+    <span style="font-family: 'OpenDyslexic', 'Nunito', sans-serif;">OpenDyslexic: base pesada; a algunas personas con dislexia les ayuda</span>
+  </label>
+  <label class="opcion">
+    <input type="radio" name="fuente-ui" value="roboto-mono">
+    <span style="font-family: 'Roboto Mono', 'Nunito', monospace;">Roboto Mono: ancho fijo, clara y sobria</span>
+  </label>
+</div>
+<p class="ayuda" style="margin-top: var(--space-md);">
+El cambio se ve al instante y se guarda en este navegador. Si no te gusta, vuelve a elegir Nunito.
+</p>
+</fieldset>
 </form>
 </main>
 <div class="panel-flotante" data-panel>
@@ -94,6 +125,25 @@ Elige un detalle sutil para el fondo de las interfaces que enriquezca la estéti
         document.documentElement.setAttribute('data-fondo', val);
         localStorage.setItem('fondo_estilo', val);
       }
+    });
+  });
+})();
+</script>
+<script>
+// Selector de la letra de toda la interfaz (la aplica reto-panel-prefs.js al cargar cada pagina).
+(function () {
+  var radios = document.querySelectorAll('input[name="fuente-ui"]');
+  if (!radios.length) return;
+  var validas = ['nunito', 'atkinson', 'lexend', 'opendyslexic', 'roboto-mono'];
+  var guardada = 'nunito';
+  try { guardada = localStorage.getItem('fuente_ui') || 'nunito'; } catch (e) {}
+  if (validas.indexOf(guardada) < 0) guardada = 'nunito';
+  radios.forEach(function (r) { if (r.value === guardada) r.checked = true; });
+  radios.forEach(function (r) {
+    r.addEventListener('change', function () {
+      if (!this.checked) return;
+      document.documentElement.setAttribute('data-fuente-ui', this.value);
+      try { localStorage.setItem('fuente_ui', this.value); } catch (e) {}
     });
   });
 })();

@@ -5,8 +5,10 @@
 ## Módulos
 
 - **Lectura Veloz:** práctica por palabra, grupos de palabras, frases y modo galáctico. Permite elegir textos de la biblioteca y ajustar ritmo y presentación.
-- **Evaluaciones:** banco de tests fijos y dinámicos, importación desde texto marcado, resolución en varios formatos, seguimiento de preguntas por repasar y **Aventura Gráfica (Modo RPG)** con selección de avatares en formato WebP, inventario estratégico de Power-Ups y HUD compacto de combate.
-- **Mini-juegos:** Mahjong, Memorama, tablas de Schulte, memoria secuencial y Stroop.
+- **Evaluaciones:** banco de tests fijos y dinámicos, importación desde texto marcado, resolución en varios formatos, seguimiento de preguntas por repasar y **Aventura Gráfica (Modo RPG)** con tres interfaces de batalla, editor de layout, 27 power ups que se ganan acertando y se llevan como equipo, y nivel de práctica.
+- **Mini-juegos:** Mahjong, Memorama, memoria secuencial y Stroop.
+- **Visión:** ejercicios para descansar y entrenar la vista (seguimiento, sacadas, tablas de Schulte, periferia, destello, pausa 20-20-20…). Ver `vision.md`.
+- **Multijugador:** duelos de dos por wifi local, sin internet: salas con código, mazos propios, turnos con contraataque, power ups y tarjeta de jugador; y **Ding!**, un quiz bowl de 2 a 4 jugadores con una persona que presenta. Ver `multijugador.md` y `rpg.md`.
 - **Biblioteca:** importa, organiza, lee y practica con textos propios.
 - **Organizando ideas:** espacio para registrar y relacionar ideas.
 - **Configuración:** temas, animaciones, sonidos, paneles y respaldo/restauración de datos.
@@ -83,3 +85,7 @@ El servidor escucha en todas las interfaces de red para permitir el acceso desde
 - `manifest.webmanifest`, `sw.js` y `pwa/`: instalación y recursos de la PWA.
 
 La documentación de Lectura Veloz está en [lectura-veloz.md](lectura-veloz.md). Los prompts de ejemplo para generar contenido están en `ejemplos/`.
+
+## Para continuar el desarrollo
+
+Lee `CONTEXTO-PROYECTO.md`: qué hay hecho, cómo se trabaja aquí, las decisiones tomadas y lo que falta.

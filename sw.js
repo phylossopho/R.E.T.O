@@ -1,13 +1,43 @@
-const CACHE_NAME = 'reto-shell-v2';
-const SHELL_FILES = [
-  '/',
-  '/index.html',
-  '/offline.html',
-  '/manifest.webmanifest',
-  '/styles/fuentes/nunito.css',
-  '/styles/fuentes/nunito-300.woff2',
-  '/pwa/icon-192.png',
-  '/pwa/icon-512.png'
+/* =========================================================================
+   R.E.T.O. - Service Worker para GitHub Pages + local
+   -------------------------------------------------------------------------
+   Funciona tanto en:
+     - Local: http://localhost:8000/  (scope = /)
+     - GitHub Pages: https://usuario.github.io/R.E.T.O_gemini/  (scope = /R.E.T.O_gemini/)
+   ========================================================================= */
+
+// Detectar base path automáticamente desde el scope del SW
+var BASE_PATH = (self.registration && self.registration.scope) ? new URL(self.registration.scope).pathname : '/';
+if (BASE_PATH !== '/' && !BASE_PATH.endsWith('/')) BASE_PATH += '/';
+
+function joinPath(base, path) {
+  if (!path) return base;
+  if (path.startsWith('/')) path = path.slice(1);
+  var baseClean = base.endsWith('/') ? base.slice(0, -1) : base;
+  return baseClean + '/' + path;
+}
+
+function isApi(url) {
+  return url.pathname.startsWith(joinPath(BASE_PATH, 'api/'));
+}
+
+function isSameOrigin(url) {
+  return url.origin === self.location.origin;
+}
+
+var CACHE_NAME = 'reto-shell-v3';
+var SHELL_FILES = [
+  joinPath(BASE_PATH, '/'),
+  joinPath(BASE_PATH, 'index.html'),
+  joinPath(BASE_PATH, 'offline.html'),
+  joinPath(BASE_PATH, 'manifest.webmanifest'),
+  joinPath(BASE_PATH, 'styles/fuentes/nunito.css'),
+  joinPath(BASE_PATH, 'styles/fuentes/nunito-300.woff2'),
+  joinPath(BASE_PATH, 'pwa/icon-192.png'),
+  joinPath(BASE_PATH, 'pwa/icon-512.png'),
+  // Datos necesarios para lógica offline
+  joinPath(BASE_PATH, 'datos/powerups.json'),
+  joinPath(BASE_PATH, 'datos/powerups_textos.json')
 ];
 
 self.addEventListener('install', function (event) {
@@ -32,12 +62,12 @@ self.addEventListener('fetch', function (event) {
   var request = event.request;
   var url = new URL(request.url);
 
-  if (request.method !== 'GET' || url.origin !== self.location.origin ||
-      url.pathname.indexOf('/api/') === 0 ||
-      url.pathname === '/direccion-del-sitio.txt') return;
+  // Solo GET, mismo origen, no API
+  if (request.method !== 'GET' || !isSameOrigin(url) || isApi(url) ||
+      url.pathname.endsWith('/direccion-del-sitio.txt')) return;
 
-  // Network-first for navigation (HTML pages)
-  if (request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname === '/') {
+  // Network-first para navegación (HTML pages)
+  if (request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname === BASE_PATH || url.pathname === BASE_PATH.slice(0, -1)) {
     event.respondWith(
       fetch(request).then(function (response) {
         if (response.ok) {
@@ -49,14 +79,14 @@ self.addEventListener('fetch', function (event) {
         return response;
       }).catch(function () {
         return caches.match(request).then(function (guardada) {
-          return guardada || caches.match('/offline.html');
+          return guardada || caches.match(joinPath(BASE_PATH, 'offline.html'));
         });
       })
     );
     return;
   }
 
-  // Stale-while-revalidate for CSS, JS, and other assets
+  // Stale-while-revalidate para CSS, JS, imágenes, fuentes, datos
   event.respondWith(
     caches.match(request).then(function (guardada) {
       var fetchPromise = fetch(request).then(function (networkResponse) {
@@ -68,7 +98,7 @@ self.addEventListener('fetch', function (event) {
         }
         return networkResponse;
       }).catch(function () {
-        // Fallback if offline
+        // Fallback si offline
         return guardada;
       });
 

@@ -79,6 +79,8 @@
       nota: 'Letras con la base pesada. A algunas personas con dislexia les ayuda; a otras no.' },
     { id: 'merriweather', nombre: 'Merriweather', familia: 'Merriweather',
       nota: 'Con remates, como un libro. Hecha para leer en pantalla.' },
+    { id: 'roboto-mono', nombre: 'Roboto Mono', familia: 'Roboto Mono',
+      nota: 'De ancho fijo, clara y sobria. Cada letra y cada número se distinguen bien.' },
     { id: 'orbitron', nombre: 'Orbitron', familia: 'Orbitron',
       nota: 'De ciencia ficción. Muy de espacio, pero cansa en textos largos.' }
   ];

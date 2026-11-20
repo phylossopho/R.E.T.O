@@ -83,6 +83,7 @@
     desvanecer: 'on',
     record: 'off',
     punto: '1',
+    fallo: 'mensaje',       // al fallar: mensaje | sacudida | nada
     letra: '2',
     fuente: 'nunito',
     sonidoAcierto: 'ding',
@@ -140,6 +141,10 @@
   var errores = 0;
   var corriendo = false;
   var empieza = 0;
+  var ocultoMs = 0;        // lo que la pestana estuvo escondida: no se cuenta
+  var ocultoDesde = null;
+  var sesionMs = 0;        // lo jugado en esta visita, para el progreso
+  var objetivoEl = null;
 
   var tableroEl, mensajeEl, lectorEl, relojEl, cuentasEl, rellenoEl;
   var cfg = null;
@@ -156,7 +161,10 @@
   }
 
   function mensaje(texto) {
-    if (mensajeEl) mensajeEl.textContent = texto || '';
+    if (mensajeEl) {
+      mensajeEl.textContent = texto || '';
+      if (mensajeEl.removeAttribute) mensajeEl.removeAttribute('data-tipo');
+    }
   }
 
   function decir(texto) {
@@ -170,8 +178,14 @@
     return segundos.toFixed(2) + ' s';
   }
 
+  /* El tiempo que la pestana estuvo escondida no cuenta: el ejercicio se pausa
+     solo si se cambia de pestana (el reloj mide la vista, no la ausencia). */
+  function tiempoOculto() {
+    return ocultoMs + (ocultoDesde !== null ? performance.now() - ocultoDesde : 0);
+  }
+
   function segundos() {
-    return corriendo ? (performance.now() - empieza) / 1000 : 0;
+    return corriendo ? (performance.now() - empieza - tiempoOculto()) / 1000 : 0;
   }
 
   /* ------------------------------------------------------- los ajustes */
@@ -243,6 +257,41 @@
 
   /* ------------------------------------------------------------- pintar */
 
+  /* "Busca: ..." Solo en los contenidos sin orden natural (dibujos y colores con
+     forma), donde la persona no puede saber cual toca: lo dice la pantalla. */
+  function nombreEsperado() {
+    if (tablero && tablero.orden_detalle && tablero.orden_detalle.length) {
+      var d = tablero.orden_detalle[encontrados];
+      return d ? d.nombre : '';
+    }
+    return esperados ? String(esperados[encontrados]) : '';
+  }
+
+  /* "Busca el 7" para numeros y letras; "Busca: manzana" para dibujos y colores
+     (los nombres no comparten genero, asi que no lleva articulo). */
+  function fraseBuscar() {
+    var n = nombreEsperado();
+    return (tablero && tablero.mostrar_objetivo) ? 'Busca: ' + n + '.' : 'Busca el ' + n + '.';
+  }
+
+  function pintarObjetivo() {
+    if (!objetivoEl) return;
+    var ver = !!(tablero && tablero.mostrar_objetivo && tablero.orden_detalle &&
+                 tablero.orden_detalle[encontrados]);
+    objetivoEl.hidden = !ver;
+    while (objetivoEl.firstChild) objetivoEl.removeChild(objetivoEl.firstChild);
+    if (!ver) return;
+    var d = tablero.orden_detalle[encontrados];
+    objetivoEl.appendChild(document.createTextNode('Busca: '));
+    var simbolo = document.createElement('span');
+    simbolo.className = 'schulte-simbolo';
+    if (d.color) simbolo.setAttribute('data-color', d.color);
+    simbolo.setAttribute('aria-hidden', 'true');
+    simbolo.textContent = d.texto;
+    objetivoEl.appendChild(simbolo);
+    objetivoEl.appendChild(document.createTextNode(' ' + d.nombre));
+  }
+
   function pintarCuentas() {
     var total = tablero ? tablero.total : 1;
     if (rellenoEl) {
@@ -263,11 +312,12 @@
   function pintar() {
     pintarCuentas();
     pintarReloj();
+    pintarObjetivo();
   }
 
   function pintarTablero() {
     while (tableroEl.firstChild) tableroEl.removeChild(tableroEl.firstChild);
-    tableroEl.setAttribute('data-tamano', ajustes.tamano);
+    tableroEl.setAttribute('data-tamano', tablero.tamano || ajustes.tamano);
     tableroEl.setAttribute('data-punto', ajustes.punto === '0' ? '0' : '1');
 
     tablero.celdas.forEach(function (c) {
@@ -277,9 +327,12 @@
       b.setAttribute('data-id', String(c.id));
       /* El nombre accesible dice DÓNDE y QUÉ, no solo el número: para quien
          navega con el lector, "casilla 4, número 13" sirve; "13", no tanto. */
+      /* Dibujos y colores traen su texto, su color y su nombre: la forma se ve
+         Y se dice ("triangulo rojo"), asi que no depende solo del color. */
       b.setAttribute('aria-label', 'Casilla ' + (c.id + 1) + ', ' +
-                                   tablero.contenido + ' ' + c.valor);
-      b.textContent = c.valor;
+                                   (c.nombre ? c.nombre : tablero.contenido + ' ' + c.valor));
+      if (c.color) b.setAttribute('data-color', c.color);
+      b.textContent = c.texto || c.valor;
       tableroEl.appendChild(b);
     });
 
@@ -313,6 +366,23 @@
 
   /* -------------------------------------------------------- la partida */
 
+  /* LA TABLA QUE CABE. Una casilla nunca baja de 44 px (WCAG 2.5.8): si en esta
+     pantalla no caben las casillas del tamano pedido, se baja de 5x5 a 4x4 (o
+     a 3x3) y se avisa. No se guarda como ajuste: en otra pantalla, o girando
+     el aparato, vuelve a salir la que se pidio. */
+  var CASILLA_MIN = 44;
+
+  function tamanoQueCabe(pedido) {
+    var n = parseInt(String(pedido), 10) || 3;
+    var caja = tableroEl && tableroEl.parentElement;
+    var ancho = (caja && caja.clientWidth) || window.innerWidth || 1000;
+    var alto = (window.innerHeight || 800) - 112;     // lo que ocupan la barra y el panel
+    var lado = Math.min(ancho, alto);
+    var hueco = 8;
+    while (n > 3 && (lado - (n - 1) * hueco) / n < CASILLA_MIN) n--;
+    return n + 'x' + n;
+  }
+
   function nuevaPartida() {
     /* POR QUÉ ESTE ERROR DICE LO QUE DICE
      Un "no se pudo preparar el tablero" a secas deja a la persona sin saber qué
@@ -327,10 +397,11 @@
 
      Lo mismo pasó con los ejemplos: hasta que el servidor se levantó con la
      ruta nueva, la siembra no hizo nada en silencio. */
+    var tamanoPedido = ajustes.tamano;
     return fetch(API + '/nueva', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tamano: ajustes.tamano, contenido: ajustes.contenido })
+      body: JSON.stringify({ tamano: tamanoPedido = tamanoQueCabe(ajustes.tamano), contenido: ajustes.contenido })
     }).then(function (r) {
       if (r.ok) return r.json();
       if (r.status === 404 || r.status === 405) {
@@ -355,11 +426,14 @@
       errores = 0;
       corriendo = false;
       empieza = 0;
-      mensaje('');
+      ocultoMs = 0;
+      ocultoDesde = null;
+      mensaje(tamanoPedido !== ajustes.tamano
+        ? 'La pantalla es chica: se usa una tabla de ' + tamanoPedido + '.' : '');
       pintarTablero();
       pintar();
-      avisar('Tablero de ' + d.columnas + ' por ' + d.filas + '. Busca el ' +
-             esperados[0] + '. La primera casilla que toques empieza el reloj.');
+      avisar('Tablero de ' + d.columnas + ' por ' + d.filas + '. ' + fraseBuscar() +
+             ' La primera casilla que toques empieza el reloj.');
     });
   }
 
@@ -370,6 +444,8 @@
     if (corriendo) return;
     corriendo = true;
     empieza = performance.now();
+    ocultoMs = 0;
+    ocultoDesde = null;
   }
 
   function tocar(id) {
@@ -388,22 +464,37 @@
         el.setAttribute('data-estado', 'hecha');
         el.setAttribute('data-desvanecer', ajustes.desvanecer === 'on' ? '1' : '0');
         el.setAttribute('aria-label', 'Casilla ' + (id + 1) + ', ' +
-                                       tablero.contenido + ' ' + celda.valor + ', encontrada');
+                                       (celda.nombre ? celda.nombre : tablero.contenido + ' ' + celda.valor) + ', encontrada');
         el.tabIndex = -1;   // ya no es un objetivo: sale del recorrido del teclado
       }
       tocarSonido('acierto');
+      if (mensajeEl && mensajeEl.getAttribute('data-tipo') === 'fallo') mensaje('');
 
       if (encontrados >= esperados.length) terminar();
       else {
         pintar();
-        avisar('Muy bien. Ahora busca el ' + esperados[encontrados] + '.');
+        avisar('Muy bien. ' + fraseBuscar());
       }
     } else {
       /* AQUÍ NO SE HACE NADA. Ni color, ni sonido, ni temblor, ni reinicio.
          Solo se cuenta, y el dato sale al final. A propósito: la señal de error
          asusta más de lo que enseña, y desanima a quien ya le cuesta. */
       errores++;
-      avisar('Esa no era. Sigue buscando el ' + esperado + '.');
+      /* EL AVISO AL FALLAR (ajuste "Si te equivocas"): un mensaje neutro que
+         dice que buscar ("Busca el 7"), sin rojo ni sonido; opcionalmente una
+         sacudida suave de la casilla (no con movimiento reducido); o nada. */
+      if (ajustes.fallo !== 'nada') {
+        mensaje(fraseBuscar());
+        if (mensajeEl) mensajeEl.setAttribute('data-tipo', 'fallo');
+      }
+      if (ajustes.fallo === 'sacudida') {
+        var tocada = tableroEl.querySelector('[data-id="' + id + '"]');
+        if (tocada) {
+          tocada.classList.add('schulte-sacude');
+          window.setTimeout(function () { tocada.classList.remove('schulte-sacude'); }, 320);
+        }
+      }
+      avisar('Esa no era. ' + fraseBuscar());
     }
   }
 
@@ -439,7 +530,7 @@
   /* --------------------------------------------------------- el final */
 
   function claveMejor() {
-    return PREFIJO + 'mejor-' + ajustes.tamano + '-' + ajustes.contenido;
+    return PREFIJO + 'mejor-' + (tablero ? tablero.tamano : ajustes.tamano) + '-' + ajustes.contenido;
   }
 
   function leerMejor() {
@@ -449,7 +540,7 @@
   }
 
   function guardarHistorial(tiempo) {
-    var clave = PREFIJO + 'historial-' + ajustes.tamano + '-' + ajustes.contenido;
+    var clave = PREFIJO + 'historial-' + (tablero ? tablero.tamano : ajustes.tamano) + '-' + ajustes.contenido;
     return window.RetoDatos.obtener(clave).then(function (v) {
       var lista = (v === null || v === undefined || !Array.isArray(v)) ? [] : v;
       lista.push(Number(tiempo.toFixed(2)));
@@ -473,8 +564,10 @@
   }
 
   function terminar() {
-    corriendo = false;
     var tiempo = segundosFinales();
+    corriendo = false;
+    sesionMs += tiempo * 1000;
+    volcarSesion();
     pintar();
     tocarSonido('final');
 
@@ -526,8 +619,21 @@
     });
   }
 
+  /* EL PROGRESO. Cada visita suma lo jugado y, cuando junta un minuto, avisa a
+     RetoProgreso ({tipo: 'vision', ejercicio: 'schulte'}): el ejercicio ocular
+     SI cuenta para el nivel de practica. Menos de un minuto no suma, para que
+     entrar y salir no infle nada. */
+  function volcarSesion() {
+    var minutos = sesionMs / 60000;
+    if (minutos < 1 || !window.RetoProgreso) return;
+    sesionMs = 0;
+    try {
+      window.RetoProgreso.registrarSesion({ tipo: 'vision', ejercicio: 'schulte', minutos: minutos });
+    } catch (e) {}
+  }
+
   function segundosFinales() {
-    return (performance.now() - empieza) / 1000;
+    return (performance.now() - empieza - tiempoOculto()) / 1000;
   }
 
   /* --------------------------------------------------------- el modal */
@@ -582,11 +688,16 @@
     rejilla.setAttribute('data-punto', ajustes.punto === '0' ? '0' : '1');
     rejilla.setAttribute('aria-hidden', 'true');
 
-    var valores = ajustes.contenido === 'letras'
-      ? ['Q', 'M', 'Z', 'R', 'A', 'H', 'F', 'C', 'D']
-      : ['14', '3', '9', '21', '1', '17', '6', '11', '8'];
+    var MUESTRAS = {
+      letras: ['Q', 'M', 'Z', 'R', 'A', 'H', 'F', 'C', 'D'],
+      emojis: ['🍎', '🐱', '🚗', '🍌', '🌻', '🐟', '🎈', '🔑', '🏠'],
+      colores: ['▲', '●', '■', '◆', '★', '✚', '▼', '▲', '●'],
+      numeros: ['14', '3', '9', '21', '1', '17', '6', '11', '8']
+    };
+    var valores = MUESTRAS[ajustes.contenido] || MUESTRAS.numeros;
     valores.forEach(function (v, i) {
       var celda = el('div', 'schulte-celda', v);
+      if (ajustes.contenido === 'colores') celda.setAttribute('data-color', 'c' + (i % 4 + 1));
       if (i === 4) {
         celda.setAttribute('data-estado', 'hecha');
         celda.setAttribute('data-desvanecer', ajustes.desvanecer === 'on' ? '1' : '0');
@@ -732,7 +843,7 @@
 
     var ops2 = el('div', 'opciones');
     ops2.setAttribute('role', 'radiogroup');
-    [['numeros', 'Números'], ['letras', 'Letras']].forEach(function (par) {
+    [['numeros', 'Números'], ['letras', 'Letras'], ['emojis', 'Dibujos'], ['colores', 'Colores con forma']].forEach(function (par) {
       ops2.appendChild(opcionRadio('schulte-contenido', par[0], par[1],
                                    ajustes.contenido, function (v) {
         guardarAjuste('contenido', v).then(function () {
@@ -781,6 +892,18 @@
     gComportamiento.appendChild(interruptor('record', 'Mostrar también el récord',
       'Tu mejor tiempo en este tamaño y con estos símbolos. Apagado sale el '
       + 'tiempo y la tendencia, que es lo que de verdad sirve.'));
+
+    /* --- si te equivocas */
+    var gFallo = grupo('Si te equivocas',
+      'Nunca hay castigo. Elige si quieres un recordatorio de qué buscar.');
+    var opsFallo = el('div', 'opciones');
+    opsFallo.setAttribute('role', 'radiogroup');
+    [['mensaje', 'Solo un mensaje'], ['sacudida', 'Mensaje y sacudida suave'], ['nada', 'Nada']].forEach(function (par) {
+      opsFallo.appendChild(opcionRadio('schulte-fallo', par[0], par[1], ajustes.fallo, function (v) {
+        guardarAjuste('fallo', v);
+      }));
+    });
+    gFallo.appendChild(opsFallo);
 
     /* --- la letra: el tamaño y la fuente */
     var gLetra = grupo('La letra',
@@ -977,6 +1100,24 @@ gSonido.appendChild(interruptor('sonido', 'Activar el sonido',
       tocar(Number(celda.getAttribute('data-id')));
     });
     tableroEl.addEventListener('keydown', enTeclado);
+
+    if (document.addEventListener) {
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden) {
+          if (corriendo && ocultoDesde === null) ocultoDesde = performance.now();
+        } else if (ocultoDesde !== null) {
+          ocultoMs += performance.now() - ocultoDesde;
+          ocultoDesde = null;
+        }
+      });
+    }
+    if (window.addEventListener) {
+      window.addEventListener('pagehide', function () {
+        if (corriendo) sesionMs += segundos() * 1000;
+        volcarSesion();
+      });
+    }
+    objetivoEl = document.getElementById('objetivo');
 
     var btnConfig = document.querySelector('[data-configurar]');
     if (btnConfig) btnConfig.addEventListener('click', abrirConfig);

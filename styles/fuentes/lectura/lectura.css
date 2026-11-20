@@ -100,3 +100,22 @@
   font-display: swap;
   src: url('orbitron-700.woff2') format('woff2');
 }
+
+/* Roboto Mono: monoespaciada, la de la aventura grafica y una de las que se
+   pueden elegir para toda la interfaz (Configuracion > Interfaz). Letra clara,
+   con la o y el cero bien distintos; reemplaza a las de pixeles de antes. */
+@font-face {
+  font-family: 'Roboto Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('roboto-mono-400.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Roboto Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('roboto-mono-700.woff2') format('woff2');
+}

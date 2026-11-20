@@ -1,0 +1,497 @@
+{
+ "_nota": "Datos de los 27 power ups. Cada efecto es un diccionario de claves que logica/rpg.py sabe aplicar; la sinergia se mezcla encima (los mismos nombres sustituyen). Los textos visibles estan en powerups_textos.json.",
+ "powerups": {
+  "pocion_menor": {
+   "rareza": "comun",
+   "efecto": {
+    "cura": 20
+   },
+   "sinergia": {
+    "clases": [
+     "clerigo"
+    ],
+    "efecto": {
+     "cura": 25
+    }
+   },
+   "requiere_tiempo": false
+  },
+  "reloj_de_arena": {
+   "rareza": "comun",
+   "efecto": {
+    "tiempo": 8
+   },
+   "sinergia": {
+    "clases": [
+     "mago"
+    ],
+    "efecto": {
+     "tiempo": 10
+    }
+   },
+   "requiere_tiempo": true
+  },
+  "filo_afilado": {
+   "rareza": "comun",
+   "efecto": {
+    "mult_dano": {
+     "valor": 1.2,
+     "golpes": 1
+    }
+   },
+   "sinergia": {
+    "clases": [
+     "guerrero"
+    ],
+    "efecto": {
+     "mult_dano": {
+      "valor": 1.25,
+      "golpes": 1
+     }
+    }
+   },
+   "requiere_tiempo": false
+  },
+  "vista_de_aguila": {
+   "rareza": "comun",
+   "efecto": {
+    "mostrar_tema": true
+   },
+   "sinergia": {
+    "clases": [
+     "arquero"
+    ],
+    "efecto": {
+     "descartar": 1
+    }
+   },
+   "requiere_tiempo": false
+  },
+  "escudo_de_madera": {
+   "rareza": "comun",
+   "efecto": {
+    "escudo": {
+     "pv": 10,
+     "golpes": 1
+    }
+   },
+   "sinergia": {
+    "clases": [
+     "caballero"
+    ],
+    "efecto": {
+     "escudo": {
+      "pv": 12,
+      "golpes": 1
+     }
+    }
+   },
+   "requiere_tiempo": false
+  },
+  "daga_rapida": {
+   "rareza": "comun",
+   "efecto": {
+    "mult_dano_rapido": {
+     "valor": 1.2,
+     "golpes": 1
+    }
+   },
+   "sinergia": {
+    "clases": [
+     "asesino"
+    ],
+    "efecto": {
+     "mult_dano_rapido": {
+      "valor": 1.25,
+      "golpes": 1
+     }
+    }
+   },
+   "requiere_tiempo": true
+  },
+  "segundo_aliento": {
+   "rareza": "comun",
+   "efecto": {
+    "cura": 15
+   },
+   "sinergia": {
+    "clases": [
+     "guerrero",
+     "caballero"
+    ],
+    "efecto": {
+     "cura": 19
+    }
+   },
+   "requiere_tiempo": false
+  },
+  "mente_clara": {
+   "rareza": "comun",
+   "efecto": {
+    "reduccion": {
+     "pct": 20,
+     "golpes": 1
+    }
+   },
+   "sinergia": {
+    "clases": [
+     "mago",
+     "clerigo"
+    ],
+    "efecto": {
+     "reduccion": {
+      "pct": 25,
+      "golpes": 1
+     }
+    }
+   },
+   "requiere_tiempo": false
+  },
+  "tiro_certero": {
+   "rareza": "comun",
+   "efecto": {
+    "dano_directo": 8
+   },
+   "sinergia": {
+    "clases": [
+     "asesino",
+     "arquero"
+    ],
+    "efecto": {
+     "dano_directo": 10
+    }
+   },
+   "requiere_tiempo": false
+  },
+  "purificar": {
+   "rareza": "especial",
+   "efecto": {
+    "purificar": 30
+   },
+   "sinergia": {
+    "clases": [
+     "clerigo"
+    ],
+    "efecto": {
+     "purificar": 38
+    }
+   },
+   "requiere_tiempo": false
+  },
+  "cincuenta_cincuenta": {
+   "rareza": "especial",
+   "efecto": {
+    "descartar": 2
+   },
+   "sinergia": {
+    "clases": [
+     "mago"
+    ],
+    "efecto": {
+     "tiempo": 3
+    }
+   },
+   "requiere_tiempo": false
+  },
+  "grito_de_guerra": {
+   "rareza": "especial",
+   "efecto": {
+    "anular_desventaja": 1
+   },
+   "sinergia": {
+    "clases": [
+     "guerrero"
+    ],
+    "efecto": {
+     "anular_desventaja": 2
+    }
+   },
+   "requiere_tiempo": false
+  },
+  "muralla": {
+   "rareza": "especial",
+   "efecto": {
+    "escudo": {
+     "pv": 30,
+     "golpes": 1
+    }
+   },
+   "sinergia": {
+    "clases": [
+     "caballero"
+    ],
+    "efecto": {
+     "escudo": {
+      "pv": 38,
+      "golpes": 1
+     }
+    }
+   },
+   "requiere_tiempo": false
+  },
+  "zancadilla": {
+   "rareza": "especial",
+   "efecto": {
+    "tiempo_rival": 5
+   },
+   "sinergia": {
+    "clases": [
+     "asesino"
+    ],
+    "efecto": {
+     "tiempo_rival": 6
+    }
+   },
+   "requiere_tiempo": true,
+   "efecto_pve": {
+    "tiempo": 5
+   },
+   "sinergia_pve": {
+    "tiempo": 6
+   }
+  },
+  "atajo": {
+   "rareza": "especial",
+   "efecto": {
+    "cambiar_pregunta": true
+   },
+   "sinergia": {
+    "clases": [
+     "arquero"
+    ],
+    "efecto": {
+     "mostrar_tema": true
+    }
+   },
+   "requiere_tiempo": false
+  },
+  "embestida": {
+   "rareza": "especial",
+   "efecto": {
+    "dano_directo": 20
+   },
+   "sinergia": {
+    "clases": [
+     "guerrero",
+     "caballero"
+    ],
+    "efecto": {
+     "dano_directo": 25
+    }
+   },
+   "requiere_tiempo": false
+  },
+  "aura": {
+   "rareza": "especial",
+   "efecto": {
+    "reduccion": {
+     "pct": 25,
+     "golpes": 3
+    }
+   },
+   "sinergia": {
+    "clases": [
+     "mago",
+     "clerigo"
+    ],
+    "efecto": {
+     "reduccion": {
+      "pct": 30,
+      "golpes": 3
+     }
+    }
+   },
+   "requiere_tiempo": false
+  },
+  "segunda_oportunidad": {
+   "rareza": "especial",
+   "efecto": {
+    "segunda_oportunidad": 1
+   },
+   "sinergia": {
+    "clases": [
+     "asesino",
+     "arquero"
+    ],
+    "efecto": {
+     "segunda_oportunidad": 2
+    }
+   },
+   "requiere_tiempo": false
+  },
+  "gran_sanacion": {
+   "rareza": "raro",
+   "efecto": {
+    "cura": 60
+   },
+   "sinergia": {
+    "clases": [
+     "clerigo"
+    ],
+    "efecto": {
+     "cura": 75
+    }
+   },
+   "requiere_tiempo": false
+  },
+  "tormenta_de_ideas": {
+   "rareza": "raro",
+   "efecto": {
+    "tiempo": 20
+   },
+   "sinergia": {
+    "clases": [
+     "mago"
+    ],
+    "efecto": {
+     "tiempo": 25
+    }
+   },
+   "requiere_tiempo": true
+  },
+  "golpe_doble": {
+   "rareza": "raro",
+   "efecto": {
+    "mult_dano": {
+     "valor": 2,
+     "golpes": 1
+    }
+   },
+   "sinergia": {
+    "clases": [
+     "guerrero"
+    ],
+    "efecto": {
+     "mult_dano": {
+      "valor": 2.5,
+      "golpes": 1
+     }
+    }
+   },
+   "requiere_tiempo": false
+  },
+  "fortaleza": {
+   "rareza": "raro",
+   "efecto": {
+    "reduccion": {
+     "pct": 50,
+     "golpes": 3
+    }
+   },
+   "sinergia": {
+    "clases": [
+     "caballero"
+    ],
+    "efecto": {
+     "reduccion": {
+      "pct": 50,
+      "golpes": 4
+     }
+    }
+   },
+   "requiere_tiempo": false
+  },
+  "ataque_furtivo": {
+   "rareza": "raro",
+   "efecto": {
+    "mult_dano_rapido": {
+     "valor": 3,
+     "golpes": 1
+    }
+   },
+   "sinergia": {
+    "clases": [
+     "asesino"
+    ],
+    "efecto": {
+     "mult_dano_rapido": {
+      "valor": 3.5,
+      "golpes": 1
+     }
+    }
+   },
+   "requiere_tiempo": true
+  },
+  "lluvia_de_flechas": {
+   "rareza": "raro",
+   "efecto": {
+    "sangrado": {
+     "pv": 8,
+     "turnos": 3
+    }
+   },
+   "sinergia": {
+    "clases": [
+     "arquero"
+    ],
+    "efecto": {
+     "sangrado": {
+      "pv": 10,
+      "turnos": 3
+     }
+    }
+   },
+   "requiere_tiempo": false
+  },
+  "furia_imparable": {
+   "rareza": "muy_raro",
+   "efecto": {
+    "mult_dano": {
+     "valor": 1.5,
+     "golpes": 3
+    },
+    "inmune_tiempo": 3
+   },
+   "sinergia": {
+    "clases": [
+     "guerrero",
+     "caballero"
+    ],
+    "efecto": {
+     "mult_dano": {
+      "valor": 1.5,
+      "golpes": 4
+     },
+     "inmune_tiempo": 4
+    }
+   },
+   "requiere_tiempo": false
+  },
+  "milagro": {
+   "rareza": "muy_raro",
+   "efecto": {
+    "cura": 100
+   },
+   "sinergia": {
+    "clases": [
+     "mago",
+     "clerigo"
+    ],
+    "efecto": {
+     "limpiar_negativos": true
+    }
+   },
+   "requiere_tiempo": false
+  },
+  "eclipse": {
+   "rareza": "muy_raro",
+   "efecto": {
+    "perder_ataque_rival": 1,
+    "mult_dano": {
+     "valor": 2,
+     "golpes": 1
+    }
+   },
+   "sinergia": {
+    "clases": [
+     "asesino",
+     "arquero"
+    ],
+    "efecto": {
+     "perder_ataque_rival": 2
+    }
+   },
+   "requiere_tiempo": false
+  }
+ }
+}

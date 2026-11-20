@@ -4,41 +4,29 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Aventura Gráfica - Test de conocimientos - R.E.T.O.</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Handjet:wght,ELSH@100..900,2&family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
 <link rel="preload" href="../../../styles/fuentes/nunito.css" as="style">
 <link rel="stylesheet" href="../../../styles/fuentes/nunito.css">
-<link rel="stylesheet" href="../../../styles/styles.css?v=c85-flexfix">
+<link rel="stylesheet" href="../../../styles/styles.css?v=c103-ding3">
 <link rel="stylesheet" href="../../../styles/modulos/75_carrusel.css">
 <style>
-  /* Press Start 2P por defecto para la interfaz y modelos de aventura gráfica */
-  #vistas, .aventura-container, .tst {
-    font-family: var(--aventura-font, "Press Start 2P", system-ui, sans-serif);
+  /* Roboto Mono (autoalojada, sin pedirla a internet) por defecto para la aventura. */
+  #vistas, .aventura-container {
+    font-family: var(--aventura-font, "Roboto Mono", ui-monospace, monospace);
   }
-  .vt323-regular {
-    font-family: "VT323", monospace;
-    font-weight: 400;
-    font-style: normal;
-  }
-  .press-start-2p-regular {
-    font-family: "Press Start 2P", system-ui;
-    font-weight: 400;
-    font-style: normal;
-  }
-  .handjet-regular {
-    font-family: "Handjet", sans-serif;
-    font-optical-sizing: auto;
-    font-style: normal;
-    font-variation-settings: "ELGR" 1, "ELSH" 2;
-  }
+  /* Responsive: que nada fuerce un ancho mayor al de la pantalla (celular y tablet) */
+  html, body { max-width: 100%; overflow-x: hidden; }
+  header h1 { font-size: clamp(1rem, 4.6vw, 2rem); white-space: normal; overflow-wrap: anywhere; }
+  main, #vistas { min-width: 0; max-width: 100%; }
+  main { padding-bottom: 110px; } /* que el panel flotante no tape el final del contenido */
 </style>
 <script>
 (function () {
-  var t = localStorage.getItem('tema');
-  if (t) { document.documentElement.setAttribute('data-theme', t); }
-  var a = localStorage.getItem('animaciones');
-  if (a === 'off' || a === 'on') { document.documentElement.setAttribute('data-anim', a); }
+  try {
+    var t = localStorage.getItem('tema');
+    if (t) { document.documentElement.setAttribute('data-theme', t); }
+    var a = localStorage.getItem('animaciones');
+    if (a === 'off' || a === 'on') { document.documentElement.setAttribute('data-anim', a); }
+  } catch (e) {}
   try {
     var forzar = /[?&]anim=1/.test(location.search);
     if (sessionStorage.getItem('reto_anim_tarjetas') && !forzar) {
@@ -49,13 +37,13 @@
   } catch (e) {}
 })();
 </script>
-<script src="../../../scripts/reto-panel-prefs.js?v=c01-0f3ddb54"></script>
+<script src="../../../scripts/reto-panel-prefs.js?v=c02-fuente-ui"></script>
 </head>
 <body>
 <header>
 <h1>Aventura Gráfica (Modo RPG)</h1>
 </header>
-<main class="tst">
+<main>
 <div id="vistas">
   <!-- Pantalla inicial de bienvenida y configuración de aventura -->
   <div class="aventura-container" style="display: flex; flex-direction: column; gap: var(--space-md); align-items: center; text-align: center; padding: var(--space-lg);">
@@ -85,10 +73,10 @@
      aria-label="Ajustes de lectura y de sonido" title="Ajustes de lectura y de sonido">
     <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#9881;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><path d="M2 14h4"/><path d="M10 8h4"/><path d="M18 16h4"/></svg></span>
   </button>
-  <button type="button" class="panel-boton panel-boton--ayuda" data-ayuda
-     aria-label="Ayuda: cómo funciona la aventura" title="Cómo jugar">
+  <a class="panel-boton panel-boton--ayuda" href="ayuda.html"
+     aria-label="Ayuda: cómo funciona la aventura" title="Ayuda: todo sobre la aventura">
     <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">?</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span>
-  </button>
+  </a>
 </div>
 <footer hidden>
 <p>R.E.T.O.</p>
@@ -102,8 +90,15 @@
 <script src="../../../scripts/reto-tests-muestra.js?v=c04-6abe6813"></script>
 <script src="../../../scripts/reto-tests-eval.js"></script>
 <script src="../../../scripts/reto-tests-instancia.js"></script>
-<script src="reto-aventura.js"></script>
+<script src="../../../scripts/reto-progreso.js?v=n2"></script>
+<script src="../../../scripts/reto-rpg.js?v=n3"></script>
+<script src="../../../scripts/reto-fondos.js?v=n1"></script>
+<script src="../../../scripts/reto-sprites.js?v=n2"></script>
+<script src="../../../scripts/reto-estados.js?v=n2"></script>
+<script src="../../../scripts/reto-frases-aventura.js?v=n1"></script>
+<script src="reto-aventura.js?v=v32"></script>
 <script src="../../../scripts/reto-panel.js?v=c04-f73a0fa9"></script>
+<script src="../../../scripts/reto-descanso.js?v=n1"></script>
 <script src="../../../scripts/reto-debug.js?v=c25-5ac10ea0"></script>
 </body>
 </html>

@@ -767,6 +767,11 @@
       }
       return;
     }
+    /* Los modos que viven en otros archivos (pacer, columnas, skimming) traen su
+       propio modal: aqui solo se les pasa el turno. */
+    var propio = window.RetoLecturaMotores && window.RetoLecturaMotores.ajustes &&
+                 window.RetoLecturaMotores.ajustes[window.RetoLectura.motor()];
+    if (propio) { propio(); return; }
     if (!window.RetoFuentes) return;
     if (abriendo || (dlg && dlg.open)) return;
     if (!window.HTMLDialogElement) {

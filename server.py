@@ -45,13 +45,15 @@ argumentos: doble clic en servidor.cmd y listo.
 import datetime
 import ipaddress
 import os
+import random
+import re
 import socket
 import subprocess
 import time
 
 from flask import Flask, jsonify, request, send_from_directory
 
-from logica import dinamicas, lectura_veloz, mahjong, memorama, rondas, schulte, secuencia
+from logica import dinamicas, ding, lectura_veloz, mahjong, memorama, pve, red, rondas, rpg, sala, schulte, secuencia, vision
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 
@@ -209,6 +211,328 @@ def ejemplos():
 # falsearia el tiempo, y el tiempo es justo lo que se esta midiendo. Por eso el
 # tablero se pide UNA vez al empezar, y de ahi en adelante el reloj, los
 # errores y el desvanecido viven en el navegador.
+
+# ===========================================================================
+# MULTIJUGADOR POR WIFI LOCAL (prueba de red)
+# ===========================================================================
+
+_eco = red.Eco()
+
+
+def _solo_red_local():
+    """El multijugador solo se abre desde una direccion privada: en un hosting
+    publico responde 403 (ahi no hay "tu wifi")."""
+    if red.es_direccion_local(request.host):
+        return None
+    return jsonify({"error": "El modo multijugador es solo para la red wifi local. "
+                             "Abre el sitio con servidor.cmd en una computadora de tu red."}), 403
+
+
+@app.get("/api/red/info")
+def red_info():
+    """Las direcciones para que el otro dispositivo se conecte, y como te ve el servidor."""
+    return jsonify({
+        "local": red.es_direccion_local(request.host),
+        "host": request.host,
+        "tu_ip": request.remote_addr,
+        "direcciones": _direcciones_locales() if red.es_direccion_local(request.host) else [],
+        "https": request.is_secure,
+    })
+
+
+@app.post("/api/red/eco")
+def red_eco_enviar():
+    bloqueo = _solo_red_local()
+    if bloqueo:
+        return bloqueo
+    datos = request.get_json(silent=True) or {}
+    try:
+        return jsonify(_eco.agregar(datos.get("nombre"), datos.get("mensaje"), request.remote_addr,
+                                       cid=datos.get("cid")))
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.get("/api/red/eco")
+def red_eco_leer():
+    bloqueo = _solo_red_local()
+    if bloqueo:
+        return bloqueo
+    try:
+        desde = int(request.args.get("desde", 0))
+    except ValueError:
+        desde = 0
+    return jsonify(_eco.desde(desde, request.remote_addr, cid=request.args.get("cid")))
+
+
+# ---- Salas y duelos (siempre solo desde la red local)
+
+_salas = sala.Salas()
+MAX_CUERPO_SALA = 300 * 1024      # un mazo de 30 preguntas pesa unos 20 KB: sobra
+
+
+def _sala_responder(accion):
+    """Corre una accion de sala: solo red local, cuerpo acotado y errores con su codigo."""
+    bloqueo = _solo_red_local()
+    if bloqueo:
+        return bloqueo
+    if (request.content_length or 0) > MAX_CUERPO_SALA:
+        return jsonify({"error": "Lo que mandaste es demasiado grande."}), 413
+    try:
+        return jsonify(accion(request.get_json(silent=True) or {}))
+    except sala.ErrorSala as e:
+        return jsonify({"error": str(e)}), e.http
+
+
+@app.post("/api/sala/crear")
+def sala_crear():
+    return _sala_responder(lambda d: _salas.crear(d.get("nombre")))
+
+
+@app.post("/api/sala/unirse")
+def sala_unirse():
+    return _sala_responder(lambda d: _salas.unirse(d.get("codigo"), d.get("nombre")))
+
+
+@app.post("/api/sala/<codigo>/configurar")
+def sala_configurar(codigo):
+    return _sala_responder(lambda d: _salas.configurar(codigo, d.get("token"), d.get("config")))
+
+
+@app.post("/api/sala/<codigo>/preparar")
+def sala_preparar(codigo):
+    return _sala_responder(lambda d: _salas.preparar(codigo, d.get("token"), d.get("clase"),
+                                                      d.get("mazo"), d.get("equipo"), d.get("perfil"),
+                                                      d.get("origen", "local")))
+
+
+@app.post("/api/sala/<codigo>/listo")
+def sala_listo(codigo):
+    return _sala_responder(lambda d: _salas.listo(codigo, d.get("token"), bool(d.get("listo", True))))
+
+
+@app.post("/api/sala/<codigo>/accion")
+def sala_accion(codigo):
+    return _sala_responder(lambda d: _salas.accion(codigo, d.get("token"), d))
+
+
+@app.post("/api/sala/<codigo>/cerrar")
+def sala_cerrar(codigo):
+    return _sala_responder(lambda d: _salas.cerrar(codigo, d.get("token")))
+
+
+@app.get("/api/sala/<codigo>/estado")
+def sala_estado(codigo):
+    token, firma = request.args.get("token"), request.args.get("firma")
+    return _sala_responder(lambda d: _salas.estado(codigo, token, firma))
+
+
+# ---- Ding! (quiz bowl por wifi local: una persona presenta, de 2 a 4 juegan)
+
+_dings = ding.Dings()
+
+
+@app.post("/api/ding/crear")
+def ding_crear():
+    return _sala_responder(lambda d: _dings.crear(d.get("nombre")))
+
+
+@app.post("/api/ding/unirse")
+def ding_unirse():
+    return _sala_responder(lambda d: _dings.unirse(d.get("codigo"), d.get("nombre")))
+
+
+@app.post("/api/ding/<codigo>/configurar")
+def ding_configurar(codigo):
+    return _sala_responder(lambda d: _dings.configurar(codigo, d.get("token"), d.get("config")))
+
+
+@app.post("/api/ding/<codigo>/test")
+def ding_test(codigo):
+    return _sala_responder(lambda d: _dings.cargar_test(codigo, d.get("token"), d.get("titulo"), d.get("preguntas")))
+
+
+@app.post("/api/ding/<codigo>/accion")
+def ding_accion(codigo):
+    return _sala_responder(lambda d: _dings.accion(codigo, d.get("token"), d))
+
+
+@app.post("/api/ding/<codigo>/cerrar")
+def ding_cerrar(codigo):
+    return _sala_responder(lambda d: _dings.cerrar(codigo, d.get("token")))
+
+
+@app.get("/api/ding/<codigo>/estado")
+def ding_estado(codigo):
+    token, firma = request.args.get("token"), request.args.get("firma")
+    return _sala_responder(lambda d: _dings.estado(codigo, token, firma))
+
+
+# ---- La aventura contra el enemigo (PvE). A diferencia del multijugador, esto SI
+# funciona en un hosting publico: no depende de la red local.
+
+_aventuras = pve.Aventuras()
+
+
+def _pve_responder(accion):
+    if (request.content_length or 0) > MAX_CUERPO_SALA:
+        return jsonify({"error": "Lo que mandaste es demasiado grande."}), 413
+    try:
+        return jsonify(accion(request.get_json(silent=True) or {}))
+    except pve.ErrorPve as e:
+        return jsonify({"error": str(e)}), e.http
+
+
+@app.post("/api/pve/iniciar")
+def pve_iniciar():
+    return _pve_responder(lambda d: _aventuras.iniciar(d))
+
+
+@app.post("/api/pve/<token>/accion")
+def pve_accion(token):
+    return _pve_responder(lambda d: _aventuras.accion(token, d))
+
+
+@app.get("/api/pve/<token>/estado")
+def pve_estado(token):
+    return _pve_responder(lambda d: _aventuras.estado(token))
+
+
+@app.post("/api/rpg/tarjeta")
+def rpg_tarjeta():
+    """La tarjeta de jugador (nivel, power ups, equipo) con su huella, para llevarla a otro servidor."""
+    datos = request.get_json(silent=True) or {}
+    try:
+        return jsonify(rpg.crear_tarjeta(datos.get("perfil"), time.strftime("%Y-%m-%d")))
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.post("/api/rpg/tarjeta/validar")
+def rpg_tarjeta_validar():
+    """Lee una tarjeta que trae alguien: revisa la huella y devuelve el perfil limpio."""
+    datos = request.get_json(silent=True) or {}
+    try:
+        return jsonify(rpg.validar_tarjeta(datos.get("tarjeta")))
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.post("/api/rpg/nivel")
+def rpg_nivel():
+    """Nivel de practica a partir de las sesiones que guarda el navegador."""
+    datos = request.get_json(silent=True) or {}
+    sesiones = datos.get("sesiones")
+    if not isinstance(sesiones, list) or len(sesiones) > 2000:
+        return jsonify({"error": "Faltan las sesiones."}), 400
+    puntos = rpg.puntos_de_sesiones(sesiones)
+    return jsonify(rpg.progreso_de_nivel(puntos))
+
+
+@app.get("/api/rpg/fondos")
+def rpg_fondos():
+    """Los fondos de batalla que hay en imagenes/fondos/: para agregar uno basta con dejar la
+    imagen en esa carpeta (webp, png, jpg, jpeg o avif); el navegador elige una al azar."""
+    carpeta = os.path.join(os.path.dirname(os.path.abspath(__file__)), "imagenes", "fondos")
+    try:
+        nombres = sorted(n for n in os.listdir(carpeta)
+                         if os.path.splitext(n)[1].lower() in (".webp", ".png", ".jpg", ".jpeg", ".avif"))
+    except OSError:
+        nombres = []
+    return jsonify({"fondos": ["/imagenes/fondos/" + n for n in nombres]})
+
+
+_SPRITE = re.compile(r"^(espera|ataque|herido)(?:_(\d+))?\.(webp|png)$", re.IGNORECASE)
+
+
+@app.get("/api/rpg/sprites")
+def rpg_sprites():
+    """Los sprites que hay en imagenes/sprites/<personaje>/<vista>/<estado>.webp.
+
+    personaje: mago, maga... · vista: frente (el adversario) o espalda (el jugador, en tercera
+    persona) · estado: espera, ataque o herido. Un estado con varios cuadros se nombra
+    espera_1.webp, espera_2.webp... y se devuelven en orden. Las carpetas que empiezan con «_» (los
+    _extras) no se listan. Para agregar un sprite basta con dejar la imagen en su carpeta."""
+    raiz = os.path.join(os.path.dirname(os.path.abspath(__file__)), "imagenes", "sprites")
+    mapa = {}
+    try:
+        personajes = sorted(os.listdir(raiz))
+    except OSError:
+        return jsonify({"sprites": {}})
+    for personaje in personajes:
+        if personaje.startswith("_") or not os.path.isdir(os.path.join(raiz, personaje)):
+            continue
+        for vista in ("frente", "espalda"):
+            carpeta = os.path.join(raiz, personaje, vista)
+            if not os.path.isdir(carpeta):
+                continue
+            estados = {}
+            for nombre in sorted(os.listdir(carpeta)):
+                m = _SPRITE.match(nombre)
+                if m:
+                    estados.setdefault(m.group(1).lower(), []).append((int(m.group(2) or 0), nombre))
+            for estado, cuadros in estados.items():
+                url = "/imagenes/sprites/%s/%s/" % (personaje, vista)
+                mapa.setdefault(personaje, {}).setdefault(vista, {})[estado] = [url + n for _, n in sorted(cuadros)]
+    return jsonify({"sprites": mapa})
+
+
+@app.get("/api/rpg/incognito")
+def rpg_incognito():
+    """La imagen del personaje incognito: la primera que haya en imagenes/incognito/ (webp, png, jpg, jpeg
+    o avif). Si no hay ninguna, `imagen` es null y la pantalla muestra un «?» grande."""
+    carpeta = os.path.join(os.path.dirname(os.path.abspath(__file__)), "imagenes", "incognito")
+    try:
+        nombres = sorted(n for n in os.listdir(carpeta)
+                         if os.path.splitext(n)[1].lower() in (".webp", ".png", ".jpg", ".jpeg", ".avif"))
+    except OSError:
+        nombres = []
+    return jsonify({"imagen": "/imagenes/incognito/" + nombres[0] if nombres else None})
+
+
+@app.post("/api/rpg/premios")
+def rpg_premios():
+    """Los power ups que da una ronda de un test (asociar, escribir o resolver; NO las
+    tarjetas de estudio). El navegador manda cuantos aciertos llevaba, cuantos suma ahora
+    y cuantos power ups lleva entregados (en total y hoy); las reglas (cada 10 aciertos,
+    el raro cada 50 entregados y el tope de 10 al dia) viven en logica/rpg.py."""
+    datos = request.get_json(silent=True) or {}
+    try:
+        antes = max(0, int(datos.get("aciertos_antes") or 0))
+        nuevos = max(0, min(200, int(datos.get("aciertos") or 0)))
+        entregados = max(0, int(datos.get("entregados_antes") or 0))
+        hoy = max(0, int(datos.get("entregados_hoy") or 0))
+    except (TypeError, ValueError):
+        return jsonify({"error": "Los números no se entienden."}), 400
+    if rpg.TOPE_PREMIOS_DIA - hoy <= 0:
+        # Tope del dia: los aciertos no cuentan, para no perder una tanda de premios.
+        return jsonify({"premios": [], "bloqueados": 0, "cupo": 0, "aciertos_contados": 0,
+                        "tope_dia": rpg.TOPE_PREMIOS_DIA})
+    r = rpg.sortear_premios(antes, antes + nuevos, random.Random(), True, entregados, hoy)
+    r["aciertos_contados"] = nuevos
+    r["tope_dia"] = rpg.TOPE_PREMIOS_DIA
+    return jsonify(r)
+
+
+@app.post("/api/vision/plan")
+def vision_plan():
+    """El plan de un ejercicio para la vision (trayectorias, rondas, secuencias)."""
+    datos = request.get_json(silent=True) or {}
+    try:
+        return jsonify(vision.plan_para(datos.get("ejercicio"), datos))
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.post("/api/vision/ajustar")
+def vision_ajustar():
+    """Como cambia la dificultad tras una respuesta (sube o baja sin castigo)."""
+    datos = request.get_json(silent=True) or {}
+    try:
+        return jsonify(vision.ajustar_para(datos.get("ejercicio"), datos))
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
 
 @app.get("/api/schulte/catalogos")
 def schulte_catalogos():
@@ -477,12 +801,17 @@ PLANES_DE_LECTURA = {
     "palabra": lectura_veloz.plan_palabra,
     "grupo": lectura_veloz.plan_grupo,
     "frases": lectura_veloz.plan_frases,
+    "prueba": lectura_veloz.plan_prueba,
+    "pacer": lectura_veloz.plan_pacer,
+    # La lectura en columnas es el pacer con otro ancho de columna: mismo plan.
+    "columnas": lectura_veloz.plan_pacer,
+    "skimming": lectura_veloz.plan_skimming,
 }
 
 
 @app.post("/api/lectura/plan")
 def lectura_plan():
-    """El plan de lectura de un motor. Por ahora el galactico, palabra por palabra, grupo y frases."""
+    """El plan de lectura de un motor: galactico, palabra por palabra, grupo, frases, prueba, pacer, columnas y skimming."""
     datos = request.get_json(silent=True) or {}
     motor_nombre = datos.get("motor")
     plan_fn = PLANES_DE_LECTURA.get(motor_nombre)
@@ -495,7 +824,25 @@ def lectura_plan():
             tg = datos.get("tamano_grupo")
             if tg in (3, 4):
                 kwargs["tamano_grupo"] = tg
+        # El pacer (y las columnas) aceptan palabras_por_tramo (1, 2 o 3)
+        if motor_nombre in ("pacer", "columnas"):
+            pt = datos.get("palabras_por_tramo")
+            if pt in lectura_veloz.TRAMOS_PACER:
+                kwargs["palabras_por_tramo"] = pt
         return jsonify(plan_fn(datos.get("parrafos"), **kwargs))
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.post("/api/lectura/velocidad")
+def lectura_velocidad():
+    """La velocidad de una prueba de lectura: bruta, comprension y efectiva."""
+    datos = request.get_json(silent=True) or {}
+    try:
+        return jsonify(lectura_veloz.calcular_velocidad(
+            datos.get("palabras"), datos.get("segundos"),
+            datos.get("aciertos"), datos.get("preguntas"),
+        ))
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 

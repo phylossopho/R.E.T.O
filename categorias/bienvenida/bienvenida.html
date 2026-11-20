@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="papel">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bienvenida - R.E.T.O.</title>
+<link rel="preload" href="../../styles/fuentes/nunito.css" as="style">
+<link rel="stylesheet" href="../../styles/fuentes/nunito.css">
+<link rel="stylesheet" href="../../styles/styles.css?v=c103-ding3">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('tema');
+    if (t) { document.documentElement.setAttribute('data-theme', t); }
+    var a = localStorage.getItem('animaciones');
+    if (a === 'off' || a === 'on') { document.documentElement.setAttribute('data-anim', a); }
+  } catch (e) {}
+  try {
+    var forzar = /[?&]anim=1/.test(location.search);
+    if (sessionStorage.getItem('reto_anim_tarjetas') && !forzar) {
+      document.documentElement.setAttribute('data-anim-tarjetas', 'off');
+    } else {
+      sessionStorage.setItem('reto_anim_tarjetas', '1');
+    }
+  } catch (e) {}
+})();
+</script>
+<script src="../../scripts/reto-panel-prefs.js?v=c02-fuente-ui"></script>
+</head>
+<body>
+<header>
+<h1>R.E.T.O.</h1>
+</header>
+<main>
+<div id="vistas"></div>
+</main>
+<div class="panel-flotante" data-panel>
+  <a class="panel-boton" href="../../index.html"
+     aria-label="Ir a la portada" title="Ir a la portada">
+    <span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8962;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 3l9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/><path d="M10 21v-6h4v6"/></svg></span>
+  </a>
+</div>
+<footer hidden>
+<p>R.E.T.O.</p>
+</footer>
+<script src="../../scripts/reto-datos.js?v=c19-c6fe548d"></script>
+<script src="../../scripts/reto-perfil.js?v=n1"></script>
+<script src="../../scripts/reto-panel.js?v=c04-f73a0fa9"></script>
+<script>
+(function () {
+  'use strict';
+  var vistas = document.getElementById('vistas');
+  if (!vistas) return;
+  if (window.RetoPerfil && window.RetoPerfil.renderBienvenida) {
+    window.RetoPerfil.renderBienvenida(vistas, function (perfil) {
+      setTimeout(function () { window.location.href = '../../index.html'; }, 350);
+    });
+  }
+})();
+</script>
+</body>
+</html>

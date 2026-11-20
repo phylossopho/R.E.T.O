@@ -1,0 +1,110 @@
+{
+ "pocion_menor": {
+  "nombre": "Poción menor",
+  "descripcion": "Cura 20 puntos de vida."
+ },
+ "reloj_de_arena": {
+  "nombre": "Reloj de arena",
+  "descripcion": "Te da 8 segundos más para responder."
+ },
+ "filo_afilado": {
+  "nombre": "Filo afilado",
+  "descripcion": "Tu próximo golpe hace un 20 % más de daño."
+ },
+ "vista_de_aguila": {
+  "nombre": "Vista de águila",
+  "descripcion": "Muestra el tema de la pregunta."
+ },
+ "escudo_de_madera": {
+  "nombre": "Escudo de madera",
+  "descripcion": "Absorbe 10 puntos del próximo daño."
+ },
+ "daga_rapida": {
+  "nombre": "Daga rápida",
+  "descripcion": "Si respondes en menos de la mitad del tiempo, tu golpe hace un 20 % más."
+ },
+ "segundo_aliento": {
+  "nombre": "Segundo aliento",
+  "descripcion": "Cura 15 puntos de vida."
+ },
+ "mente_clara": {
+  "nombre": "Mente clara",
+  "descripcion": "El próximo daño que recibas baja un 20 %."
+ },
+ "tiro_certero": {
+  "nombre": "Tiro certero",
+  "descripcion": "Quita 8 puntos de vida al rival."
+ },
+ "purificar": {
+  "nombre": "Purificar",
+  "descripcion": "Devuelve los puntos del último daño recibido (hasta 30)."
+ },
+ "cincuenta_cincuenta": {
+  "nombre": "50/50",
+  "descripcion": "Quita 2 respuestas incorrectas."
+ },
+ "grito_de_guerra": {
+  "nombre": "Grito de guerra",
+  "descripcion": "Anula tu desventaja de clase por 1 turno."
+ },
+ "muralla": {
+  "nombre": "Muralla",
+  "descripcion": "Absorbe el siguiente daño que recibas (hasta 30 puntos)."
+ },
+ "zancadilla": {
+  "nombre": "Zancadilla",
+  "descripcion": "El rival pierde 5 segundos en su próxima pregunta."
+ },
+ "atajo": {
+  "nombre": "Atajo",
+  "descripcion": "Cambia la pregunta por otra, sin daño ni premio."
+ },
+ "embestida": {
+  "nombre": "Embestida",
+  "descripcion": "Quita 20 puntos de vida al rival."
+ },
+ "aura": {
+  "nombre": "Aura",
+  "descripcion": "Los próximos 3 daños que recibas bajan un 25 %."
+ },
+ "segunda_oportunidad": {
+  "nombre": "Segunda oportunidad",
+  "descripcion": "Si fallas, puedes elegir otra respuesta (1 vez)."
+ },
+ "gran_sanacion": {
+  "nombre": "Gran sanación",
+  "descripcion": "Cura 60 puntos de vida."
+ },
+ "tormenta_de_ideas": {
+  "nombre": "Tormenta de ideas",
+  "descripcion": "Te da 20 segundos más para responder."
+ },
+ "golpe_doble": {
+  "nombre": "Golpe doble",
+  "descripcion": "Tu próximo golpe hace el doble de daño."
+ },
+ "fortaleza": {
+  "nombre": "Fortaleza",
+  "descripcion": "Los próximos 3 daños que recibas se reducen a la mitad."
+ },
+ "ataque_furtivo": {
+  "nombre": "Ataque furtivo",
+  "descripcion": "Si respondes en menos de la mitad del tiempo, tu golpe hace el triple."
+ },
+ "lluvia_de_flechas": {
+  "nombre": "Lluvia de flechas",
+  "descripcion": "El rival pierde 8 puntos al inicio de sus próximos 3 turnos."
+ },
+ "furia_imparable": {
+  "nombre": "Furia imparable",
+  "descripcion": "Tus próximos 3 golpes hacen un 50 % más y el tiempo no te quita vida durante 3 turnos."
+ },
+ "milagro": {
+  "nombre": "Milagro",
+  "descripcion": "Cura 100 puntos de vida (hasta el máximo)."
+ },
+ "eclipse": {
+  "nombre": "Eclipse",
+  "descripcion": "El rival pierde su siguiente ataque y tu próximo golpe hace el doble."
+ }
+}
