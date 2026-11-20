@@ -772,7 +772,7 @@
   function crearTarjeta(perfil, fecha) {
     var limpio = validarPerfil(perfil, 2);
     fecha = String(fecha).slice(0, 10);
-    return { tipo: 'tarjeta-reto', v: 2, fecha: fecha, perfil: limpio, huella: _huella(limpio, fecha, 2) };
+    return Promise.resolve({ tipo: 'tarjeta-reto', v: 2, fecha: fecha, perfil: limpio, huella: _huella(limpio, fecha, 2) });
   }
 
   function validarTarjeta(t) {
