@@ -218,7 +218,11 @@
     crear.type = 'button';
     crear.addEventListener('click', function () {
       almacen('red_nombre', nombre.value.trim());
-      llamar('POST', '/crear', { nombre: nombre.value }).then(entrar).catch(function (e) { falla(e.message); });
+      if (window.RetoDueloP2P && window.RetoDueloP2P.crearSala) {
+        window.RetoDueloP2P.crearSala().then(entrar).catch(function (e) { falla(e.message); });
+      } else {
+        llamar('POST', '/crear', { nombre: nombre.value }).then(entrar).catch(function (e) { falla(e.message); });
+      }
     });
     caja.appendChild(crear);
 
@@ -234,8 +238,12 @@
     unir.type = 'button';
     unir.addEventListener('click', function () {
       almacen('red_nombre', nombre.value.trim());
-      llamar('POST', '/unirse', { codigo: codigo.value, nombre: nombre.value }).then(entrar)
-        .catch(function (e) { falla(e.message); });
+      if (window.RetoDueloP2P && window.RetoDueloP2P.unirseSala) {
+        window.RetoDueloP2P.unirseSala(codigo.value).then(entrar).catch(function (e) { falla(e.message); });
+      } else {
+        llamar('POST', '/unirse', { codigo: codigo.value, nombre: nombre.value }).then(entrar)
+          .catch(function (e) { falla(e.message); });
+      }
     });
     caja.appendChild(unir);
     raiz.appendChild(caja);
