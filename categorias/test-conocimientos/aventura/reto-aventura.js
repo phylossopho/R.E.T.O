@@ -2599,12 +2599,16 @@ function renderSeleccionTest(contenedor) {
   function llamarPve(metodo, ruta, cuerpo) {
     actualizarModoOfflinePve();
 
-    // MODO OFFLINE: usar RetoRpg local
-    if (modoOfflinePve && window.RetoRpg) {
-      return llamarPveLocal(metodo, ruta, cuerpo);
+    // FORZAR MODO LOCAL EN GITHUB PAGES (fallback robusto)
+    var esGH = esGitHubPages();
+    if (esGH || modoOfflinePve) {
+      if (window.RetoRpg) {
+        return llamarPveLocal(metodo, ruta, cuerpo);
+      }
+      return Promise.reject(new Error('RetoRpg no disponible'));
     }
 
-    // MODO ONLINE
+    // MODO ONLINE (solo en servidor local)
     var opts = { method: metodo, headers: { 'Content-Type': 'application/json' } };
     if (cuerpo) opts.body = JSON.stringify(cuerpo);
     return fetch(PVE + ruta, opts).then(function (r) {
@@ -2618,12 +2622,15 @@ function renderSeleccionTest(contenedor) {
   function llamarPveLocal(metodo, ruta, cuerpo) {
     if (metodo === 'POST' && ruta === '/iniciar') {
       // Iniciar batalla PvE local
-      if (!cuerpo) {
-        return Promise.reject(new Error('Cuerpo de petición vacío'));
+      if (!cuerpo || typeof cuerpo !== 'object') {
+        return Promise.reject(new Error('Cuerpo de petición inválido'));
       }
       var cfg = cuerpo.config || {};
       // El frontend envía 'preguntas' (un array), duplicamos para ambos combatientes
-      var preguntas = cuerpo.preguntas || cuerpo.preguntas1 || cuerpo.preguntas2 || [];
+      var preguntas = (cuerpo && cuerpo.preguntas) || (cuerpo && cuerpo.preguntas1) || (cuerpo && cuerpo.preguntas2) || [];
+      if (!preguntas.length) {
+        return Promise.reject(new Error('El mazo debe tener entre 1 y 60 preguntas (tiene 0).'));
+      }
       if (!preguntas.length) {
         return Promise.reject(new Error('El mazo debe tener entre 1 y 60 preguntas (tiene 0).'));
       }
