@@ -346,7 +346,9 @@
     return post('/api/rpg/tarjeta/validar', { tarjeta: tarjeta }).then(function (p) { return { perfil: p, tarjeta: tarjeta }; });
   }
 
-  window.RetoRpg = {
+  })(window);
+  // Merge with existing RetoRpg (from reto-rpg-logica.js) instead of overwriting
+  window.RetoRpg = Object.assign(window.RetoRpg || {}, {
     perfil: perfil, crearTarjeta: crearTarjeta, aTexto: aTexto, leerTarjeta: leerTarjeta,
     INVENTARIO_MAX: INVENTARIO_MAX, EQUIPO_MAX: EQUIPO_MAX, USOS: USOS, RAREZAS: RAREZAS,
     NOMBRES_RAREZA: NOMBRES_RAREZA, NOMBRES_CLASE: NOMBRES_CLASE,
@@ -355,5 +357,5 @@
     entregados: entregados, entregadosHoy: entregadosHoy, registrarEntrega: registrarEntrega,
     premiarTest: premiarTest, mostrarPremiosDeTest: mostrarPremiosDeTest,
     claseDeAvatar: claseDeAvatar, contar: contar, nivel: nivel
-  };
+  });
 })(window);
