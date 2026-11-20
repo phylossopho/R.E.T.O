@@ -255,6 +255,10 @@
     almacen('duelo_sesion', JSON.stringify(sesion), true);
     vista = null; firma = null;
     local.clase = null; local.mazo = null; local.elegidos = {}; local.consumido = false; local.inicioDuelo = null;
+    if (window.RetoDueloP2P && window.RetoDueloP2P.estado && window.RetoDueloP2P.estado.fase !== 'desconectado') {
+      // Modo P2P: delegar a reto-duelo-p2p.js
+      return;
+    }
     empezarSondeo();
     preguntar();
   }
