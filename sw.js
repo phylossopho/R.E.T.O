@@ -25,7 +25,7 @@ function isSameOrigin(url) {
   return url.origin === self.location.origin;
 }
 
-var CACHE_NAME = 'reto-shell-v4';
+var CACHE_NAME = 'reto-shell-v5';
 var SHELL_FILES = [
   joinPath(BASE_PATH, '/'),
   joinPath(BASE_PATH, 'index.html'),
