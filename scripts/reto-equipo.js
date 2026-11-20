@@ -296,7 +296,15 @@
     if (!raiz || !R) return;
     Promise.all([R.catalogo(), R.inventario(), R.equipo(), R.aciertos(), R.nivel(), R.entregados(), R.entregadosHoy(), window.RetoPerfil ? window.RetoPerfil.obtener() : Promise.resolve(null)]).then(function (r) {
       cat = r[0];
-      if (!Object.keys(cat.powerups).length) { raiz.textContent = 'No pude cargar los power ups. Abre el sitio con servidor.cmd.'; return; }
+      if (!Object.keys(cat.powerups).length) { 
+        var h = window.location.hostname;
+        if (h.includes('github.io') || h.includes('github.dev')) {
+          raiz.textContent = 'No se pudieron cargar los power ups (función no disponible en GitHub Pages).';
+        } else {
+          raiz.textContent = 'No pude cargar los power ups. Abre el sitio con servidor.cmd.';
+        }
+        return; 
+      }
       estado.inventario = r[1]; estado.equipo = r[2]; estado.aciertos = r[3]; estado.nivel = r[4]; estado.entregados = r[5]; estado.hoy = r[6];
       estado.perfilCompleto = r[7];
       pintar();

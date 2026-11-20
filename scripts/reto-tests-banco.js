@@ -142,6 +142,11 @@
 
   /* ----------------------------------------------------------- servidor */
 
+  function esGitHubPages() {
+    var h = window.location.hostname;
+    return h.includes('github.io') || h.includes('github.dev');
+  }
+
   /* Un 404 o un 405 quieren decir lo mismo aquí: el servidor que está corriendo
      es más viejo que esta pantalla y no conoce la ruta. */
   function pedir(ruta, cuerpo) {
@@ -152,6 +157,9 @@
     }).then(function (r) {
       if (r.ok) return r.json();
       if (r.status === 404 || r.status === 405) {
+        if (esGitHubPages()) {
+          throw new Error('Función no disponible en GitHub Pages (requiere servidor local).');
+        }
         throw new Error('El servidor que está corriendo es más viejo que esta pantalla. ' +
           'Ciérralo y abre servidor.cmd otra vez.');
       }
@@ -159,7 +167,12 @@
         throw new Error(d.error || ('El servidor no pudo con esto (error ' + r.status + ').'));
       });
     }).catch(function (e) {
-      if (e instanceof TypeError) throw new Error('No se pudo hablar con el servidor. ¿Está abierto?');
+      if (e instanceof TypeError) {
+        if (esGitHubPages()) {
+          throw new Error('Función no disponible en GitHub Pages (requiere servidor local).');
+        }
+        throw new Error('No se pudo hablar con el servidor. ¿Está abierto?');
+      }
       throw e;
     });
   }
@@ -194,12 +207,40 @@
   function ronda(test, ids, cantidad, modo) {
     var qs = test.preguntas.filter(function (p) { return jugable(p) && (!ids || ids.indexOf(p.id) >= 0); });
     return estados(test.id).then(function (mapa) {
+      // En GitHub Pages no hay servidor Python: armar ronda client-side
+      if (typeof window !== 'undefined' && !window.location.hostname.includes('127.0.0.1') && !window.location.hostname.includes('localhost')) {
+        return rondaLocal(qs, mapa, cantidad, modo);
+      }
       return pedir('/ronda', {
         preguntas: qs.map(paraServidor),
         estados: mapa,
         cantidad: cantidad,
         modo: modo
       });
+    });
+  }
+
+  function rondaLocal(qs, mapa, cantidad, modo) {
+    // Lógica simple client-side: mezclar y devolver
+    var disponibles = qs.slice();
+    if (modo === 'repasar') {
+      disponibles.sort(function (a, b) {
+        var ea = mapa[a.id] || 0;
+        var eb = mapa[b.id] || 0;
+        return ea - eb; // las que menos saben primero
+      });
+    } else {
+      for (var i = disponibles.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = disponibles[i]; disponibles[i] = disponibles[j]; disponibles[j] = tmp;
+      }
+    }
+    var seleccionadas = disponibles.slice(0, cantidad);
+    var semilla = Date.now().toString(36) + Math.random().toString(36).slice(2);
+    return Promise.resolve({
+      preguntas: seleccionadas.map(function (p, i) { return { id: p.id, orden: i }; }),
+      resumen: {},
+      semilla: semilla
     });
   }
 

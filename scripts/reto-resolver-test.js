@@ -1055,6 +1055,7 @@
         });
       });
     }
+    if (window.RetoSonido && window.RetoSonido.precargar) window.RetoSonido.precargar();
     pantallaElegir();
   }
 

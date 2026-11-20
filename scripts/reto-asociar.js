@@ -1309,7 +1309,10 @@
         });
       });
     }
-    Promise.all(listos).then(pantallaElegir).catch(function (e) { decir(e.message); });
+    Promise.all(listos).then(function () {
+      if (window.RetoSonido && window.RetoSonido.precargar) window.RetoSonido.precargar();
+      pantallaElegir();
+    }).catch(function (e) { decir(e.message); });
   }
 
   document.addEventListener('DOMContentLoaded', iniciar);
