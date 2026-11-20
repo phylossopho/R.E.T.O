@@ -110,9 +110,9 @@
      bien la sabía. Las tres respuestas se traducen a lo mismo que entiende el
      registro de repaso (las mismas clases que "Resolver"):
 
-       'sabia'  la sabía    → acierto, con seguridad    → 'dominada' (sube de caja)
-       'costo'  me costó    → acierto, con dudas        → 'fragil'   (no sube)
-       'no'     no la sabía → fallo                     → 'repasar'  (vuelve pronto)
+        'sabia'  la sabía    → acierto, con seguridad    → 'dominada' (sube de caja)
+        'costo'  me costó    → acierto, con dudas        → 'fragil'   (no sube)
+        'no'     no la sabía → fallo                     → 'repasar'  (vuelve pronto)
 
      "Me costó" existe a propósito: acertar con dudas no demuestra que se sabe
      (es la regla de rondas.py), y poder decirlo es más honesto que obligar a
@@ -135,6 +135,16 @@
     armarMazo: armarMazo,
     autoevaluacion: autoevaluacion
   };
-  if (typeof module !== 'undefined' && module.exports) module.exports = API;
-  else raiz.RetoTestsInstancia = API;
+
+  // Exponer en window para uso inmediato y en módulos CommonJS/Node
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = API;
+  } else {
+    raiz.RetoTestsInstancia = API;
+  }
+
+  // Asegurar exposición explícita en window para carga síncrona confiable
+  if (typeof window !== 'undefined') {
+    window.RetoTestsInstancia = API;
+  }
 })(typeof window !== 'undefined' ? window : this);

@@ -46,10 +46,34 @@
     try { if (Sonido && Sonido.reproducir) Sonido.reproducir(nombre); } catch (e) { /* el sonido nunca debe frenar la aventura */ }
   }
 
-  var Banco = window.RetoTestsBanco;
-  var Sonido = window.RetoSonido;
-  var Eval = window.RetoTestsEval;
-  var Instancia = window.RetoTestsInstancia;
+  // Esperar a que los módulos estén disponibles (manejo de orden de carga)
+  function esperarModulos() {
+    return new Promise(function (resolve) {
+      function verificar() {
+        if (window.RetoTestsInstancia && window.RetoTestsInstancia.armarMazo &&
+            window.RetoTestsEval && window.RetoTestsBanco &&
+            window.RetoTestsMuestra && window.RetoSonido &&
+            window.RetoRpg) {
+          resolve();
+        } else {
+          setTimeout(verificar, 50);
+        }
+      }
+      verificar();
+    });
+  }
+
+  var Banco = null;
+  var Sonido = null;
+  var Eval = null;
+  var Instancia = null;
+
+  function inicializarModulos() {
+    Banco = window.RetoTestsBanco;
+    Sonido = window.RetoSonido;
+    Eval = window.RetoTestsEval;
+    Instancia = window.RetoTestsInstancia;
+  }
 
   var estadoAventura = {
     avatar: 'mago',
@@ -74,8 +98,10 @@
   };
 
   function iniciar() {
-    var raiz = document.getElementById('vistas');
-    if (!raiz) return;
+    return esperarModulos().then(function () {
+      inicializarModulos();
+      var raiz = document.getElementById('vistas');
+      if (!raiz) return;
 
     aplicarAjustesAventura();
 
@@ -113,7 +139,8 @@
     } else {
       renderConfiguracion(raiz);
     }
-  }
+  }); // fin de esperarModulos().then()
+}
 
   var cfgModal = null;
 
