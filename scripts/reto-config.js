@@ -249,21 +249,25 @@
 R.leerTarjeta(t).then(function (res) {
             modal.close(); modal.remove();
             // res puede ser { perfil, tarjeta } o directamente el perfil (compatibilidad)
-            var perfilImportado = res.perfil || res;
-            var tarjetaFecha = (res.tarjeta && res.tarjeta.fecha) || (res.fecha) || null;
+            var perfilImportado = (res && res.perfil) ? res.perfil : res;
+            var tarjetaFecha = (res && res.tarjeta && res.tarjeta.fecha) || (res && res.fecha) || null;
+            var nombreImportado = (perfilImportado && perfilImportado.nombre) ? perfilImportado.nombre : 'Jugador';
             if (window.RetoPerfil && window.RetoPerfil.obtener) {
               window.RetoPerfil.obtener().then(function (perfilActual) {
                 var nuevoPerfil = Object.assign({}, perfilActual, perfilImportado, { 
-                  usuario_id: perfilImportado.usuario_id || perfilActual.usuario_id || 'importado',
+                  usuario_id: (perfilImportado && perfilImportado.usuario_id) || perfilActual.usuario_id || 'importado',
                   creado: tarjetaFecha || perfilActual.creado || new Date().toISOString().slice(0, 10)
                 });
                 window.RetoDatos && window.RetoDatos.poner('reto-perfil-usuario', nuevoPerfil).then(function () {
-                  decir('Tarjeta importada: ' + perfilImportado.nombre);
+                  decir('Tarjeta importada: ' + nombreImportado);
                   setTimeout(renderTodo, 300);
                 });
               });
             }
-          }).catch(function (e) { modal.querySelector('#importar-error').textContent = e.message; });
+          }).catch(function (e) { 
+            modal.querySelector('#importar-error').textContent = e.message; 
+            console.error('[Importar] Error:', e, 'res:', res);
+          });
       };
       if (archivo) {
         var rd = new FileReader();
