@@ -746,8 +746,12 @@
     } catch (e) { throw new Error('La tarjeta tiene numeros que no se entienden.'); }
     var inv = p.inventario || [];
     if (!Array.isArray(inv) || inv.length > INVENTARIO_MAX) throw new Error('El inventario de la tarjeta no es valido.');
-    inv.forEach(function(i) { if (!powerUps()[i]) throw new Error('La tarjeta trae un power up que no existe.'); });
-    var equipo = [], restante = inv.slice();
+    var pu = powerUps();
+    // Filtrar power ups desconocidos en lugar de fallar (compatibilidad con tarjetas antiguas)
+    var invValido = inv.filter(function(i) { return pu[i]; });
+    var descartados = inv.filter(function(i) { return !pu[i]; });
+    if (descartados.length) console.warn('[RetoRpg] Power ups descartados al importar:', descartados);
+    var equipo = [], restante = invValido.slice();
     (p.equipo || []).forEach(function(i) {
       if (restante.indexOf(i) >= 0 && equipo.indexOf(i) < 0) { equipo.push(i); restante.splice(restante.indexOf(i), 1); }
     });
@@ -755,7 +759,7 @@
     var config = p.config || {}; if (typeof config !== 'object') config = {};
     var tpm = p.tiempo_por_modulo || {}; if (typeof tpm !== 'object') tpm = {};
     return { nombre: String(p.nombre || 'Jugador').slice(0, 24), puntos: Math.round(puntos * 10) / 10,
-      nivel: nivelDePuntos(puntos), inventario: inv, equipo: equipo, aciertos: aciertos, config: config, tiempo_por_modulo: tpm, creado: p.creado, usuario_id: p.usuario_id };
+      nivel: nivelDePuntos(puntos), inventario: invValido, equipo: equipo, aciertos: aciertos, config: config, tiempo_por_modulo: tpm, creado: p.creado, usuario_id: p.usuario_id };
   }
 
   function _huella(perfil, fecha, version) {

@@ -67,9 +67,11 @@
 
     if ('serviceWorker' in navigator && esContextoSeguro()) {
       window.addEventListener('load', function () {
-        // Scope relativo: funciona tanto en raíz como en subpath (GitHub Pages)
-        var swUrl = new URL('sw.js', location.href).href;
-        navigator.serviceWorker.register(swUrl, { scope: '.' }).then(function (registration) {
+        // Usar SW raíz con scope correcto (no relativo a la página)
+        var basePath = location.pathname.split('/R.E.T.O/')[0] + '/R.E.T.O/';
+        var swUrl = new URL('sw.js', basePath).href;
+        var scope = basePath;
+        navigator.serviceWorker.register(swUrl, { scope: scope }).then(function (registration) {
           registration.addEventListener('updatefound', function () {
             var installingWorker = registration.installing;
             if (installingWorker) {

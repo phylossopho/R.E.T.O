@@ -1568,8 +1568,13 @@ limpiar: function () {
     if (tamano_grupo) body.tamano_grupo = tamano_grupo;
     if (extras) Object.keys(extras).forEach(function (k) { body[k] = extras[k]; });
 
-    // MODO OFFLINE: usar RetoLecturaVeloz local
-    if (window.RetoOfflineCache && window.RetoOfflineCache.isOffline() && window.RetoLecturaVeloz) {
+function esGitHubPages() {
+    var h = window.location.hostname;
+    return h.includes('github.io') || h.includes('github.dev');
+  }
+
+  // MODO OFFLINE: usar RetoLecturaVeloz local
+  if (window.RetoOfflineCache && window.RetoOfflineCache.isOffline() && window.RetoLecturaVeloz) {
       try {
         var plan = window.RetoLecturaVeloz['plan' + nombre.charAt(0).toUpperCase() + nombre.slice(1)];
         if (plan) {
@@ -1580,7 +1585,17 @@ limpiar: function () {
       }
     }
 
-    // MODO ONLINE
+    // MODO ONLINE - en GitHub Pages usar plan local
+    if (esGitHubPages()) {
+      if (window.RetoLecturaVeloz) {
+        var plan = window.RetoLecturaVeloz['plan' + nombre.charAt(0).toUpperCase() + nombre.slice(1)];
+        if (plan) {
+          return Promise.resolve(plan(parrafos.map(function (x) { return x.texto; })));
+        }
+      }
+      // Fallback simple si no hay motor local
+      return Promise.resolve({ ejercicios: [] });
+    }
     return fetch('/api/lectura/plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
