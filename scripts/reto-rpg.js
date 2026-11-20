@@ -268,9 +268,22 @@
   function nivel() {
     if (!window.RetoProgreso) return Promise.resolve(null);
     return window.RetoProgreso.sesiones().then(function (ses) {
-      return fetch('/api/rpg/nivel', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sesiones: ses.slice(-2000) })
-      }).then(function (r) { return r.ok ? r.json() : null; });
+      // Cálculo local del nivel (sin servidor)
+      var total = 0;
+      (ses || []).forEach(function(s) {
+        if (!s || typeof s !== 'object') return;
+        var tipo = s.tipo;
+        if (['lectura', 'vision', 'test', 'rpg'].indexOf(tipo) < 0) return;
+        try {
+          var pts = puntosSesion(tipo, parseFloat(s.minutos) || 0, parseInt(s.rondas) || 0, parseInt(s.preguntas) || 0);
+        } catch (e) { return; }
+        var dia = String(s.fecha || '').slice(0, 10);
+        // Acumular por día (tope diario 120)
+        if (!porDia[dia]) porDia[dia] = 0;
+        porDia[dia] = Math.min(120, porDia[dia] + Math.max(0, pts));
+      });
+      var total = Object.keys(porDia).reduce(function(a, d) { return a + porDia[d]; }, 0);
+      return Promise.resolve({ puntos: Math.round(total * 10) / 10, nivel: nivelDePuntos(total) });
     }).catch(function () { return null; });
   }
 
