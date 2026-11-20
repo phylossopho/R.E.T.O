@@ -1629,16 +1629,14 @@
     });
   }
 
-  /* -------------------------------------------------------------------------
-     2. SELECCIÓN DE TEST PARA LA BATALLA RPG
-     ------------------------------------------------------------------------- */
-  function renderSeleccionTest(contenedor) {
-    contenedor.innerHTML = '<p style="text-align: center; padding: var(--space-lg);">Cargando tests disponibles...</p>';
+/* -------------------------------------------------------------------------
+      2. SELECCIÓN DE TEST PARA LA BATALLA RPG
+      ------------------------------------------------------------------------- */
+  // Alias para compatibilidad
+  var Banco = window.RetoTestsBanco;
 
-    if (!Banco) {
-      contenedor.innerHTML = '<p style="text-align: center; color: var(--aviso);">Error: Banco de tests no disponible.</p>';
-      return;
-    }
+function renderSeleccionTest(contenedor) {
+    contenedor.innerHTML = '<p style="text-align: center; padding: var(--space-lg);">Cargando tests disponibles...</p>';
 
     Banco.cargar().then(function (tests) {
       if ((!tests || tests.length === 0) && window.RetoTestsMuestra && window.RetoTestsMuestra.copiar) {
