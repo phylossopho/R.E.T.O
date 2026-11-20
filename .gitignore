@@ -34,9 +34,7 @@ multijugador.md
 vision.md
 lectura-veloz.md
 rpg.md
-configuracion-*.html
 pokemon_educational_rpg_battle.html
-rpg01.html
 
 # Signaling worker (se deploya por separado en Cloudflare Workers)
 signaling-worker/
