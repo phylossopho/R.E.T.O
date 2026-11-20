@@ -69,8 +69,15 @@
       fetch('/datos/powerups.json').then(function (r) { return r.json(); }),
       fetch('/datos/powerups_textos.json').then(function (r) { return r.json(); })
     ]).then(function (r) {
-      return { powerups: r[0].powerups, textos: r[1] };
-    }).catch(function () { cache = null; return { powerups: {}, textos: {} }; });
+      _cachePU = r[0].powerups;
+      _cacheTXT = r[1];
+      return { powerups: _cachePU, textos: _cacheTXT };
+    }).catch(function () { 
+      _cachePU = {}; 
+      _cacheTXT = {}; 
+      cache = null; 
+      return { powerups: {}, textos: {} }; 
+    });
     return cache;
   }
 
