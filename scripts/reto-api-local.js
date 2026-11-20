@@ -54,6 +54,11 @@
       return respuestaLocal(body.tarjeta);
     }
 
+    // /api/pve/* - aventura gráfica
+    if (urlStr.startsWith('/api/pve/')) {
+      return apiPveLocal(urlStr, method, body);
+    }
+
     // /api/tests/* - banco de tests
     if (urlStr.startsWith('/api/tests/')) {
       return apiTestsLocal(urlStr, method, body);
@@ -74,8 +79,23 @@
       return respuestaLocal({ ok: true, data: 'vision local' });
     }
 
-    // /api/secuencia, /api/schulte, /api/mahjong, /api/memorama, /api/ding, /api/pve, /api/sala
-    if (urlStr.match(/^\/(api\/(secuencia|schulte|mahjong|memorama|ding|pve|sala))/)) {
+    // /api/pve/* - aventura gráfica (ANTES del regex genérico)
+    if (urlStr.startsWith('/api/pve/')) {
+      return apiPveLocal(urlStr, method, body);
+    }
+
+    // /api/rpg/tarjeta - crear tarjeta (ya no se usa, pero por compatibilidad)
+    if (urlStr === '/api/rpg/tarjeta' && method === 'POST') {
+      return respuestaLocal({ ok: true, tarjeta: body.perfil });
+    }
+
+    // /api/rpg/tarjeta/validar - validar tarjeta (ya no se usa)
+    if (urlStr === '/api/rpg/tarjeta/validar' && method === 'POST') {
+      return respuestaLocal(body.tarjeta);
+    }
+
+    // /api/secuencia, /api/schulte, /api/mahjong, /api/memorama, /api/ding, /api/sala
+    if (urlStr.match(/^\/(api\/(secuencia|schulte|mahjong|memorama|ding|sala))/)) {
       return respuestaLocal({ ok: true, data: 'local fallback' });
     }
 
@@ -161,7 +181,42 @@
     premiarTestLocal: premiarTestLocal,
     apiTestsLocal: apiTestsLocal,
     lecturaPlanLocal: lecturaPlanLocal,
-    lecturaVelocidadLocal: lecturaVelocidadLocal
+    lecturaVelocidadLocal: lecturaVelocidadLocal,
+    apiPveLocal: apiPveLocal
   };
+
+  /* ---------- Implementaciones locales ---------- */
+
+  function apiPveLocal(url, method, body) {
+    if (url === '/api/pve/iniciar' && method === 'POST') {
+      // Iniciar batalla PvE local
+      return respuestaLocal({
+        estado: {
+          v: 1,
+          semilla: Date.now(),
+          _n: 0,
+          config: body.config || {},
+          turno: 1,
+          fase: 'elegir',
+          atacante: 'j1',
+          pregunta: null,
+          ganador: null,
+          motivo: null,
+          log: [],
+          jugadores: {
+            j1: { nombre: body.jugador?.nombre || 'Jugador', clase: body.jugador?.clase || 'guerrero', nivel: body.jugador?.nivel || 1, pv: 100, pv_max: 100, mazo: { preguntas: {}, orden: [], usadas: [] }, oferta: [], equipo: {}, efectos: [], usados: [], usos_pregunta: 0, aciertos: 0, fallos: 0, ultimo_dano: 0 },
+            j2: { nombre: 'Enemigo', clase: 'guerrero', nivel: 1, pv: 100, pv_max: 100, mazo: { preguntas: {}, orden: [], usadas: [] }, oferta: [], equipo: {}, efectos: [], usados: [], usos_pregunta: 0, aciertos: 0, fallos: 0, ultimo_dano: 0 }
+          }
+        }
+      });
+    }
+    if (url === '/api/pve/responder' && method === 'POST') {
+      return respuestaLocal({ ok: true, estado: body.estado });
+    }
+    if (url === '/api/pve/powerup' && method === 'POST') {
+      return respuestaLocal({ ok: true, estado: body.estado });
+    }
+    return errorLocal('PvE endpoint no implementado localmente: ' + url, 405);
+  }
 
 })();
