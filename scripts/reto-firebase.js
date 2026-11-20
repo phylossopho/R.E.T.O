@@ -36,9 +36,18 @@
   var database = null;
   var auth = null;
   var inicializado = false;
+  var firebaseDisponible = esConfigValida();
+
+  function esConfigValida() {
+    return FIREBASE_CONFIG.apiKey &&
+           FIREBASE_CONFIG.apiKey !== 'TU_API_KEY' &&
+           FIREBASE_CONFIG.projectId &&
+           FIREBASE_CONFIG.projectId !== 'TU_PROYECTO';
+  }
 
   function inicializar() {
     if (inicializado) return Promise.resolve();
+    if (!firebaseDisponible) return Promise.reject(new Error('Firebase no configurado'));
 
     if (!window.firebase) {
       return Promise.reject(new Error('Firebase SDK no cargado. Añade el script en index.html'));
@@ -197,6 +206,8 @@
     transaction: transaction,
     setupPresencia: setupPresencia,
     removePresencia: removePresencia,
+    esConfigValida: esConfigValida,
+    firebaseDisponible: function () { return firebaseDisponible; },
 
     // Helpers para rutas comunes
     salaRef: function (codigo) { return ref(RUTAS.salas + '/' + codigo.toUpperCase()); },

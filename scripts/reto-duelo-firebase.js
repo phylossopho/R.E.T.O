@@ -23,12 +23,19 @@
      DETECTAR MODO: si hay Firebase configurado y usuario quiere online -> Firebase
      =========================================================================== */
   function detectarModo() {
+    // Verificar si Firebase está disponible y configurado
+    if (!window.RetoFirebase || !window.RetoFirebase.esConfigValida()) {
+      _usandoFirebase = false;
+      console.log('[RetoDueloFirebase] Modo P2P local (Firebase no configurado)');
+      return Promise.resolve();
+    }
+
     return firebase.inicializar().then(function () {
       _usandoFirebase = true;
       console.log('[RetoDueloFirebase] Modo Firebase activado');
     }).catch(function () {
       _usandoFirebase = false;
-      console.log('[RetoDueloFirebase] Modo API local (fallback)');
+      console.log('[RetoDueloFirebase] Modo P2P local (fallback)');
     });
   }
 

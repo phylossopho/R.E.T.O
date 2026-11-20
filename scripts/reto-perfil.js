@@ -240,7 +240,7 @@
         if (changed) {
           m.total = recalcularTotal(m);
           perfil.tiempo_por_modulo = m;
-          return escribir(CLAVE_PERFIL, perfil).then(function () ({ migrated: true }));
+          return escribir(CLAVE_PERFIL, perfil).then(function () { return { migrated: true }; });
         }
         return { migrated: false, reason: 'already ok' };
       });
