@@ -346,7 +346,6 @@
     return post('/api/rpg/tarjeta/validar', { tarjeta: tarjeta }).then(function (p) { return { perfil: p, tarjeta: tarjeta }; });
   }
 
-  })(window);
   // Merge with existing RetoRpg (from reto-rpg-logica.js) instead of overwriting
   window.RetoRpg = Object.assign(window.RetoRpg || {}, {
     perfil: perfil, crearTarjeta: crearTarjeta, aTexto: aTexto, leerTarjeta: leerTarjeta,
