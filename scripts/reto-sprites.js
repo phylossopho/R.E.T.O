@@ -41,7 +41,7 @@
 
   function cargar() {
     if (cache) return cache;
-    cache = fetch('/api/rpg/sprites').then(function (r) { return r.ok ? r.json() : { sprites: {} }; })
+    cache = fetch('/datos/sprites.json').then(function (r) { return r.ok ? r.json() : { sprites: {} }; })
       .then(function (d) { return d.sprites || {}; })
       .catch(function () { return {}; });
     return cache;

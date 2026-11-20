@@ -1421,7 +1421,7 @@
     var avataresFiltrados = avataresBase;
     estadoAventura.incognito = lsSeguro.getItem('aventura_incognito') === 'on';
     var imagenIncognito = null;                    // imagenes/incognito/: si hay una imagen se usa; si no, un «?» grande
-    fetch('/api/rpg/incognito').then(function (r) { return r.ok ? r.json() : {}; }).then(function (d) {
+    fetch('/datos/incognito.json').then(function (r) { return r.ok ? r.json() : {}; }).then(function (d) {
       imagenIncognito = d.imagen || null;
       actualizarCarrusel();
     }).catch(function () {});

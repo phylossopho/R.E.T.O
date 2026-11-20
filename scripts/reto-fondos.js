@@ -2,7 +2,7 @@
    R.E.T.O. - Fondos de la batalla
 
    Las imagenes de fondo viven en imagenes/fondos/. Para agregar una basta con dejarla
-   ahi (webp, png, jpg, jpeg o avif): el servidor lista la carpeta (/api/rpg/fondos) y
+   ahi (webp, png, jpg, jpeg o avif): la lista estatica esta en /datos/fondos.json y
    aqui se elige una AL AZAR para cada batalla. No hay que registrar nada ni tocar codigo.
 
    window.RetoFondos
@@ -17,7 +17,7 @@
 
   function lista() {
     if (cache) return cache;
-    cache = fetch('/api/rpg/fondos').then(function (r) { return r.ok ? r.json() : { fondos: [] }; })
+    cache = fetch('/datos/fondos.json').then(function (r) { return r.ok ? r.json() : { fondos: [] }; })
       .then(function (d) { return Array.isArray(d.fondos) ? d.fondos : []; })
       .catch(function () { return []; });
     return cache;
