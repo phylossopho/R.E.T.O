@@ -746,20 +746,21 @@
     } catch (e) { throw new Error('La tarjeta tiene numeros que no se entienden.'); }
     var inv = p.inventario || [];
     if (!Array.isArray(inv) || inv.length > INVENTARIO_MAX) throw new Error('El inventario de la tarjeta no es valido.');
-    var pu = powerUps();
-    // Filtrar power ups desconocidos en lugar de fallar (compatibilidad con tarjetas antiguas)
-    var invValido = inv.filter(function(i) { return pu[i]; });
-    var descartados = inv.filter(function(i) { return !pu[i]; });
-    if (descartados.length) console.warn('[RetoRpg] Power ups descartados al importar:', descartados);
-    var equipo = [], restante = invValido.slice();
-    (p.equipo || []).forEach(function(i) {
-      if (restante.indexOf(i) >= 0 && equipo.indexOf(i) < 0) { equipo.push(i); restante.splice(restante.indexOf(i), 1); }
+    return loadPowerUps().then(function (pu) {
+      // Filtrar power ups desconocidos en lugar de fallar (compatibilidad con tarjetas antiguas)
+      var invValido = inv.filter(function(i) { return pu[i]; });
+      var descartados = inv.filter(function(i) { return !pu[i]; });
+      if (descartados.length) console.warn('[RetoRpg] Power ups descartados al importar:', descartados);
+      var equipo = [], restante = invValido.slice();
+      (p.equipo || []).forEach(function(i) {
+        if (restante.indexOf(i) >= 0 && equipo.indexOf(i) < 0) { equipo.push(i); restante.splice(restante.indexOf(i), 1); }
+      });
+      validarEquipo(equipo, { con_tiempo: true });
+      var config = p.config || {}; if (typeof config !== 'object') config = {};
+      var tpm = p.tiempo_por_modulo || {}; if (typeof tpm !== 'object') tpm = {};
+      return { nombre: String(p.nombre || 'Jugador').slice(0, 24), puntos: Math.round(puntos * 10) / 10,
+        nivel: nivelDePuntos(puntos), inventario: invValido, equipo: equipo, aciertos: aciertos, config: config, tiempo_por_modulo: tpm, creado: p.creado, usuario_id: p.usuario_id };
     });
-    validarEquipo(equipo, { con_tiempo: true });
-    var config = p.config || {}; if (typeof config !== 'object') config = {};
-    var tpm = p.tiempo_por_modulo || {}; if (typeof tpm !== 'object') tpm = {};
-    return { nombre: String(p.nombre || 'Jugador').slice(0, 24), puntos: Math.round(puntos * 10) / 10,
-      nivel: nivelDePuntos(puntos), inventario: invValido, equipo: equipo, aciertos: aciertos, config: config, tiempo_por_modulo: tpm, creado: p.creado, usuario_id: p.usuario_id };
   }
 
   function _huella(perfil, fecha, version) {
@@ -783,17 +784,18 @@
     if (!t || t.tipo !== 'tarjeta-reto') throw new Error('Eso no es una tarjeta de jugador de R.E.T.O.');
     var version = t.v;
     if (version !== 1 && version !== 2) throw new Error('Version de tarjeta no soportada.');
-    var perfil = validarPerfil(t.perfil, version);
-    if (t.huella !== _huella(perfil, String(t.fecha || '').slice(0, 10), version))
-      throw new Error('La tarjeta fue modificada o esta dañada. Pide otra.');
-    return perfil;
+    return validarPerfil(t.perfil, version).then(function (perfil) {
+      if (t.huella !== _huella(perfil, String(t.fecha || '').slice(0, 10), version))
+        throw new Error('La tarjeta fue modificada o esta dañada. Pide otra.');
+      return perfil;
+    });
   }
 
   function aTexto(tarjeta) { return JSON.stringify(tarjeta); }
   function leerTarjeta(texto) {
     try {
       var t = JSON.parse(texto);
-      return Promise.resolve(validarTarjeta(t));
+      return validarTarjeta(t);
     } catch (e) {
       return Promise.reject(e);
     }
