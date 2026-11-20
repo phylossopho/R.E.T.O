@@ -1917,21 +1917,30 @@ function renderSeleccionTest(contenedor) {
 
         var R = window.RetoRpg;
         var cargas = R ? [R.catalogo(), R.equipo(), R.aciertos(), R.entregados(), R.entregadosHoy()] : [Promise.resolve({ powerups: {}, textos: {} }), Promise.resolve([]), Promise.resolve(0), Promise.resolve(0), Promise.resolve(0)];
-        Promise.all(cargas).then(function (r) {
+Promise.all(cargas).then(function (r) {
           var cat = r[0], aciertosAntes = r[2];
           estadoAventura.textosPU = cat.textos;
           estadoAventura.catalogoPU = cat;
           var conTiempo = ajustesAventura.danoTiempo === 'on';
-          // Sin tiempo no se llevan los power ups que lo necesitan.
           var equipo = r[1].filter(function (id) {
             return !(cat.powerups[id] && cat.powerups[id].requiere_tiempo && !conTiempo);
           });
+
           var preguntasParaEnviar = preguntasParaServidor(mazo);
           if (!preguntasParaEnviar || !preguntasParaEnviar.length) {
             throw new Error('No se pudieron preparar las preguntas para la batalla');
           }
 
-          return llamarPve('POST', '/iniciar', {
+          var cuerpoPve = {
+            nombre: nombreDeAvatar(estadoAventura.avatar), clase: claseDeAvatar(estadoAventura.avatar),
+            enemigo: { nombre: nombreDeAvatar(estadoAventura.avatarRival), clase: claseDeAvatar(estadoAventura.avatarRival) },
+            preguntas: preguntasParaServidor(mazo), equipo: equipo, dano_base: ajustesAventura.danPorcentaje,
+            ventaja: 3, dificultad: ajustesAventura.dificultad, con_tiempo: conTiempo, segundos: 30,
+            aciertos_antes: aciertosAntes, entregados_antes: r[3], entregados_hoy: r[4]
+          };
+
+          console.log('[Aventura] Llamando a llamarPve con cuerpo:', JSON.stringify(cuerpoPve).slice(0, 500));
+          return llamarPve('POST', '/iniciar', cuerpoPve);
             nombre: nombreDeAvatar(estadoAventura.avatar), clase: claseDeAvatar(estadoAventura.avatar),
             enemigo: { nombre: nombreDeAvatar(estadoAventura.avatarRival), clase: claseDeAvatar(estadoAventura.avatarRival) },
             preguntas: preguntasParaServidor(mazo), equipo: equipo, dano_base: ajustesAventura.danPorcentaje,
@@ -1944,7 +1953,7 @@ function renderSeleccionTest(contenedor) {
           contenedor.style.opacity = '1';
           renderBatalla(contenedor);
         }).catch(function (e) {
-          console.error('[Aventura] Error iniciando batalla:', e);
+          console.error('[Aventura] Error iniciando batalla:', e, e.stack);
           alert('No se pudo empezar la batalla: ' + (e.message || e));
           contenedor.style.opacity = '1';
           renderSeleccionTest(contenedor);
@@ -2605,8 +2614,8 @@ function renderSeleccionTest(contenedor) {
 
   function llamarPve(metodo, ruta, cuerpo) {
     actualizarModoOfflinePve();
+    console.log('[Aventura] llamarPve llamado:', metodo, ruta, !!cuerpo);
 
-    // FORZAR MODO LOCAL EN GITHUB PAGES (fallback robusto)
     var esGH = esGitHubPages();
     if (esGH || modoOfflinePve) {
       if (!cuerpo || typeof cuerpo !== 'object') {
@@ -2630,6 +2639,7 @@ function renderSeleccionTest(contenedor) {
   }
 
   function llamarPveLocal(metodo, ruta, cuerpo) {
+    console.log('[Aventura] llamarPveLocal llamado:', metodo, ruta, !!cuerpo);
     if (metodo === 'POST' && ruta === '/iniciar') {
       // Iniciar batalla PvE local
       if (!cuerpo || typeof cuerpo !== 'object') {
@@ -2638,6 +2648,7 @@ function renderSeleccionTest(contenedor) {
       var cfg = cuerpo.config || {};
       // El frontend envía 'preguntas' (un array), duplicamos para ambos combatientes
       var preguntas = (cuerpo && cuerpo.preguntas) || (cuerpo && cuerpo.preguntas1) || (cuerpo && cuerpo.preguntas2) || [];
+      console.log('[Aventura] Preguntas recibidas:', preguntas ? preguntas.length : 'undefined');
       if (!preguntas.length) {
         return Promise.reject(new Error('El mazo debe tener entre 1 y 60 preguntas (tiene 0).'));
       }
