@@ -219,7 +219,9 @@
     crear.addEventListener('click', function () {
       almacen('red_nombre', nombre.value.trim());
       if (window.RetoDueloP2P && window.RetoDueloP2P.crearSala) {
-        window.RetoDueloP2P.crearSala().then(entrar).catch(function (e) { falla(e.message); });
+        (window.RetoDueloP2P.init ? window.RetoDueloP2P.init() : Promise.resolve())
+          .then(function () { return window.RetoDueloP2P.crearSala(); })
+          .then(entrar).catch(function (e) { falla(e.message); });
       } else {
         llamar('POST', '/crear', { nombre: nombre.value }).then(entrar).catch(function (e) { falla(e.message); });
       }
@@ -239,7 +241,9 @@
     unir.addEventListener('click', function () {
       almacen('red_nombre', nombre.value.trim());
       if (window.RetoDueloP2P && window.RetoDueloP2P.unirseSala) {
-        window.RetoDueloP2P.unirseSala(codigo.value).then(entrar).catch(function (e) { falla(e.message); });
+        (window.RetoDueloP2P.init ? window.RetoDueloP2P.init() : Promise.resolve())
+          .then(function () { return window.RetoDueloP2P.unirseSala(codigo.value); })
+          .then(entrar).catch(function (e) { falla(e.message); });
       } else {
         llamar('POST', '/unirse', { codigo: codigo.value, nombre: nombre.value }).then(entrar)
           .catch(function (e) { falla(e.message); });
