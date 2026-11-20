@@ -2594,17 +2594,19 @@
     if (metodo === 'POST' && ruta === '/iniciar') {
       // Iniciar batalla PvE local
       var cfg = cuerpo.config || {};
+      // El frontend envía 'preguntas' (un array), duplicamos para ambos combatientes
+      var preguntas = cuerpo.preguntas || cuerpo.preguntas1 || cuerpo.preguntas2 || [];
       var spec1 = {
-        nombre: cuerpo.jugador1 || 'Jugador',
-        clase: cuerpo.clase1 || 'guerrero',
-        preguntas: cuerpo.preguntas1 || [],
-        equipo: cuerpo.equipo1 || [],
+        nombre: cuerpo.jugador1 || cuerpo.nombre || 'Jugador',
+        clase: cuerpo.clase1 || cuerpo.clase || 'guerrero',
+        preguntas: preguntas,
+        equipo: cuerpo.equipo1 || cuerpo.equipo || [],
         pv_max: cfg.pv_max
       };
       var spec2 = {
-        nombre: cuerpo.jugador2 || 'Enemigo',
-        clase: cuerpo.clase2 || 'mago',
-        preguntas: cuerpo.preguntas2 || [],
+        nombre: cuerpo.jugador2 || cuerpo.enemigo?.nombre || 'Enemigo',
+        clase: cuerpo.clase2 || cuerpo.enemigo?.clase || 'mago',
+        preguntas: preguntas,
         equipo: cuerpo.equipo2 || [],
         pv_max: cfg.pv_max
       };
