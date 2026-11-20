@@ -2591,9 +2591,15 @@ function renderSeleccionTest(contenedor) {
   function llamarPveLocal(metodo, ruta, cuerpo) {
     if (metodo === 'POST' && ruta === '/iniciar') {
       // Iniciar batalla PvE local
+      if (!cuerpo) {
+        return Promise.reject(new Error('Cuerpo de petición vacío'));
+      }
       var cfg = cuerpo.config || {};
       // El frontend envía 'preguntas' (un array), duplicamos para ambos combatientes
       var preguntas = cuerpo.preguntas || cuerpo.preguntas1 || cuerpo.preguntas2 || [];
+      if (!preguntas.length) {
+        return Promise.reject(new Error('El mazo debe tener entre 1 y 60 preguntas (tiene 0).'));
+      }
       var spec1 = {
         nombre: cuerpo.jugador1 || cuerpo.nombre || 'Jugador',
         clase: cuerpo.clase1 || cuerpo.clase || 'guerrero',
@@ -2608,6 +2614,9 @@ function renderSeleccionTest(contenedor) {
         equipo: cuerpo.equipo2 || [],
         pv_max: cfg.pv_max
       };
+      if (!window.RetoRpg) {
+        return Promise.reject(new Error('RetoRpg no disponible'));
+      }
       estadoPveLocal = window.RetoRpg.nuevaBatalla(cfg, spec1, spec2);
       estadoPveLocal.sesionId = 'local-' + Date.now();
       // El enemigo ataca primero en PvE
