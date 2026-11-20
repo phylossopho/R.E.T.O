@@ -1872,7 +1872,7 @@ function renderSeleccionTest(contenedor) {
         var candidatasBarajadas = Instancia ? Instancia.barajar(candidatas) : candidatas;
         var mazo = Instancia ? Instancia.armarMazo(candidatasBarajadas, ajustesAventura.numPreguntas, { evaluador: Eval }) : candidatasBarajadas;
         
-        if (!mazo || mazo.length === 0) {
+        if (!mazo || !Array.isArray(mazo) || mazo.length === 0) {
           alert('Este test no tiene preguntas jugables.');
           contenedor.style.opacity = '1';
           return;
@@ -1926,6 +1926,11 @@ function renderSeleccionTest(contenedor) {
           var equipo = r[1].filter(function (id) {
             return !(cat.powerups[id] && cat.powerups[id].requiere_tiempo && !conTiempo);
           });
+          var preguntasParaEnviar = preguntasParaServidor(mazo);
+          if (!preguntasParaEnviar || !preguntasParaEnviar.length) {
+            throw new Error('No se pudieron preparar las preguntas para la batalla');
+          }
+
           return llamarPve('POST', '/iniciar', {
             nombre: nombreDeAvatar(estadoAventura.avatar), clase: claseDeAvatar(estadoAventura.avatar),
             enemigo: { nombre: nombreDeAvatar(estadoAventura.avatarRival), clase: claseDeAvatar(estadoAventura.avatarRival) },
@@ -1939,12 +1944,14 @@ function renderSeleccionTest(contenedor) {
           contenedor.style.opacity = '1';
           renderBatalla(contenedor);
         }).catch(function (e) {
-          alert('No se pudo empezar la batalla: ' + e.message);
+          console.error('[Aventura] Error iniciando batalla:', e);
+          alert('No se pudo empezar la batalla: ' + (e.message || e));
           contenedor.style.opacity = '1';
           renderSeleccionTest(contenedor);
         });
       } catch (e) {
-        alert('Error al iniciar batalla: ' + e.message);
+        console.error('[Aventura] Error síncrono:', e);
+        alert('Error al iniciar batalla: ' + (e.message || e));
         contenedor.style.opacity = '1';
       }
     }, 400);
