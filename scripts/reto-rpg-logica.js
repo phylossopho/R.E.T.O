@@ -13,15 +13,23 @@
   var _cachePU = null;
   var _cacheTXT = null;
 
+  function getBasePath() {
+    var path = location.pathname;
+    var idx = path.indexOf('/R.E.T.O/');
+    return idx >= 0 ? path.slice(0, idx + 9) : '/';
+  }
+
   function loadPowerUps() {
     if (_cachePU) return Promise.resolve(_cachePU);
-    return fetch('../../datos/powerups.json').then(function(r) { return r.json(); })
+    var base = getBasePath();
+    return fetch(base + 'datos/powerups.json').then(function(r) { return r.json(); })
       .then(function(d) { _cachePU = d.powerups; return _cachePU; });
   }
 
   function loadTextosPU() {
     if (_cacheTXT) return Promise.resolve(_cacheTXT);
-    return fetch('../../datos/powerups_textos.json').then(function(r) { return r.json(); })
+    var base = getBasePath();
+    return fetch(base + 'datos/powerups_textos.json').then(function(r) { return r.json(); })
       .then(function(d) { _cacheTXT = d; return _cacheTXT; });
   }
 
