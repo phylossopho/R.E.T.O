@@ -794,7 +794,7 @@
     return validarPerfil(t.perfil, version).then(function (perfil) {
       if (t.huella !== _huella(perfil, String(t.fecha || '').slice(0, 10), version))
         throw new Error('La tarjeta fue modificada o esta dañada. Pide otra.');
-      return perfil;
+      return { perfil: perfil, tarjeta: { fecha: t.fecha } };
     });
   }
 
