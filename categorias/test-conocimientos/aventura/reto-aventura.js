@@ -2602,6 +2602,9 @@ function renderSeleccionTest(contenedor) {
     // FORZAR MODO LOCAL EN GITHUB PAGES (fallback robusto)
     var esGH = esGitHubPages();
     if (esGH || modoOfflinePve) {
+      if (!cuerpo || typeof cuerpo !== 'object') {
+        return Promise.reject(new Error('Cuerpo de petición inválido'));
+      }
       if (window.RetoRpg) {
         return llamarPveLocal(metodo, ruta, cuerpo);
       }
