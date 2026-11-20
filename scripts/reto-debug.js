@@ -6,8 +6,8 @@
    JavaScript, recursos que fallan al cargar (CSS/JS/imagenes), peticiones
    fetch/XHR y todo lo que se escriba en la consola.
 
-   No muestra interfaz. Se extrae con Ctrl+Alt+4 del teclado numerico.
-   Con ?debug=1 en la URL muestra un contador de eventos.
+No muestra interfaz. Se extrae con Ctrl+Shift+E.
+    Con ?debug=1 en la URL muestra un contador de eventos.
 
    API manual (desde la consola del navegador):
      RetoDebug.buscar('lo que sospecho')   declara la falla que persigo
@@ -792,21 +792,14 @@
 
   /* ------------------------------------------------------------- atajos - */
 
-  // Atajo unico: Ctrl+Alt+4 del teclado numerico.
-  //  -- Se compara con e.code y no con e.key porque Bloq Num cambia e.key
-  //     (con Bloq Num apagado, Numpad4 entrega la flecha izquierda).
-  //  -- AltGr no lo dispara por error: los caracteres de AltGr viven en la
-  //     fila principal de numeros, no en el teclado numerico.
-  //  -- Solo importa mientras esta pagina tiene el foco, asi que los atajos de
-  //     otras aplicaciones (IntelliJ, Excel, etc.) no interfieren.
-  //  -- Se exige !e.shiftKey para no chocar con Ctrl+Alt+Mayus+4.
+  // Atajo: Ctrl+Shift+E (solo cuando la pagina tiene foco)
   function atajos() {
     document.addEventListener('keydown', function (e) {
-      if (!e.ctrlKey || !e.altKey || e.shiftKey || e.metaKey) return;
-      if (e.code !== 'Numpad4') return;
+      if (!e.ctrlKey || !e.shiftKey || e.altKey || e.metaKey) return;
+      if (e.code !== 'KeyE') return;
       e.preventDefault();
       e.stopPropagation();
-      registrar('atajo', { usado: 'Ctrl+Alt+Numpad4' });
+      registrar('atajo', { usado: 'Ctrl+Shift+E' });
       copiar();
     }, true);
   }
@@ -829,7 +822,7 @@
 
   window.RetoDebug = {
     cargado: true,
-    atajos: 'Ctrl+Alt+4 del teclado numerico',
+    atajos: 'Ctrl+Shift+E',
     buscar: function (descripcion) {
       busqueda = descripcion;
       registrar('busqueda', { descripcion: descripcion });
