@@ -24,7 +24,7 @@
 
    -------------------------------------------------------------------------
    QUÉ VIVE EN EL SERVIDOR Y QUÉ AQUÍ
-   El tablero lo arma Python (logica/schulte.py) y se pide UNA vez al empezar.
+   El tablero lo arma Python (scripts/logica/schulte.js) y se pide UNA vez al empezar.
    Todo lo demás —el reloj, el desvanecido, los errores— vive aquí, porque un
    viaje al servidor por cada casilla falsearía el tiempo, y el tiempo es justo
    lo que se mide. En el memorama el servidor guarda la partida porque tiene
@@ -404,16 +404,12 @@
       body: JSON.stringify({ tamano: tamanoPedido = tamanoQueCabe(ajustes.tamano), contenido: ajustes.contenido })
     }).then(function (r) {
       if (r.ok) return r.json();
-      if (r.status === 404 || r.status === 405) {
-        throw new Error('El servidor que está corriendo es más viejo que el juego. '
-          + 'Ciérralo y abre servidor.cmd otra vez para que aparezca.');
-      }
-      throw new Error('El servidor no pudo preparar la tabla (error ' + r.status + ').');
+      throw new Error('No se pudo preparar la tabla (error ' + r.status + '). Recarga la página.');
     }).catch(function (e) {
       /* Si el fallo es de la red (el servidor está apagado, o no se alcanza),
          el mensaje de arriba no sirve de nada: se dice otra cosa. */
       if (e instanceof TypeError) {
-        decir('No se pudo hablar con el servidor. ¿Está abierto?');
+        decir('No se pudo preparar la tabla. Recarga la página.');
         return;
       }
       decir(e.message);

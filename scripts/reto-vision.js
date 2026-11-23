@@ -60,7 +60,7 @@
   // Estado offline
   var modoOffline = false;
   function actualizarModoOffline() {
-    var offline = !navigator.onLine || (window.RetoOfflineCache && window.RetoOfflineCache.isOffline());
+    var offline = false;   // las reglas corren en la propia página: funciona también sin internet
     if (offline !== modoOffline) {
       modoOffline = offline;
       document.documentElement.setAttribute('data-modo-offline', modoOffline ? '1' : '0');
@@ -107,16 +107,12 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(cuerpo)
     }).then(function (r) {
-      if (r.status === 404 || r.status === 405) {
-        throw new Error('El servidor que está corriendo es más viejo que los ejercicios. ' +
-                        'Ciérralo y abre servidor.cmd otra vez.');
-      }
       return r.json().then(function (d) {
         if (!r.ok) throw new Error((d && d.error) || 'No se pudo preparar el ejercicio.');
         return d;
       });
     }).catch(function (e) {
-      if (e instanceof TypeError) throw new Error('No se pudo hablar con el servidor. ¿Está abierto?');
+      if (e instanceof TypeError) throw new Error('No se pudo preparar el ejercicio. Recarga la página.');
       throw e;
     });
   }

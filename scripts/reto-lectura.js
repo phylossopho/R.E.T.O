@@ -7,7 +7,7 @@
    QUE HACE Y QUE NO HACE
    Aqui NO se decide nada de la lectura. Que palabras se junten, cuantas letras
    entran en un grupo, cuanto dura cada palabra y donde va la pausa son reglas,
-   y las reglas van en Python (logica/lectura_veloz.py), que devuelve el plan
+   y las reglas van en Python (scripts/logica/lectura_veloz.js), que devuelve el plan
    entero. Este archivo solo guarda el estado del mando y pinta el numero de la
    velocidad y el aviso. Cuando llegue el motor, este archivo le pasa el estado
    y el motor pinta; este archivo no cambia.
@@ -73,7 +73,7 @@
 
     /* Los ajustes del modo galactico (el modal del boton de
        los controles deslizantes). inicio y fin nacen null: sus limites y su
-       valor por defecto los decide Python (logica/lectura_veloz.py) y llegan
+       valor por defecto los decide Python (scripts/logica/lectura_veloz.js) y llegan
        dentro del plan. Asi los numeros viven en UN solo sitio, y aqui no hay
        una copia que se pueda desincronizar. */
     galAnchoBase: 85,      // 81-93: ancho del texto abajo (base del trapecio)
@@ -643,7 +643,7 @@
      para siempre (el horizonte se alcanza, pero nunca se toca), asi que se acaba
      cuando se ha encogido hasta un porcentaje. Ese porcentaje (y el de entrada)
      los elige la persona en el modal, y sus limites vienen de Python
-     (ESCALA_INICIO y ESCALA_FIN en logica/lectura_veloz.py). */
+     (ESCALA_INICIO y ESCALA_FIN en scripts/logica/lectura_veloz.js). */
   var ALCANCE = 0.9;
 
   var motor = null;   // el motor que esta activo; null = todavia no hay
@@ -1568,34 +1568,6 @@ limpiar: function () {
     if (tamano_grupo) body.tamano_grupo = tamano_grupo;
     if (extras) Object.keys(extras).forEach(function (k) { body[k] = extras[k]; });
 
-function esGitHubPages() {
-    var h = window.location.hostname;
-    return h.includes('github.io') || h.includes('github.dev');
-  }
-
-  // MODO OFFLINE: usar RetoLecturaVeloz local
-  if (window.RetoOfflineCache && window.RetoOfflineCache.isOffline() && window.RetoLecturaVeloz) {
-      try {
-        var plan = window.RetoLecturaVeloz['plan' + nombre.charAt(0).toUpperCase() + nombre.slice(1)];
-        if (plan) {
-          return Promise.resolve(plan(parrafos.map(function (x) { return x.texto; })));
-        }
-      } catch (e) {
-        console.warn('[Lectura] Error offline:', e);
-      }
-    }
-
-    // MODO ONLINE - en GitHub Pages usar plan local
-    if (esGitHubPages()) {
-      if (window.RetoLecturaVeloz) {
-        var plan = window.RetoLecturaVeloz['plan' + nombre.charAt(0).toUpperCase() + nombre.slice(1)];
-        if (plan) {
-          return Promise.resolve(plan(parrafos.map(function (x) { return x.texto; })));
-        }
-      }
-      // Fallback simple si no hay motor local
-      return Promise.resolve({ ejercicios: [] });
-    }
     return fetch('/api/lectura/plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2247,10 +2219,6 @@ function esGitHubPages() {
   }
 
   document.addEventListener('DOMContentLoaded', function () {
-    // Detectar modo offline
-    if (window.RetoOfflineCache) {
-      window.RetoOfflineCache.installFetchInterceptor();
-    }
     window.addEventListener('online', function () { document.documentElement.setAttribute('data-modo-offline', '0'); });
     window.addEventListener('offline', function () { document.documentElement.setAttribute('data-modo-offline', '1'); });
 

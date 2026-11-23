@@ -15,20 +15,59 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  # 1) Prueba y arma el sitio, y lo sube como paquete.
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Upload artifact
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Si una regla cambia sin querer, el sitio no se publica.
+      - name: Pruebas
+        run: node tests/run-all.js
+
+      # Un sitio estático no puede listar carpetas: se escriben los índices (ejemplos, fondos, sprites).
+      - name: Índices de archivos
+        run: node tools/generar-indices.js
+
+      # Solo se publica lo que el sitio usa (nada de pruebas, herramientas ni notas de trabajo).
+      - name: Preparar el sitio
+        run: |
+          set -e
+          mkdir _site
+          for d in categorias datos ejemplos imagenes pwa scripts sonidos styles; do
+            if [ -d "$d" ]; then cp -r "$d" _site/; else echo "Aviso: no existe la carpeta $d"; fi
+          done
+          cp ./*.html sw.js manifest.webmanifest _site/
+          # Para comprobar qué versión quedó publicada: https://USUARIO.github.io/REPO/version.txt
+          printf 'commit: %s\nmensaje: %s\nfecha: %s\n' "$GITHUB_SHA" "$(git log -1 --pretty=%s)" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > _site/version.txt
+          echo "== Contenido del sitio que se publica =="
+          du -sh _site
+          find _site -maxdepth 1 | sort
+          echo "Archivos en total: $(find _site -type f | wc -l)"
+          test -f _site/index.html
+
+      - name: Configurar Pages
+        uses: actions/configure-pages@v5
+
+      - name: Subir el paquete del sitio
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: _site
 
-      - name: Deploy to GitHub Pages
+  # 2) Publica el paquete.
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publicar en GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

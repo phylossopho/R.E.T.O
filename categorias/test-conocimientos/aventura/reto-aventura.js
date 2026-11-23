@@ -2545,39 +2545,7 @@ function renderSeleccionTest(contenedor) {
   var PVE = '/api/pve';
   var cuentaAtras = null;      // { desde, valor }: lo que queda para responder (solo con tiempo)
 
-  // Estado offline PvE
-  var estadoPveLocal = null;
-  var modoOfflinePve = false;
-
-  function esGitHubPages() {
-    var h = location.hostname;
-    return h.includes('github.io') || h.includes('github.dev');
-  }
-
-  function actualizarModoOfflinePve() {
-    var offline = !navigator.onLine || (window.RetoOfflineCache && window.RetoOfflineCache.isOffline()) || esGitHubPages();
-    if (offline !== modoOfflinePve) {
-      modoOfflinePve = offline;
-      document.documentElement.setAttribute('data-modo-offline-pve', modoOfflinePve ? '1' : '0');
-    }
-    return modoOfflinePve;
-  }
-
-  window.addEventListener('online', actualizarModoOfflinePve);
-  window.addEventListener('offline', actualizarModoOfflinePve);
-
-  // Ejecutar al cargar para detectar GitHub Pages
-  actualizarModoOfflinePve();
-
   function llamarPve(metodo, ruta, cuerpo) {
-    actualizarModoOfflinePve();
-
-    // MODO OFFLINE: usar RetoRpg local
-    if (modoOfflinePve && window.RetoRpg) {
-      return llamarPveLocal(metodo, ruta, cuerpo);
-    }
-
-    // MODO ONLINE
     var opts = { method: metodo, headers: { 'Content-Type': 'application/json' } };
     if (cuerpo) opts.body = JSON.stringify(cuerpo);
     return fetch(PVE + ruta, opts).then(function (r) {
@@ -2585,60 +2553,7 @@ function renderSeleccionTest(contenedor) {
         if (!r.ok) throw new Error((d && d.error) || 'No se pudo.');
         return d;
       });
-    }, function () { throw new Error('No hay conexión con el servidor.'); });
-  }
-
-  function llamarPveLocal(metodo, ruta, cuerpo) {
-    if (metodo === 'POST' && ruta === '/iniciar') {
-      // Iniciar batalla PvE local
-      if (!cuerpo) {
-        return Promise.reject(new Error('Cuerpo de petición vacío'));
-      }
-      var cfg = cuerpo.config || {};
-      // El frontend envía 'preguntas' (un array), duplicamos para ambos combatientes
-      var preguntas = cuerpo.preguntas || cuerpo.preguntas1 || cuerpo.preguntas2 || [];
-      if (!preguntas.length) {
-        return Promise.reject(new Error('El mazo debe tener entre 1 y 60 preguntas (tiene 0).'));
-      }
-      var spec1 = {
-        nombre: cuerpo.jugador1 || cuerpo.nombre || 'Jugador',
-        clase: cuerpo.clase1 || cuerpo.clase || 'guerrero',
-        preguntas: preguntas,
-        equipo: cuerpo.equipo1 || cuerpo.equipo || [],
-        pv_max: cfg.pv_max
-      };
-      var spec2 = {
-        nombre: cuerpo.jugador2 || cuerpo.enemigo?.nombre || 'Enemigo',
-        clase: cuerpo.clase2 || cuerpo.enemigo?.clase || 'mago',
-        preguntas: preguntas,
-        equipo: cuerpo.equipo2 || [],
-        pv_max: cfg.pv_max
-      };
-      if (!window.RetoRpg) {
-        return Promise.reject(new Error('RetoRpg no disponible'));
-      }
-      estadoPveLocal = window.RetoRpg.nuevaBatalla(cfg, spec1, spec2);
-      estadoPveLocal.sesionId = 'local-' + Date.now();
-      // El enemigo ataca primero en PvE
-      estadoPveLocal.atacante = 'j2';
-      window.RetoRpg._empezarTurno(estadoPveLocal);
-      return Promise.resolve({ sesion: estadoPveLocal.sesionId, estado: window.RetoRpg.estadoPublico(estadoPveLocal, 'j1') });
-    }
-    if (metodo === 'GET' && ruta.indexOf('/estado') >= 0) {
-      if (!estadoPveLocal) return Promise.reject(new Error('No hay batalla local'));
-      return Promise.resolve(window.RetoRpg.estadoPublico(estadoPveLocal, 'j1'));
-    }
-    if (metodo === 'POST' && ruta.indexOf('/accion') >= 0) {
-      if (!estadoPveLocal) return Promise.reject(new Error('No hay batalla local'));
-      var accion = cuerpo.tipo;
-      if (accion === 'power_up') {
-        window.RetoRpg.usarPowerUp(estadoPveLocal, 'j1', cuerpo.id);
-      } else if (accion === 'responder') {
-        window.RetoRpg.responder(estadoPveLocal, 'j1', cuerpo.opcion, cuerpo.milisegundos);
-      }
-      return Promise.resolve(window.RetoRpg.estadoPublico(estadoPveLocal, 'j1'));
-    }
-    return Promise.reject(new Error('Endpoint local no implementado: ' + metodo + ' ' + ruta));
+    }, function () { throw new Error('No se pudo seguir con la batalla. Recarga la página.'); });
   }
 
   function claseDeAvatar(av) {
@@ -2976,7 +2891,7 @@ function renderSeleccionTest(contenedor) {
     document.head.appendChild(style);
     wrapper.className = 'resultado-wrapper';
     var avatar = estadoAventura.avatar || 'mago';
-    var resultadoImg = '/imagenes/sprites/' + avatar + '/' + (victoria ? 'victoria' : 'derrota') + '.webp';
+    var resultadoImg = RetoApi.url('imagenes/sprites/') + avatar + '/' + (victoria ? 'victoria' : 'derrota') + '.webp';
     wrapper.innerHTML = `
       <img src="${resultadoImg}" alt="${victoria ? 'Victoria' : 'Derrota'}" style="max-width: 100px; height: auto; margin-bottom: var(--space-sm);">
       <h2>${victoria ? '¡VICTORIA ÉPICA!' : 'HAS SIDO DERROTADO'}</h2>

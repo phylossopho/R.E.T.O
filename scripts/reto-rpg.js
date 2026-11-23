@@ -273,26 +273,11 @@
     return c;
   }
 
-  /* El nivel de practica: el navegador manda sus sesiones y Python calcula. */
+  /* El nivel de practica: el navegador manda sus sesiones y las reglas (reto-api.js) calculan. */
   function nivel() {
     if (!window.RetoProgreso) return Promise.resolve(null);
     return window.RetoProgreso.sesiones().then(function (ses) {
-      // Cálculo local del nivel (sin servidor)
-      var total = 0;
-      (ses || []).forEach(function(s) {
-        if (!s || typeof s !== 'object') return;
-        var tipo = s.tipo;
-        if (['lectura', 'vision', 'test', 'rpg'].indexOf(tipo) < 0) return;
-        try {
-          var pts = puntosSesion(tipo, parseFloat(s.minutos) || 0, parseInt(s.rondas) || 0, parseInt(s.preguntas) || 0);
-        } catch (e) { return; }
-        var dia = String(s.fecha || '').slice(0, 10);
-        // Acumular por día (tope diario 120)
-        if (!porDia[dia]) porDia[dia] = 0;
-        porDia[dia] = Math.min(120, porDia[dia] + Math.max(0, pts));
-      });
-      var total = Object.keys(porDia).reduce(function(a, d) { return a + porDia[d]; }, 0);
-      return Promise.resolve({ puntos: Math.round(total * 10) / 10, nivel: nivelDePuntos(total) });
+      return post('/api/rpg/nivel', { sesiones: ses || [] });
     }).catch(function () { return null; });
   }
 
@@ -342,24 +327,10 @@
     } catch (e) {
       return Promise.reject(new Error('No pude leer la tarjeta. Copia el código completo o elige el archivo.'));
     }
-    // Asegurar que el catálogo de powerups esté cargado antes de validar
-    return window.RetoRpg.catalogo().then(function () {
-      // Validación local (sin servidor) usando la lógica de reto-rpg-logica.js
-      if (window.RetoRpg && window.RetoRpg.validarTarjeta) {
-        try {
-          var perfil = window.RetoRpg.validarTarjeta(tarjeta);
-          return Promise.resolve({ perfil: perfil, tarjeta: tarjeta });
-        } catch (e) {
-          return Promise.reject(new Error(e.message || 'Tarjeta inválida.'));
-        }
-      }
-      // Fallback: si no hay validación local, intentar con servidor (modo wifi local)
-      return post('/api/rpg/tarjeta/validar', { tarjeta: tarjeta }).then(function (p) { return { perfil: p, tarjeta: tarjeta }; });
-    });
+    return post('/api/rpg/tarjeta/validar', { tarjeta: tarjeta }).then(function (p) { return { perfil: p, tarjeta: tarjeta }; });
   }
 
-  // Merge with existing RetoRpg (from reto-rpg-logica.js) instead of overwriting
-  window.RetoRpg = Object.assign(window.RetoRpg || {}, {
+  window.RetoRpg = {
     perfil: perfil, aTexto: aTexto, leerTarjeta: leerTarjeta,
     INVENTARIO_MAX: INVENTARIO_MAX, EQUIPO_MAX: EQUIPO_MAX, USOS: USOS, RAREZAS: RAREZAS,
     NOMBRES_RAREZA: NOMBRES_RAREZA, NOMBRES_CLASE: NOMBRES_CLASE,
@@ -368,5 +339,5 @@
     entregados: entregados, entregadosHoy: entregadosHoy, registrarEntrega: registrarEntrega,
     premiarTest: premiarTest, mostrarPremiosDeTest: mostrarPremiosDeTest,
     claseDeAvatar: claseDeAvatar, contar: contar, nivel: nivel
-  });
+  };
 })(window);

@@ -49,18 +49,27 @@
 
   function pintarDirecciones(info) {
     direccionesEl.textContent = '';
+    if (info.estatico) {
+      avisoEl.textContent = 'Este sitio es una página web: todos los dispositivos abren esta misma dirección. ' +
+        'Para jugar juntos, quien crea la sala pulsa «Invitar a otro dispositivo» y el otro pega su código al unirse.';
+      var enlace = window.location.href.split('#')[0];
+      var fila = el('li', 'red-direccion');
+      fila.appendChild(el('code', '', enlace));
+      direccionesEl.appendChild(fila);
+      return;
+    }
     if (!info.local) {
-      avisoEl.textContent = 'Este modo es solo para la red wifi local. Abre el sitio con servidor.cmd en una computadora de tu red.';
+      avisoEl.textContent = 'Este modo es solo para la red wifi local.';
       return;
     }
     var puerto = window.location.port ? ':' + window.location.port : '';
     var ruta = '/categorias/multijugador/prueba-red/prueba-red.html';
     var direcciones = info.direcciones && info.direcciones.length ? info.direcciones : [];
     if (!direcciones.length) {
-      avisoEl.textContent = 'No encontré la dirección de esta computadora en la red. ¿Está conectada al wifi?';
+      avisoEl.textContent = 'No encontré una dirección para compartir.';
       return;
     }
-    avisoEl.textContent = 'Abre una de estas direcciones en el otro dispositivo (misma red wifi):';
+    avisoEl.textContent = 'Abre una de estas direcciones en el otro dispositivo:';
     direcciones.forEach(function (ip) {
       var url = window.location.protocol + '//' + ip + puerto + ruta;
       var li = el('li', 'red-direccion');
@@ -98,10 +107,10 @@
       ultimo = Math.max(ultimo, d.ultimo || 0);
       dispositivosEl.textContent = d.dispositivos > 1
         ? 'Ya se ven ' + d.dispositivos + ' dispositivos en la red.'
-        : 'Por ahora solo te veo a ti. Abre la dirección en el otro dispositivo y manda un saludo.';
+        : 'Por ahora solo te veo a ti. Conecta el otro dispositivo (botón «Invitar a otro dispositivo») y manda un saludo.';
     }).catch(function () {
       fallos++;
-      if (fallos >= 3) dispositivosEl.textContent = 'Perdí la conexión con la computadora anfitriona. ¿Sigue abierto servidor.cmd?';
+      if (fallos >= 3) dispositivosEl.textContent = 'Perdí la conexión con el dispositivo anfitrión. ¿Sigue abierta su página?';
     });
   }
 
@@ -156,7 +165,7 @@
       preguntar();
       window.setInterval(preguntar, 1000);
     }).catch(function () {
-      avisoEl.textContent = 'No pude hablar con el servidor. Abre el sitio con servidor.cmd.';
+      avisoEl.textContent = 'No pude preparar la prueba. Recarga la página.';
     });
   }
 

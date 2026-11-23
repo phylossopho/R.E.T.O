@@ -1,5 +1,5 @@
 /* =========================================================================
-   R.E.T.O. - Service Worker para GitHub Pages + local
+   R.E.T.O. - Service Worker (guarda el sitio para usarlo sin internet)
    -------------------------------------------------------------------------
    Funciona tanto en:
      - Local: http://localhost:8000/  (scope = /)
@@ -25,7 +25,8 @@ function isSameOrigin(url) {
   return url.origin === self.location.origin;
 }
 
-var CACHE_NAME = 'reto-shell-v5';
+var CACHE_NAME = 'reto-shell-v6';
+var V = '?v=estatico-1';   // la misma versión con la que reto-api.js carga la lógica
 var SHELL_FILES = [
   joinPath(BASE_PATH, '/'),
   joinPath(BASE_PATH, 'index.html'),
@@ -35,15 +36,39 @@ var SHELL_FILES = [
   joinPath(BASE_PATH, 'styles/fuentes/nunito-300.woff2'),
   joinPath(BASE_PATH, 'pwa/icon-192.png'),
   joinPath(BASE_PATH, 'pwa/icon-512.png'),
-  // Datos necesarios para lógica offline
+  // Las reglas (antes en el servidor Python) y sus datos: con esto todo funciona sin internet
+  joinPath(BASE_PATH, 'scripts/reto-api.js' + V),
+  joinPath(BASE_PATH, 'scripts/reto-azar.js' + V),
+  joinPath(BASE_PATH, 'scripts/reto-conexion.js' + V),
+  joinPath(BASE_PATH, 'scripts/logica/_base.js' + V),
+  joinPath(BASE_PATH, 'scripts/logica/lectura_veloz.js' + V),
+  joinPath(BASE_PATH, 'scripts/logica/vision.js' + V),
+  joinPath(BASE_PATH, 'scripts/logica/schulte.js' + V),
+  joinPath(BASE_PATH, 'scripts/logica/secuencia.js' + V),
+  joinPath(BASE_PATH, 'scripts/logica/mahjong.js' + V),
+  joinPath(BASE_PATH, 'scripts/logica/memorama.js' + V),
+  joinPath(BASE_PATH, 'scripts/logica/rondas.js' + V),
+  joinPath(BASE_PATH, 'scripts/logica/dinamicas.js' + V),
+  joinPath(BASE_PATH, 'scripts/logica/rpg.js' + V),
+  joinPath(BASE_PATH, 'scripts/logica/pve.js' + V),
+  joinPath(BASE_PATH, 'scripts/logica/sala.js' + V),
+  joinPath(BASE_PATH, 'scripts/logica/ding.js' + V),
+  joinPath(BASE_PATH, 'scripts/logica/red.js' + V),
   joinPath(BASE_PATH, 'datos/powerups.json'),
-  joinPath(BASE_PATH, 'datos/powerups_textos.json')
+  joinPath(BASE_PATH, 'datos/powerups_textos.json'),
+  joinPath(BASE_PATH, 'datos/ejemplos.json'),
+  joinPath(BASE_PATH, 'datos/fondos.json'),
+  joinPath(BASE_PATH, 'datos/sprites.json'),
+  joinPath(BASE_PATH, 'datos/incognito.json')
 ];
 
 self.addEventListener('install', function (event) {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(function (cache) { return cache.addAll(SHELL_FILES); })
+      .then(function (cache) {
+        // Un archivo que falte no debe impedir que el resto se guarde.
+        return Promise.all(SHELL_FILES.map(function (u) { return cache.add(u).catch(function () { /* se pedirá de la red */ }); }));
+      })
       .then(function () { return self.skipWaiting(); })
   );
 });

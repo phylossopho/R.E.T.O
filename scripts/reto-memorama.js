@@ -1,9 +1,39 @@
 /* =========================================================================
    R.E.T.O. - El memorama, en el navegador
    -------------------------------------------------------------------------
-   Hibrido offline/online: usa logica local (RetoMemorama) si no hay red,
-   y API del servidor si hay conexion.
-   ========================================================================= */
+   Aqui NO hay reglas. Las reglas estan en Python, en logica/memorama.py, y se
+   prueban con python test_memorama.py. Este archivo solo:
+
+     - pregunta al servidor que tablero hay (POST /api/memorama/nueva);
+     - al tocar una carta, la destapa EN SEGUIDA y pregunta despues si hizo
+       pareja (POST /api/memorama/voltear);
+     - y cuando el servidor dice "no hicieron pareja", las tapa.
+
+   POR QUE LA CARTA SE DESTAPA ANTES DE PREGUNTAR
+   Si se esperara la respuesta del servidor antes de voltear, con un internet
+   lento (o en PythonAnywhere, que no es instantaneo) el tablero se sentiria
+   lento y la persona creeria que no esta tocando bien. La carta voltea al
+   instante porque es la respuesta a "toco esto", que no necesita permiso de
+   nadie. Lo que si necesita permiso es "¿hizo pareja?", y eso se pregunta
+   despues, en segundo plano. Si el servidor contesta "ignorado", la carta se
+   vuelve a tapar: ahi si se espera.
+
+   EL SIMBOLO DE UNA CARTA TAPADA NO LLEGA NUNCA
+   El servidor manda las cartas sin el simbolo de las que siguen tapadas, y eso
+   esta probado en Python (la prueba "la pagina no ve los simbolos de las cartas
+   tapadas"). Si el tablero entero llegara con sus simbolos, un nino podria
+   abrir este archivo, ver donde esta cada uno y ganar sin jugar. Por eso el
+   servidor es el unico que sabe el reparto y la pagina solo pide.
+
+   LA MEJOR MARCA NO ESTA EN EL SERVIDOR
+   Se guarda en el navegador, en la base de datos del sitio, como una
+   preferencia. Dos razones: es un dato de LA PERSONA y no del juego, y asi sale
+   en el archivo de respaldo y viaja a otra computadora. En el servidor se
+   perderia al reiniciar y no se podria respaldar.
+
+   OJO CON LA API DE PREFERENCIAS: obtener() y poner() DEVUELVEN UNA PROMESA.
+   No son valores de una vez. Por eso mejorGuardado() devuelve la promesa y
+   quien lo llama la espera. */
 (function () {
   'use strict';
 
@@ -11,27 +41,6 @@
   var tablero = document.getElementById('tablero');
   var mensaje = document.getElementById('mensaje');
   var lector = document.getElementById('lector');
-
-  /* Estado local (RetoMemorama) para modo offline */
-  var modoOffline = false;
-  var partidaLocal = null;
-
-  /* Detectar si estamos offline y mostrar indicador */
-  function actualizarModoOffline() {
-    var offline = !navigator.onLine || (window.RetoOfflineCache && window.RetoOfflineCache.isOffline());
-    if (offline !== modoOffline) {
-      modoOffline = offline;
-      document.documentElement.setAttribute('data-modo-offline', modoOffline ? '1' : '0');
-      if (modoOffline) {
-        avisar('🌐 Sin conexión — Modo práctica offline activado');
-      }
-    }
-    return modoOffline;
-  }
-
-  /* Escuchar cambios de conectividad */
-  window.addEventListener('online', function () { actualizarModoOffline(); });
-  window.addEventListener('offline', function () { actualizarModoOffline(); });
 
   /* Lo que vive DENTRO del modal de configurar. No esta en la pagina a la vista
      porque mientras se juega no hace falta: el tablero se cambia una vez y ya,
@@ -88,8 +97,6 @@
      lo pone el tema. Los de TEXTO y EMOJI se escriben tal cual.
 
      ESTA FUNCION DEVUELVE SIEMPRE UN NODO DE DOM, y eso no es un detalle: la
-     guarda con appendChild() no acepta un texto, y una carta tapada llega SIN
-
      guarda con appendChild() no acepta un texto, y una carta tapada llega SIN
      simbolo, o sea con null. Si aqui se devolvia "" (un texto) para ese caso,
      appendChild("") tiraba el error "parameter 1 is not of type 'Node' y el
@@ -224,7 +231,7 @@
     if (cfgIntentos) cfgIntentos.textContent = String(estado.intentos);
     if (cfgParejas) cfgParejas.textContent = estado.parejas + ' / ' + estado.totalParejas;
     mejorGuardado(estado.tamano, estado.catalogo).then(function (mejor) {
-      if (cfgMejor) cfgMejor.textContent = mejor ? String(mejor) : '\u2014';
+      if (cfgMejor) cfgMejor.textContent = mejor ? String(mejor) : '—';
     });
   }
 
@@ -247,45 +254,9 @@
   function nuevaPartida() {
     var tamano = tablero.getAttribute('data-tamano') || '4x4';
     var conjunto = conjuntoElegido();
-
-    // Verificar modo offline
-    actualizarModoOffline();
-
     if (relojTapado) { clearTimeout(relojTapado); relojTapado = null; }
     animando = false;
 
-    if (modoOffline && window.RetoMemorama) {
-      // MODO OFFLINE: usar logica local
-      try {
-        var r = window.RetoMemorama.nueva_partida(tamano, conjunto);
-        partidaLocal = r;
-        cartas = r.cartas.map(function (c) {
-          return { id: c.id, simbolo: c.simbolo, volteada: c.volteada, emparejada: c.emparejada };
-        });
-        tablero.setAttribute('data-tamano', tamano);
-        tipoSimbolo = 'texto';
-        CATALOGOS.catalogos.forEach(function (k) {
-          if (k.id === conjunto) { tipoSimbolo = k.tipo; }
-        });
-        construirTablero();
-        pintarCuentas({
-          intentos: r.intentos,
-          parejas: r.parejas,
-          totalParejas: r.totalParejas,
-          tamano: tamano,
-          catalogo: conjunto
-        });
-        decir('');
-        avisar('Tablero de ' + r.columnas + ' por ' + r.filas + ' con ' +
-               r.totalParejas + ' parejas. Modo offline — progreso local.');
-        return;
-      } catch (e) {
-        console.warn('[Memorama] Error offline, probando online:', e);
-        // Caer a online si falla
-      }
-    }
-
-    // MODO ONLINE: usar API del servidor
     pedir(API + '/nueva', { tamano: tamano, catalogo: conjunto })
       .then(function (e) {
         partida = e.partida;
@@ -306,242 +277,19 @@
       });
   }
 
-  /* --------------------------------------------------------------- pedir */
-
-  function pedir(ruta, cuerpo) {
-    return fetch(ruta, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(cuerpo)
-    }).then(function (r) {
-      return r.json().then(function (d) {
-        if (!r.ok) { throw new Error(d && d.error ? d.error : 'error ' + r.status); }
-        return d;
-      });
-    });
-  }
-
-  /* ------------------------------------------------------------ los botones */
-
-  function marcarSolo(grupo, atributo, valor) {
-    grupo.querySelectorAll('[' + atributo + ']').forEach(function (x) {
-      x.setAttribute('aria-pressed', x.getAttribute(atributo) === valor ? 'true' : 'false');
-    });
-  }
-
-  function preguntarSiEmpezar(que) {
-    if (!hayJuegoEmpezado()) { nuevaPartida(); cerrarConfig(); return; }
-    window.RetoDialogo.preguntar({
-      titulo: '¿Empezar de nuevo?',
-      texto: que + ' Vas a medio juego, y esto pierde lo que llevas.',
-      ok: 'Sí, empezar de nuevo',
-      cancelar: 'No, seguir aquí'
-    }).then(function (si) { if (si) { nuevaPartida(); cerrarConfig(); } });
-  }
-
-  /* -------------------------------------------------------- el modal de ajustes
-
-     Es un <dialog> armado aqui y no el del sitio, porque este necesita BOTONES
-     DENTRO (los tres tableros y los cuatro conjuntos), y el del sitio recibe
-     texto. Se hace con showModal(), que es lo que trae el foco dentro, cierra con
-     Escape y vuelve a poner el foco donde estaba.
-
-     El boton de cerrar esta ABAJO y es el ultimo: en un dialogo de configuracion
-     se llega con el Tab y con las flechas, y volver a cerrarlo tiene que estar
-     a mano sin tener que cazarlo. */
-  function armarConfig() {
-    if (cfgDialogo) return;
-    cfgDialogo = document.createElement('dialog');
-    cfgDialogo.className = 'dialogo memo-config';
-    cfgDialogo.setAttribute('aria-labelledby', 'memo-cfg-titulo');
-
-    var titulo = document.createElement('h2');
-    titulo.className = 'dialogo-titulo';
-    titulo.id = 'memo-cfg-titulo';
-    titulo.textContent = 'Configurar el juego';
-    cfgDialogo.appendChild(titulo);
-
-    var gTablero = document.createElement('div');
-    gTablero.className = 'memo-config-grupo';
-    var etTablero = document.createElement('p');
-    etTablero.className = 'editor-label';
-    etTablero.id = 'memo-cfg-et-tablero';
-    etTablero.textContent = 'Tablero';
-    cfgTamano.setAttribute('role', 'group');
-    cfgTamano.setAttribute('aria-labelledby', 'memo-cfg-et-tablero');
-    gTablero.appendChild(etTablero);
-    gTablero.appendChild(cfgTamano);
-    cfgDialogo.appendChild(gTablero);
-
-    var gConjunto = document.createElement('div');
-    gConjunto.className = 'memo-config-grupo';
-    var etConjunto = document.createElement('p');
-    etConjunto.className = 'editor-label';
-    etConjunto.id = 'memo-cfg-et-conjunto';
-    etConjunto.textContent = 'Con qué dibujitos';
-    cfgConjunto.setAttribute('role', 'group');
-    cfgConjunto.setAttribute('aria-labelledby', 'memo-cfg-et-conjunto');
-    gConjunto.appendChild(etConjunto);
-    gConjunto.appendChild(cfgConjunto);
-    cfgDialogo.appendChild(gConjunto);
-
-    var gAyuda = document.createElement('div');
-    gAyuda.className = 'memo-config-grupo';
-    var etAyuda = document.createElement('p');
-    etAyuda.className = 'editor-label';
-    etAyuda.id = 'memo-cfg-et-ayuda';
-    etAyuda.textContent = 'Ayuda';
-    cfgAyuda.setAttribute('role', 'group');
-    cfgAyuda.setAttribute('aria-labelledby', 'memo-cfg-et-ayuda');
-    gAyuda.appendChild(etAyuda);
-    gAyuda.appendChild(cfgAyuda);
-    cfgDialogo.appendChild(gAyuda);
-
-    var cerrar = document.createElement('button');
-    cerrar.type = 'button';
-    cerrar.className = 'boton boton--principal';
-    cerrar.textContent = 'Listo';
-    cerrar.addEventListener('click', cerrarConfig);
-    cfgDialogo.appendChild(cerrar);
-
-    document.body.appendChild(cfgDialogo);
-  }
-
-  function abrirConfig() {
-    if (!cfgDialogo) armarConfig();
-    cfgDialogo.showModal();
-  }
-
-  function cerrarConfig() {
-    if (cfgDialogo) cfgDialogo.close();
-  }
-
-  /* ------------------------------------------------------------ inicializacion */
-
-  function iniciar() {
-    if (!tablero) return;
-
-    actualizarModoOffline();
-
-    var btnConfig = document.getElementById('btn-config');
-    if (btnConfig) btnConfig.addEventListener('click', abrirConfig);
-
-    var btnOtra = document.getElementById('btn-otra-partida');
-    if (btnOtra) btnOtra.addEventListener('click', function () { nuevaPartida(); });
-
-    CATALOGOS = { tamanos: [], catalogos: [] };
-    fetch(API + '/catalogos')
-      .then(function (r) { return r.json(); })
-      .then(function (c) {
-        CATALOGOS = c;
-        // Poblar botones de tablero
-        c.tamanos.forEach(function (t) {
-          var btn = botonOpcion('memo-tamano', t.nombre, dibujitoRejilla(t.columnas, t.filas), t.parejas + ' parejas', function () {
-            tablero.setAttribute('data-tamano', t.id);
-            preguntarSiEmpezar('Cambiaste el tablero a ' + t.nombre + '.');
-            marcarSolo(cfgTamano, 'data-tamano', t.id);
-          });
-          btn.setAttribute('data-tamano', t.id);
-          cfgTamano.appendChild(btn);
-        });
-        // Marcar el actual
-        var tamActual = tablero.getAttribute('data-tamano') || '4x4';
-        marcarSolo(cfgTamano, 'data-tamano', tamActual);
-
-        // Poblar botones de conjunto
-        c.catalogos.forEach(function (k) {
-          var btn = botonOpcion('memo-conjunto', k.nombre, dibujitoMuestra(k), k.ayuda, function () {
-            preguntarSiEmpezar('Cambiaste los dibujitos a ' + k.nombre + '.');
-            marcarSolo(cfgConjunto, 'data-conjunto', k.id);
-          });
-          btn.setAttribute('data-conjunto', k.id);
-          cfgConjunto.appendChild(btn);
-        });
-        // Marcar el actual (por defecto formas)
-        marcarSolo(cfgConjunto, 'data-conjunto', 'formas');
-
-        // Poblar ayuda
-        c.catalogos.forEach(function (k) {
-          var li = document.createElement('li');
-          li.textContent = k.nombre + ': ' + k.ayuda;
-          cfgAyuda.appendChild(li);
-        });
-
-        // Cargar mejor marca guardada
-        mejorGuardado(tamActual, 'formas').then(function (m) {
-          if (cfgMejor) cfgMejor.textContent = m ? String(m) : '\u2014';
-        });
-
-        // Si no hay juego empezado, empezar uno nuevo
-        if (!hayJuegoEmpezado()) nuevaPartida();
-      })
-      .catch(function () {
-        // Si falla el servidor, intentar modo offline
-        actualizarModoOffline();
-        if (modoOffline && window.RetoMemorama) {
-          nuevaPartida();
-        } else {
-          decir('No se pudo cargar la configuración. Verifica la conexión.');
-        }
-      });
-  }
-
-  /* -------------------------------------------------------------- voltear */
+  /* ------------------------------------------------------------------ voltear */
 
   function voltear(id) {
-    if (!partida && !partidaLocal || animando) return;
+    if (!partida || animando) return;
     if (relojTapado) return;   // ya hay dos cartas esperando a taparse
 
-    var carta = (cartas || []).filter(function (c) { return c.id === id; })[0];
+    var carta = cartas.filter(function (c) { return c.id === id; })[0];
     if (!carta || carta.volteada || carta.emparejada) return;
-
-    actualizarModoOffline();
 
     animando = true;
     carta.volteada = true;
     aplicarEstadoACarta(elementoDe(id), carta);
 
-    if (modoOffline && window.RetoMemorama && partidaLocal) {
-      // MODO OFFLINE: usar logica local
-      try {
-        var r = window.RetoMemorama.voltear(partidaLocal, id);
-        partidaLocal = r.partida;
-        var resultado = r.resultado;
-
-        // Actualizar cartas locales
-        cartas = partidaLocal.cartas.map(function (c) {
-          return { id: c.id, simbolo: c.simbolo, volteada: c.volteada, emparejada: c.emparejada };
-        });
-
-        animando = false;
-        sincronizar();
-        pintarCuentas({
-          intentos: partidaLocal.intentos,
-          parejas: partidaLocal.parejas,
-          totalParejas: partidaLocal.totalParejas,
-          tamano: partidaLocal.tamano,
-          catalogo: partidaLocal.catalogo
-        });
-
-        if (resultado === 'ignorado') {
-          volverATapar(id);
-        } else if (resultado === 'volteada') {
-          // Primera de la pareja
-        } else if (resultado === 'sin-pareja') {
-          taparDespues(partidaLocal.volteadas);
-        } else if (resultado === 'pareja') {
-          festejarPareja({ volteadas: partidaLocal.volteadas }, carta.simbolo);
-        } else if (resultado === 'completo') {
-          terminar({ intentos: partidaLocal.intentos, parejas: partidaLocal.parejas, totalParejas: partidaLocal.totalParejas });
-        }
-        return;
-      } catch (e) {
-        console.warn('[Memorama] Error offline voltear:', e);
-        // Caer a online si falla
-      }
-    }
-
-    // MODO ONLINE
     pedir(API + '/voltear', { partida: partida, carta: id })
       .then(function (e) {
         animando = false;
@@ -627,28 +375,17 @@
     avisar('No son pareja.');
     relojTapado = setTimeout(function () {
       relojTapado = null;
-      if (modoOffline && window.RetoMemorama && partidaLocal) {
-        // OFFLINE: ocultar local
-        var r = window.RetoMemorama.ocultar(partidaLocal);
-        partidaLocal = r;
-        cartas = r.cartas.map(function (c) {
-          return { id: c.id, simbolo: c.simbolo, volteada: c.volteada, emparejada: c.emparejada };
+      pedir(API + '/ocultar', { partida: partida })
+        .then(function (f) {
+          cartas = f.cartas;
+          sincronizar(ids);
+        })
+        .catch(function () {
+          // Si el servidor no responde, las cartas se tapan igual. Que el
+          // tablero se atrase es feo; que queden dos cartas descubiertas
+          // para siempre es un juego roto.
+          ids.forEach(function (cid) { volverATapar(cid); });
         });
-        sincronizar(ids);
-      } else {
-        // ONLINE
-        pedir(API + '/ocultar', { partida: partida })
-          .then(function (f) {
-            cartas = f.cartas;
-            sincronizar(ids);
-          })
-          .catch(function () {
-            // Si el servidor no responde, las cartas se tapan igual. Que el
-            // tablero se atrase es feo; que queden dos cartas descubiertas
-            // para siempre es un juego roto.
-            ids.forEach(function (cid) { volverATapar(cid); });
-          });
-      }
     }, 1100);
   }
 
@@ -659,7 +396,7 @@
     avisar('¡Pareja de ' + nombreDeSimbolo(simbolo) + '!');
     // El festejo de la carta se quita solo, para que el atributo no se queden
     // pegados si despues se vuelve a pintar el tablero.
-    (estado.volteadas || []).forEach(function (cid) {
+    estado.volteadas.forEach(function (cid) {
       var el = elementoDe(cid);
       if (!el) return;
       el.setAttribute('data-pareja', '1');
@@ -670,43 +407,312 @@
   /* ------------------------------------------------------------------ el final
 
      AQUI ESTA la decision de que este juego no tenga castigo. Se celebra que se
-     acabo, se guarda la mejor marca, y se deja elegir otra partida. */
+     TERMINO, no que se fue rapido. El numero de intentos se informa al lado, y
+     solo se dice "nuevo mejor" cuando de verdad se supero el record de ESA
+     combinacion de tablero y conjunto.
 
+     En una partida de 40 intentos no dice "mal". Dice lo que hizo, que es
+     encontrar todas las parejas. Un memorama de concentration que regaña es
+     justo el que hace que alguien deje de jugar. */
   function terminar(estado) {
-    var intentos = estado.intentos;
-    var tamano = modoOffline && partidaLocal ? partidaLocal.tamano : (partida && partida.tamano || tablero.getAttribute('data-tamano'));
-    var conjunto = modoOffline && partidaLocal ? partidaLocal.catalogo : (partida && partida.catalogo || 'formas');
-
-    mejorGuardado(tamano, conjunto).then(function (mejor) {
-      var esRecord = !mejor || intentos < mejor;
-      if (esRecord) {
-        window.RetoDatos.poner(claveMejor(tamano, conjunto), intentos);
-        if (cfgMejor) cfgMejor.textContent = String(intentos);
-        avisar('¡Nueva mejor marca: ' + intentos + ' intentos! 🎉');
-      } else {
-        avisar('¡Completado en ' + intentos + ' intentos! (Mejor: ' + (mejor || '—') + ')');
+    var combo = estado.tamano + ' con ' + nombreConjunto(estado.catalogo);
+    mejorGuardado(estado.tamano, estado.catalogo).then(function (mejor) {
+      var esNuevo = mejor === null || estado.intentos < mejor;
+      if (esNuevo) {
+        return window.RetoDatos
+          .poner(claveMejor(estado.tamano, estado.catalogo), estado.intentos)
+          .catch(function () {})
+          .then(function () { return { esNuevo: true, mejor: estado.intentos }; });
       }
-    });
-    avisar('¡Encontraste todas las parejas! Intentos: ' + intentos);
-    setTimeout(function () {
-      window.RetoDialogo.preguntar({
-        titulo: '¡Partida completada!',
-        texto: 'Lo hiciste en ' + intentos + ' intentos.' + (esRecord ? ' 🎉 ¡Nuevo récord!' : ''),
-        ok: 'Otra partida',
-        cancelar: 'Cambiar ajustes'
-      }).then(function (si) {
-        if (si) nuevaPartida(); else abrirConfig();
+      // El numero se lleva en el objeto, NO en una variable suelta. Antes se
+      // escribia "mejor" en el aviso de más abajo, y esa variable vivia solo
+      // dentro de este pedazo. Cuando el juego NO era nuevo, la parte de
+      // arriba no se ejecutaba y a la de abajo le faltaba la variable: salia
+      // un "mejor is not defined" y el modal de final NUNCA aparecia. Solo
+      // fallaba la segunda vez, porque la primera siempre era marca nueva.
+      return { esNuevo: false, mejor: mejor };
+    }).then(function (r) {
+      var esNuevo = r.esNuevo;
+      pintarCuentas(estado);
+      var texto = esNuevo
+        ? '¡Encontraste todas las parejas! Nuevo mejor en ' + combo + '.'
+        : '¡Encontraste todas las parejas de ' + combo + '!';
+      decir(texto, 'bien');
+      avisar(texto + ' Con ' + estado.intentos + ' intentos.');
+
+      /* LAS CUENTAS SALEN EN UN MODAL, no en la pagina. Mientras se juega el
+         numero no sirve de nada; aqui ya cuenta, y es el momento de verlo junto
+         con el record anterior. */
+      window.RetoDialogo.lista({
+        titulo: esNuevo ? '¡Nuevo mejor!' : '¡Terminaste!',
+        texto: 'Tablero ' + combo + ', con ' + estado.intentos +
+               (estado.intentos === 1 ? ' intento' : ' intentos') + '.\n' +
+               (esNuevo ? 'Es tu mejor marca hasta ahora.'
+                        : 'Tu mejor marca aquí sigue siendo ' + r.mejor + '.'),
+        items: [{ texto: 'Elegir otro tablero', valor: 'config' },
+                { texto: 'Jugar otra vez', valor: 'otra' },
+                { texto: 'Ver el tablero', valor: 'quedarse' }],
+        nota: 'En el tablero no hay ni títulos ni cuentas: solo las cartas, para no distraer.'
+      }).then(function (elegido) {
+        if (elegido === 'config') { abrirConfig(); }
+        else if (elegido === 'otra') { nuevaPartida(); }
       });
-    }, 800);
+    });
   }
 
-  // Iniciar cuando el DOM este listo
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', iniciar);
-  } else {
-    iniciar();
+  /* --------------------------------------------------------------- pedir */
+
+  function pedir(ruta, cuerpo) {
+    return fetch(ruta, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cuerpo)
+    }).then(function (r) {
+      return r.json().then(function (d) {
+        if (!r.ok) { throw new Error(d && d.error ? d.error : 'error ' + r.status); }
+        return d;
+      });
+    });
   }
 
-  window.RetoMemoramaUI = { iniciar: iniciar };
+  /* ------------------------------------------------------------ los botones */
 
+  function marcarSolo(grupo, atributo, valor) {
+    grupo.querySelectorAll('[' + atributo + ']').forEach(function (x) {
+      x.setAttribute('aria-pressed', x.getAttribute(atributo) === valor ? 'true' : 'false');
+    });
+  }
+
+  function preguntarSiEmpezar(que) {
+    if (!hayJuegoEmpezado()) { nuevaPartida(); cerrarConfig(); return; }
+    window.RetoDialogo.preguntar({
+      titulo: '¿Empezar de nuevo?',
+      texto: que + ' Vas a medio juego, y esto pierde lo que llevas.',
+      ok: 'Sí, empezar de nuevo',
+      cancelar: 'No, seguir aquí'
+    }).then(function (si) { if (si) { nuevaPartida(); cerrarConfig(); } });
+  }
+
+  /* -------------------------------------------------------- el modal de ajustes
+
+     Es un <dialog> armado aqui y no el del sitio, porque este necesita BOTONES
+     DENTRO (los tres tableros y los cuatro conjuntos), y el del sitio recibe
+     texto. Se hace con showModal(), que es lo que trae el foco dentro, cierra con
+     Escape y vuelve a poner el foco donde estaba.
+
+     El boton de cerrar esta ABAJO y es el ultimo: en un dialogo de configuracion
+     se llega con el Tab y con las flechas, y volver a cerrarlo tiene que estar
+     a mano sin tener que cazarlo. */
+  function armarConfig() {
+    if (cfgDialogo) return;
+    cfgDialogo = document.createElement('dialog');
+    cfgDialogo.className = 'dialogo memo-config';
+    cfgDialogo.setAttribute('aria-labelledby', 'memo-cfg-titulo');
+
+    var titulo = document.createElement('h2');
+    titulo.className = 'dialogo-titulo';
+    titulo.id = 'memo-cfg-titulo';
+    titulo.textContent = 'Configurar el juego';
+    cfgDialogo.appendChild(titulo);
+
+    var gTablero = document.createElement('div');
+    gTablero.className = 'memo-config-grupo';
+    var etTablero = document.createElement('p');
+    etTablero.className = 'editor-label';
+    etTablero.id = 'memo-cfg-et-tablero';
+    etTablero.textContent = 'Tablero';
+    cfgTamano.setAttribute('role', 'group');
+    cfgTamano.setAttribute('aria-labelledby', 'memo-cfg-et-tablero');
+    gTablero.appendChild(etTablero);
+    gTablero.appendChild(cfgTamano);
+    cfgDialogo.appendChild(gTablero);
+
+    var gConjunto = document.createElement('div');
+    gConjunto.className = 'memo-config-grupo';
+    var etConjunto = document.createElement('p');
+    etConjunto.className = 'editor-label';
+    etConjunto.id = 'memo-cfg-et-conjunto';
+    etConjunto.textContent = 'Con qué dibujitos';
+    cfgConjunto.setAttribute('role', 'group');
+    cfgConjunto.setAttribute('aria-labelledby', 'memo-cfg-et-conjunto');
+    gConjunto.appendChild(etConjunto);
+    gConjunto.appendChild(cfgConjunto);
+    /* AQUI NO SE TOCA EL className DEL GRUPO. Antes habia una linea que lo
+       vaciaba, y por eso los dibujitos salian en columna: al abrir el dialogo
+       se borraba la clase "memo-fila--4" que arma la fila de cuatro, y los
+       botones se acomodaban solos uno abajo del otro. Solo se nota la PRIMERA
+       vez que se abre, porque la clase se vuelve a poner al cambiar de
+       conjunto. */
+    cfgDialogo.appendChild(gConjunto);
+
+    cfgAyuda.className = 'memo-config-ayuda';
+    gConjunto.appendChild(cfgAyuda);
+
+    var cuentas = document.createElement('div');
+    cuentas.className = 'memo-config-ayuda';
+    cuentas.appendChild(document.createTextNode('Lo que llevas: '));
+    var caja = document.getElementById('cfg-cuentas');
+    caja.removeAttribute('class');
+    cuentas.appendChild(caja);
+    cfgDialogo.appendChild(cuentas);
+
+    var acciones = document.createElement('div');
+    acciones.className = 'dialogo-acciones';
+    var btnCerrar = document.createElement('button');
+    btnCerrar.type = 'button';
+    btnCerrar.className = 'boton boton--principal';
+    btnCerrar.textContent = 'Listo';
+    btnCerrar.addEventListener('click', cerrarConfig);
+    acciones.appendChild(btnCerrar);
+    cfgDialogo.appendChild(acciones);
+
+    // Clic en el fondo = cerrar, como en el resto de los modales del sitio.
+    cfgDialogo.addEventListener('click', function (e) {
+      if (e.target === cfgDialogo) { cerrarConfig(); }
+    });
+
+    document.body.appendChild(cfgDialogo);
+  }
+
+  function cerrarConfig() {
+    if (cfgDialogo && cfgDialogo.open) { cfgDialogo.close(); }
+  }
+
+  function abrirConfig() {
+    armarConfig();
+    cfgDialogo.showModal();
+    var listo = cfgDialogo.querySelector('.dialogo-acciones .boton');
+    if (listo) listo.focus();
+  }
+
+  function armarOpciones() {
+    cfgTamano.textContent = '';
+    cfgTamano.className = 'memo-fila memo-fila--3';
+    CATALOGOS.tamanos.forEach(function (t) {
+      var b = botonOpcion(null, t.nombre, dibujitoRejilla(t.columnas, t.filas),
+                          t.parejas + ' parejas',
+                          function () {
+        if (tablero.getAttribute('data-tamano') === t.id) return;
+        marcarSolo(cfgTamano, 'data-tamano', t.id);
+        tablero.setAttribute('data-tamano', t.id);
+        preguntarSiEmpezar('Cambiaste de tablero.');
+      });
+      b.setAttribute('data-tamano', t.id);
+      b.setAttribute('aria-pressed', t.id === '4x4' ? 'true' : 'false');
+      cfgTamano.appendChild(b);
+    });
+
+    cfgConjunto.textContent = '';
+    cfgConjunto.className = 'memo-fila memo-fila--4';
+    CATALOGOS.catalogos.forEach(function (k, i) {
+      var b = botonOpcion(null, k.nombre, dibujitoMuestra(k), null,
+                          function () {
+        if (conjuntoElegido() === k.id) return;
+        marcarSolo(cfgConjunto, 'data-conjunto', k.id);
+        cfgAyuda.textContent = k.ayuda;
+        preguntarSiEmpezar('Cambiaste de dibujitos.');
+      });
+      b.setAttribute('data-conjunto', k.id);
+      b.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
+      cfgConjunto.appendChild(b);
+    });
+    if (CATALOGOS.catalogos[0]) { cfgAyuda.textContent = CATALOGOS.catalogos[0].ayuda; }
+  }
+
+  /* --------------------------------------------------------------- el tablero */
+
+  tablero.addEventListener('click', function (e) {
+    var b = e.target.closest('.memo-carta');
+    if (b) { voltear(Number(b.getAttribute('data-id'))); }
+  });
+
+  /* Con el teclado: la carta es un <button>, asi que ya recibe Enter y Espacio
+     solos. Este manejador es para las FLECHAS, que permiten recorrer el tablero
+     sin pasar por todas con el Tab: son veinte cartas, y recorrerlas una por una
+     en cada partida es un fastidio. */
+  tablero.addEventListener('keydown', function (e) {
+    var b = e.target.closest('.memo-carta');
+    if (!b) return;
+    var todas = Array.prototype.slice.call(tablero.querySelectorAll('.memo-carta'));
+    var i = todas.indexOf(b);
+    var columnas = getComputedStyle(tablero).gridTemplateColumns.split(' ').length;
+    var destino = null;
+    if (e.key === 'ArrowRight') destino = i + 1;
+    else if (e.key === 'ArrowLeft') destino = i - 1;
+    else if (e.key === 'ArrowDown') destino = i + columnas;
+    else if (e.key === 'ArrowUp') destino = i - columnas;
+    if (destino === null) return;
+    e.preventDefault();
+    if (todas[destino]) { todas[destino].focus(); }
+  });
+
+  /* ----------------------------------------------------------------- el panel */
+
+  var btnReiniciar = document.querySelector('[data-reiniciar]');
+  if (btnReiniciar) {
+    btnReiniciar.addEventListener('click', function () {
+      preguntarSiEmpezar('Vas a reiniciar.');
+    });
+  }
+
+  var btnConfigurar = document.querySelector('[data-configurar]');
+  if (btnConfigurar) {
+    btnConfigurar.addEventListener('click', abrirConfig);
+  }
+
+  var btnAyuda = document.querySelector('[data-ayuda]');
+  if (btnAyuda) {
+    btnAyuda.addEventListener('click', function () {
+      window.RetoDialogo.informar({
+        titulo: 'Cómo se juega',
+        texto: [
+          'MEMORAMA',
+          'Hay parejas escondidas. Destapa dos cartas a la vez.',
+          'Si son iguales, se quedan descubiertas. Si no, se tapan otra vez.',
+          '',
+          'No hay reloj. Puedes tardar lo que quieras: aquí no se gana por',
+          'rápido, se gana por recordar.',
+          '',
+          'CON EL TECLADO',
+          'Las flechas para moverte entre las cartas, y Enter o Espacio para',
+          'voltear. Con el dedo también funciona.',
+          '',
+          'EL CONJUNTO',
+          'Si te cuesta distinguir dos cosas parecidas, cámbialo arriba. Las',
+          'formas se ven igual en cualquier aparato; los números y las letras',
+          'usan la letra del sitio; los emojis son los más bonitos pero',
+          'necesitan un aparato que tenga los dibujitos.',
+          '',
+          'PARA LEER EN VOZ ALTA',
+          'Cada carta se anuncia al voltearla y cada pareja se avisa. Si tu',
+          'lector de pantalla lo repite mucho, se puede apagar en el sistema.'
+        ].join('\n'),
+        nota: 'El número de intentos no es una nota: solo se celebra cuando terminas, y el mejor se guarda aparte para cada tablero y cada conjunto.'
+      });
+    });
+  }
+
+  /* ------------------------------------------------------------------ arrancar */
+
+  fetch(API + '/catalogos')
+    .then(function (r) { return r.json(); })
+    .then(function (c) {
+      CATALOGOS = c;
+      armarOpciones();
+      return pedir(API + '/nueva', { tamano: '4x4', catalogo: 'formas' });
+    })
+    .then(function (e) {
+      partida = e.partida;
+      cartas = e.cartas;
+      CATALOGOS.catalogos.forEach(function (k) {
+        if (k.id === e.catalogo) { tipoSimbolo = k.tipo; }
+      });
+      construirTablero();
+      pintarCuentas(e);
+      avisar('Tablero listo. ' + e.totalParejas + ' parejas por encontrar.');
+    })
+    .catch(function (error) {
+      decir('No se pudo cargar el juego: ' + error.message);
+      tablero.classList.add('memo-oculto');
+    });
 })();

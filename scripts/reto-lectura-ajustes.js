@@ -242,7 +242,7 @@
 
        LA PALABRA ES "Configuración", y la letra de fijacion es la "f". No es
        un capricho: la cuenta sale de la misma regla de Python
-       (punto_de_fijacion, en logica/lectura_veloz.py) que usa la lectura de
+       (punto_de_fijacion, en scripts/logica/lectura_veloz.js) que usa la lectura de
        verdad. La palabra sin signos tiene 13 letras, y de 10 a 13 la fijacion
        cae en la cuarta, que es la "f". Si un dia cambia esa regla, el cuadrito
        tiene que cambiar con ella, o el preview estaria enseñando una letra que

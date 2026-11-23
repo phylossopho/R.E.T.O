@@ -1,0 +1,13 @@
+{
+  "name": "reto",
+  "version": "1.0.0",
+  "private": true,
+  "description": "R.E.T.O. - Refuerzo, Estudio, Test, Organización. Sitio estático (HTML/CSS/JS), sin servidor.",
+  "scripts": {
+    "start": "node tools/servir.js",
+    "test": "node tests/run-all.js",
+    "indices": "node tools/generar-indices.js"
+  },
+  "engines": { "node": ">=18" },
+  "license": "UNLICENSED"
+}

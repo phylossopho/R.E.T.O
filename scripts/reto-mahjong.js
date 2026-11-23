@@ -48,7 +48,7 @@
   var modoOffline = false;
 
   function actualizarModoOffline() {
-    var offline = !navigator.onLine || (window.RetoOfflineCache && window.RetoOfflineCache.isOffline());
+    var offline = false;   // las reglas corren en la propia página: funciona también sin internet
     if (offline !== modoOffline) {
       modoOffline = offline;
       document.documentElement.setAttribute('data-modo-offline', modoOffline ? '1' : '0');

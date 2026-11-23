@@ -310,7 +310,7 @@
       }).catch(function (e) {
         limpiarCuerpo();
         cuerpo.appendChild(el('p', 'prueba-texto-ayuda', e && e.message ? e.message :
-          'No se pudo calcular la velocidad. Abre el sitio con servidor.cmd.'));
+          'No se pudo calcular la velocidad. Recarga la página e inténtalo otra vez.'));
       });
     }
 

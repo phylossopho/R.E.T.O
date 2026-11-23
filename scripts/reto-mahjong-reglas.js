@@ -4,7 +4,7 @@
    Dos funciones puras: qué fichas están libres y qué parejas se pueden quitar.
    No tocan la página, así que se cargan igual en el navegador y en Node.
 
-   ESTA REGLA ESTÁ ESCRITA DOS VECES: aquí y en logica/mahjong.py (libres() y
+   ESTA REGLA ESTÁ ESCRITA DOS VECES: aquí y en scripts/logica/mahjong.js (libres() y
    jugadas()). El navegador la necesita en cada toque para marcar qué se puede
    tocar, y un viaje al servidor por toque retrasaría el juego. Por eso
    test_mahjong.py corre ESTE archivo con Node y comprueba que dé lo mismo que

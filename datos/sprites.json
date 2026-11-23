@@ -3,288 +3,288 @@
     "arquera": {
       "frente": {
         "ataque": [
-          "/imagenes/sprites/arquera/frente/ataque.webp"
+          "imagenes/sprites/arquera/frente/ataque.webp"
         ],
         "espera": [
-          "/imagenes/sprites/arquera/frente/espera.webp"
+          "imagenes/sprites/arquera/frente/espera.webp"
         ],
         "herido": [
-          "/imagenes/sprites/arquera/frente/herido.webp"
+          "imagenes/sprites/arquera/frente/herido.webp"
         ]
       },
       "espalda": {
         "ataque": [
-          "/imagenes/sprites/arquera/espalda/ataque.webp"
+          "imagenes/sprites/arquera/espalda/ataque.webp"
         ],
         "espera": [
-          "/imagenes/sprites/arquera/espalda/espera.webp"
+          "imagenes/sprites/arquera/espalda/espera.webp"
         ],
         "herido": [
-          "/imagenes/sprites/arquera/espalda/herido.webp"
+          "imagenes/sprites/arquera/espalda/herido.webp"
         ]
       }
     },
     "arquero": {
       "frente": {
         "ataque": [
-          "/imagenes/sprites/arquero/frente/ataque.webp"
+          "imagenes/sprites/arquero/frente/ataque.webp"
         ],
         "espera": [
-          "/imagenes/sprites/arquero/frente/espera.webp"
+          "imagenes/sprites/arquero/frente/espera.webp"
         ],
         "herido": [
-          "/imagenes/sprites/arquero/frente/herido.webp"
+          "imagenes/sprites/arquero/frente/herido.webp"
         ]
       },
       "espalda": {
         "ataque": [
-          "/imagenes/sprites/arquero/espalda/ataque.webp"
+          "imagenes/sprites/arquero/espalda/ataque.webp"
         ],
         "espera": [
-          "/imagenes/sprites/arquero/espalda/espera.webp"
+          "imagenes/sprites/arquero/espalda/espera.webp"
         ],
         "herido": [
-          "/imagenes/sprites/arquero/espalda/herido.webp"
+          "imagenes/sprites/arquero/espalda/herido.webp"
         ]
       }
     },
     "asesina": {
       "frente": {
         "ataque": [
-          "/imagenes/sprites/asesina/frente/ataque.webp"
+          "imagenes/sprites/asesina/frente/ataque.webp"
         ],
         "espera": [
-          "/imagenes/sprites/asesina/frente/espera.webp"
+          "imagenes/sprites/asesina/frente/espera.webp"
         ],
         "herido": [
-          "/imagenes/sprites/asesina/frente/herido.webp"
+          "imagenes/sprites/asesina/frente/herido.webp"
         ]
       },
       "espalda": {
         "ataque": [
-          "/imagenes/sprites/asesina/espalda/ataque.webp"
+          "imagenes/sprites/asesina/espalda/ataque.webp"
         ],
         "espera": [
-          "/imagenes/sprites/asesina/espalda/espera.webp"
+          "imagenes/sprites/asesina/espalda/espera.webp"
         ],
         "herido": [
-          "/imagenes/sprites/asesina/espalda/herido.webp"
+          "imagenes/sprites/asesina/espalda/herido.webp"
         ]
       }
     },
     "asesino": {
       "frente": {
         "ataque": [
-          "/imagenes/sprites/asesino/frente/ataque.webp"
+          "imagenes/sprites/asesino/frente/ataque.webp"
         ],
         "espera": [
-          "/imagenes/sprites/asesino/frente/espera.webp"
+          "imagenes/sprites/asesino/frente/espera.webp"
         ],
         "herido": [
-          "/imagenes/sprites/asesino/frente/herido.webp"
+          "imagenes/sprites/asesino/frente/herido.webp"
         ]
       },
       "espalda": {
         "ataque": [
-          "/imagenes/sprites/asesino/espalda/ataque.webp"
+          "imagenes/sprites/asesino/espalda/ataque.webp"
         ],
         "espera": [
-          "/imagenes/sprites/asesino/espalda/espera.webp"
+          "imagenes/sprites/asesino/espalda/espera.webp"
         ],
         "herido": [
-          "/imagenes/sprites/asesino/espalda/herido.webp"
+          "imagenes/sprites/asesino/espalda/herido.webp"
         ]
       }
     },
     "caballera": {
       "frente": {
         "ataque": [
-          "/imagenes/sprites/caballera/frente/ataque.webp"
+          "imagenes/sprites/caballera/frente/ataque.webp"
         ],
         "espera": [
-          "/imagenes/sprites/caballera/frente/espera.webp"
+          "imagenes/sprites/caballera/frente/espera.webp"
         ],
         "herido": [
-          "/imagenes/sprites/caballera/frente/herido.webp"
+          "imagenes/sprites/caballera/frente/herido.webp"
         ]
       },
       "espalda": {
         "ataque": [
-          "/imagenes/sprites/caballera/espalda/ataque.webp"
+          "imagenes/sprites/caballera/espalda/ataque.webp"
         ],
         "espera": [
-          "/imagenes/sprites/caballera/espalda/espera.webp"
+          "imagenes/sprites/caballera/espalda/espera.webp"
         ],
         "herido": [
-          "/imagenes/sprites/caballera/espalda/herido.webp"
+          "imagenes/sprites/caballera/espalda/herido.webp"
         ]
       }
     },
     "caballero": {
       "frente": {
         "ataque": [
-          "/imagenes/sprites/caballero/frente/ataque.webp"
+          "imagenes/sprites/caballero/frente/ataque.webp"
         ],
         "espera": [
-          "/imagenes/sprites/caballero/frente/espera.webp"
+          "imagenes/sprites/caballero/frente/espera.webp"
         ],
         "herido": [
-          "/imagenes/sprites/caballero/frente/herido.webp"
+          "imagenes/sprites/caballero/frente/herido.webp"
         ]
       },
       "espalda": {
         "ataque": [
-          "/imagenes/sprites/caballero/espalda/ataque.webp"
+          "imagenes/sprites/caballero/espalda/ataque.webp"
         ],
         "espera": [
-          "/imagenes/sprites/caballero/espalda/espera.webp"
+          "imagenes/sprites/caballero/espalda/espera.webp"
         ],
         "herido": [
-          "/imagenes/sprites/caballero/espalda/herido.webp"
+          "imagenes/sprites/caballero/espalda/herido.webp"
         ]
       }
     },
     "clerigo": {
       "frente": {
         "ataque": [
-          "/imagenes/sprites/clerigo/frente/ataque.webp"
+          "imagenes/sprites/clerigo/frente/ataque.webp"
         ],
         "espera": [
-          "/imagenes/sprites/clerigo/frente/espera.webp"
+          "imagenes/sprites/clerigo/frente/espera.webp"
         ],
         "herido": [
-          "/imagenes/sprites/clerigo/frente/herido.webp"
+          "imagenes/sprites/clerigo/frente/herido.webp"
         ]
       },
       "espalda": {
         "ataque": [
-          "/imagenes/sprites/clerigo/espalda/ataque.webp"
+          "imagenes/sprites/clerigo/espalda/ataque.webp"
         ],
         "espera": [
-          "/imagenes/sprites/clerigo/espalda/espera.webp"
+          "imagenes/sprites/clerigo/espalda/espera.webp"
         ],
         "herido": [
-          "/imagenes/sprites/clerigo/espalda/herido.webp"
+          "imagenes/sprites/clerigo/espalda/herido.webp"
         ]
       }
     },
     "guerrera": {
       "frente": {
         "ataque": [
-          "/imagenes/sprites/guerrera/frente/ataque.webp"
+          "imagenes/sprites/guerrera/frente/ataque.webp"
         ],
         "espera": [
-          "/imagenes/sprites/guerrera/frente/espera.webp"
+          "imagenes/sprites/guerrera/frente/espera.webp"
         ],
         "herido": [
-          "/imagenes/sprites/guerrera/frente/herido.webp"
+          "imagenes/sprites/guerrera/frente/herido.webp"
         ]
       },
       "espalda": {
         "ataque": [
-          "/imagenes/sprites/guerrera/espalda/ataque.webp"
+          "imagenes/sprites/guerrera/espalda/ataque.webp"
         ],
         "espera": [
-          "/imagenes/sprites/guerrera/espalda/espera.webp"
+          "imagenes/sprites/guerrera/espalda/espera.webp"
         ],
         "herido": [
-          "/imagenes/sprites/guerrera/espalda/herido.webp"
+          "imagenes/sprites/guerrera/espalda/herido.webp"
         ]
       }
     },
     "guerrero": {
       "frente": {
         "ataque": [
-          "/imagenes/sprites/guerrero/frente/ataque.webp"
+          "imagenes/sprites/guerrero/frente/ataque.webp"
         ],
         "espera": [
-          "/imagenes/sprites/guerrero/frente/espera.webp"
+          "imagenes/sprites/guerrero/frente/espera.webp"
         ],
         "herido": [
-          "/imagenes/sprites/guerrero/frente/herido.webp"
+          "imagenes/sprites/guerrero/frente/herido.webp"
         ]
       },
       "espalda": {
         "ataque": [
-          "/imagenes/sprites/guerrero/espalda/ataque.webp"
+          "imagenes/sprites/guerrero/espalda/ataque.webp"
         ],
         "espera": [
-          "/imagenes/sprites/guerrero/espalda/espera.webp"
+          "imagenes/sprites/guerrero/espalda/espera.webp"
         ],
         "herido": [
-          "/imagenes/sprites/guerrero/espalda/herido.webp"
+          "imagenes/sprites/guerrero/espalda/herido.webp"
         ]
       }
     },
     "maga": {
       "frente": {
         "ataque": [
-          "/imagenes/sprites/maga/frente/ataque.webp"
+          "imagenes/sprites/maga/frente/ataque.webp"
         ],
         "espera": [
-          "/imagenes/sprites/maga/frente/espera.webp"
+          "imagenes/sprites/maga/frente/espera.webp"
         ],
         "herido": [
-          "/imagenes/sprites/maga/frente/herido.webp"
+          "imagenes/sprites/maga/frente/herido.webp"
         ]
       },
       "espalda": {
         "ataque": [
-          "/imagenes/sprites/maga/espalda/ataque.webp"
+          "imagenes/sprites/maga/espalda/ataque.webp"
         ],
         "espera": [
-          "/imagenes/sprites/maga/espalda/espera.webp"
+          "imagenes/sprites/maga/espalda/espera.webp"
         ],
         "herido": [
-          "/imagenes/sprites/maga/espalda/herido.webp"
+          "imagenes/sprites/maga/espalda/herido.webp"
         ]
       }
     },
     "mago": {
       "frente": {
         "ataque": [
-          "/imagenes/sprites/mago/frente/ataque.webp"
+          "imagenes/sprites/mago/frente/ataque.webp"
         ],
         "espera": [
-          "/imagenes/sprites/mago/frente/espera.webp"
+          "imagenes/sprites/mago/frente/espera.webp"
         ],
         "herido": [
-          "/imagenes/sprites/mago/frente/herido.webp"
+          "imagenes/sprites/mago/frente/herido.webp"
         ]
       },
       "espalda": {
         "ataque": [
-          "/imagenes/sprites/mago/espalda/ataque.webp"
+          "imagenes/sprites/mago/espalda/ataque.webp"
         ],
         "espera": [
-          "/imagenes/sprites/mago/espalda/espera.webp"
+          "imagenes/sprites/mago/espalda/espera.webp"
         ],
         "herido": [
-          "/imagenes/sprites/mago/espalda/herido.webp"
+          "imagenes/sprites/mago/espalda/herido.webp"
         ]
       }
     },
     "sacerdotiza": {
       "frente": {
         "ataque": [
-          "/imagenes/sprites/sacerdotiza/frente/ataque.webp"
+          "imagenes/sprites/sacerdotiza/frente/ataque.webp"
         ],
         "espera": [
-          "/imagenes/sprites/sacerdotiza/frente/espera.webp"
+          "imagenes/sprites/sacerdotiza/frente/espera.webp"
         ],
         "herido": [
-          "/imagenes/sprites/sacerdotiza/frente/herido.webp"
+          "imagenes/sprites/sacerdotiza/frente/herido.webp"
         ]
       },
       "espalda": {
         "ataque": [
-          "/imagenes/sprites/sacerdotiza/espalda/ataque.webp"
+          "imagenes/sprites/sacerdotiza/espalda/ataque.webp"
         ],
         "espera": [
-          "/imagenes/sprites/sacerdotiza/espalda/espera.webp"
+          "imagenes/sprites/sacerdotiza/espalda/espera.webp"
         ],
         "herido": [
-          "/imagenes/sprites/sacerdotiza/espalda/herido.webp"
+          "imagenes/sprites/sacerdotiza/espalda/herido.webp"
         ]
       }
     }

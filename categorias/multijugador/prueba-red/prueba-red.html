@@ -46,6 +46,7 @@
 })();
 </script>
 <script src="../../../scripts/reto-panel-prefs.js?v=c02-fuente-ui"></script>
+<script src="../../../scripts/reto-api.js?v=estatico-1"></script>
 </head>
 <body>
 <header>
@@ -53,10 +54,10 @@
 </header>
 <main class="red-pagina">
 <section class="red-caja" aria-labelledby="red-t1">
-<h2 id="red-t1">1. Abre esta dirección en el otro dispositivo</h2>
+<h2 id="red-t1">1. Conecta el otro dispositivo</h2>
 <p class="red-estado" id="red-aviso" role="status">Buscando direcciones…</p>
 <ul class="red-direcciones" id="red-direcciones"></ul>
-<p class="ayuda">Los dos dispositivos deben estar en la misma red wifi. La primera vez, el navegador avisará que el certificado no es de confianza: es el de tu propia computadora. Pulsa «Avanzado» y luego «Continuar».</p>
+<p class="ayuda">Esta prueba usa la misma conexión directa que el duelo y Ding!: en una de las dos pantallas, abre «Invitar a otro dispositivo» (aparece al crear una sala en Duelo o Ding!) y el otro dispositivo pega su código al unirse. Funciona en la misma red wifi sin internet, y también con internet.</p>
 </section>
 <section class="red-caja" aria-labelledby="red-t2">
 <h2 id="red-t2">2. Mándense un saludo</h2>
@@ -78,11 +79,9 @@
 <details>
 <summary>Cosas que revisar</summary>
 <ul>
-<li>Los dos dispositivos están en <strong>la misma red wifi</strong> (no una red de invitados: muchas aíslan a los dispositivos entre sí).</li>
-<li>La computadora anfitriona tiene abierto <strong>servidor.cmd</strong> y no se durmió.</li>
-<li>En Windows, la primera vez que corre, el firewall pregunta si permitir Python: elige <strong>redes privadas</strong>.</li>
-<li>Usa la dirección completa, con <strong>https</strong> y el puerto.</li>
-<li>Si la red de tu escuela o casa bloquea la comunicación entre dispositivos, pide que la desactiven (se llama «aislamiento de clientes» o «AP isolation»), o usa el punto de acceso del celular del anfitrión.</li>
+<li>El dispositivo anfitrión (el que creó la sala) tiene su página abierta y no se durmió.</li>
+<li>Copiaron el código <strong>completo</strong>, sin cortarlo.</li>
+<li>Si la red de tu escuela o casa bloquea la comunicación entre dispositivos («aislamiento de clientes» o «AP isolation»), usa el punto de acceso del celular del anfitrión o datos móviles.</li>
 </ul>
 </details>
 </section>

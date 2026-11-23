@@ -1,47 +1,34 @@
-# HTTPS certificates and machine-specific address output.
+# Certificados y llaves: nunca se suben.
 /*.pem
-/direccion-del-sitio.txt
 
 # Python bytecode and caches.
 **/__pycache__/
 *.py[cod]
 
-# Local build marker and personal reading material.
-/.compilacion
+# Material personal de lectura.
 /look-back-*.txt
 
-# Test suites and local review utilities are not part of the deployed platform.
+# Revisiones sueltas del sitio (las pruebas oficiales están en tests/).
 /test_*.py
 /test_*.js
 /_*.py
 /_*.js
 
 # =============================================================================
-# Archivos solo para desarrollo local / servidor Python (no para GitHub Pages)
+# Solo para trabajar en local (no se publican)
 # =============================================================================
 
-# Servidor Python local (solo para modo wifi local, no para GitHub Pages)
-server.py
-wsgi.py
-servidor.cmd
-logica/*.py
-logica/__init__.py
+# El servidor original en Python (ya no se usa) y sus pruebas. Se conserva solo como
+# referencia y para regenerar las pruebas de paridad (ver tools/paridad/).
+_legacy_python/
 
-# Configuración local / scripts de utilidad (no para producción)
-ejemplos/
+# Documentos de trabajo
 CONTEXTO-PROYECTO.md
 multijugador.md
 vision.md
 lectura-veloz.md
 rpg.md
 pokemon_educational_rpg_battle.html
-
-# Signaling worker (se deploya por separado en Cloudflare Workers)
-signaling-worker/
-
-# Archivos de configuración local de Wrangler
-.wrangler/
-*.toml.local
 
 # =============================================================================
 # Archivos de sistema y IDE

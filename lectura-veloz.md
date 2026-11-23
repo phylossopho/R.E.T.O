@@ -1,6 +1,6 @@
 # Lectura Veloz
 
-Este documento describe los motores que están conectados en la plataforma actual. Las reglas de preparación del texto viven en `logica/lectura_veloz.py`; el navegador se encarga de pintarlo, animarlo y controlar la lectura. La API expone esos planes mediante `POST /api/lectura/plan`.
+Este documento describe los motores que están conectados en la plataforma actual. Las reglas de preparación del texto viven en `scripts/logica/lectura_veloz.js`; el navegador se encarga de pintarlo, animarlo y controlar la lectura. La API expone esos planes mediante `POST /api/lectura/plan`.
 
 ## Motores disponibles
 
@@ -61,7 +61,7 @@ La petición contiene el motor y una lista de párrafos. El modo grupo también 
 
 El servidor responde con el plan específico del motor. Los textos vacíos se descartan; un texto sin palabras o que excede los límites devuelve un error de validación. Los topes son 300 000 palabras y 20 000 párrafos.
 
-Los valores de velocidad y pausas se contrastan con las pruebas de `test_lectura_veloz.py` para evitar discrepancias entre Python, JavaScript y esta especificación.
+Los valores de velocidad y pausas se contrastan con las pruebas de `tests/paridad_lectura_vision.test.js` para evitar discrepancias entre Python, JavaScript y esta especificación.
 
 ## Módulos agregados: prueba de velocidad, pacer, columnas y skimming
 

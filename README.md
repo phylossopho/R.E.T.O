@@ -1,91 +1,57 @@
 # R.E.T.O.
 
-**Refuerzo · Estudio · Test · Organización** es una plataforma web local de aprendizaje. Reúne prácticas de lectura, evaluaciones, juegos de atención y memoria, una biblioteca personal y herramientas para organizar ideas.
+**Refuerzo · Estudio · Test · Organización** es una plataforma web de aprendizaje. Reúne prácticas de lectura, evaluaciones, juegos de atención y memoria, una biblioteca personal y herramientas para organizar ideas.
+
+Es un **sitio estático** (HTML, CSS y JavaScript, sin servidor): se publica tal cual en GitHub Pages y también funciona sin internet una vez visitado.
 
 ## Módulos
 
-- **Lectura Veloz:** práctica por palabra, grupos de palabras, frases y modo galáctico. Permite elegir textos de la biblioteca y ajustar ritmo y presentación.
+- **Lectura Veloz:** práctica por palabra, grupos de palabras, frases, pacer, columnas, skimming, prueba de velocidad y modo galáctico. Permite elegir textos de la biblioteca y ajustar ritmo y presentación.
 - **Evaluaciones:** banco de tests fijos y dinámicos, importación desde texto marcado, resolución en varios formatos, seguimiento de preguntas por repasar y **Aventura Gráfica (Modo RPG)** con tres interfaces de batalla, editor de layout, 27 power ups que se ganan acertando y se llevan como equipo, y nivel de práctica.
 - **Mini-juegos:** Mahjong, Memorama, memoria secuencial y Stroop.
 - **Visión:** ejercicios para descansar y entrenar la vista (seguimiento, sacadas, tablas de Schulte, periferia, destello, pausa 20-20-20…). Ver `vision.md`.
-- **Multijugador:** duelos de dos por wifi local, sin internet: salas con código, mazos propios, turnos con contraataque, power ups y tarjeta de jugador; y **Ding!**, un quiz bowl de 2 a 4 jugadores con una persona que presenta. Ver `multijugador.md` y `rpg.md`.
+- **Multijugador:** duelos de dos jugadores y **Ding!**, un quiz bowl de 2 a 4 jugadores con una persona que presenta. Sin servidor ni cuenta: la sala vive en el dispositivo de quien la crea y los demás se conectan con un código. Ver `multijugador.md` y `rpg.md`.
 - **Biblioteca:** importa, organiza, lee y practica con textos propios.
 - **Organizando ideas:** espacio para registrar y relacionar ideas.
 - **Configuración:** temas, animaciones, sonidos, paneles y respaldo/restauración de datos.
 
-## Ejecución local en Windows
+## Cómo está hecho
 
-1. Abre la carpeta `R.E.T.O_gemini`.
-2. Ejecuta `servidor.cmd`. El script comprueba Python e instala Flask y `cryptography` si hacen falta.
-3. En esta computadora, abre <https://127.0.0.1:8000>.
+- `categorias/`: páginas de los módulos. `styles/`: estilos y fuentes (autoalojadas).
+- `scripts/`: la interfaz de cada pantalla (`reto-*.js`).
+- `scripts/logica/`: **las reglas** (planes de lectura, ejercicios de visión, daños y power ups, rondas de repaso, salas…). Se escribieron primero en Python y se portaron a JavaScript; las pruebas comprueban que dan exactamente lo mismo que el original.
+- `scripts/reto-api.js`: responde en el navegador las llamadas `/api/...` que antes atendía un servidor, y hace que el sitio funcione dentro de una subcarpeta (`usuario.github.io/REPO/`).
+- `datos/`: power ups y los índices de carpetas (los escribe `tools/generar-indices.js`).
+- `tests/` y `tools/`: pruebas y herramientas; no se publican.
 
-La primera visita muestra una advertencia del navegador porque el servidor usa un certificado HTTPS autofirmado. Es necesario aceptarlo para habilitar funciones de almacenamiento seguro como IndexedDB.
+## Probar en tu computadora
 
-También se puede iniciar desde PowerShell, en esta carpeta:
+Hace falta [Node.js](https://nodejs.org) (versión 18 o más).
 
-```powershell
-python -m pip install -r requirements.txt
-python server.py
+```bash
+node tools/servir.js        # abre http://localhost:8000
+npm test                    # corre todas las pruebas
+npm run indices             # vuelve a escribir los índices (tras agregar ejemplos, fondos o sprites)
 ```
 
-El servidor escucha en el puerto `8000`. La dirección para otros dispositivos de la misma red se muestra en la consola y se escribe en `direccion-del-sitio.txt`. Ese archivo y los certificados son locales y no se incluyen en el repositorio.
+## Publicar en GitHub Pages
+
+En Windows, **doble clic en `subir-a-github.cmd`**: actualiza los índices, corre las pruebas, te pide una descripción de los cambios y sube todo a GitHub.
+
+1. Sube el proyecto a un repositorio de GitHub.
+2. En **Settings → Pages**, elige **Source: GitHub Actions**.
+3. Cada vez que subas a `main`, `.github/workflows/deploy-pages.yml` corre las pruebas, genera los índices y publica el sitio. Si alguna prueba falla, no se publica.
+
+La dirección queda en `https://USUARIO.github.io/REPO/`. Cada dirección guarda sus propios datos (biblioteca, progreso, power ups): para moverlos, usa el respaldo de Configuración › Datos.
 
 ## Aplicación instalable (PWA)
 
-Con HTTPS, R.E.T.O. ofrece manifest e iconos de instalación. El service worker precarga la portada y recursos básicos, y guarda páginas y recursos estáticos que se visitan. Las rutas `/api/` no se almacenan: los juegos y funciones que requieren Flask necesitan conexión; si no la hay, se muestra una página de desconexión. El almacenamiento personal continúa en el navegador y no se sincroniza entre dispositivos.
+Con HTTPS (GitHub Pages) o `localhost`, R.E.T.O. ofrece manifest e iconos de instalación. El service worker guarda el sitio y las reglas, así que **todo funciona sin conexión** después de la primera visita. El almacenamiento personal vive en el navegador y no se sincroniza entre dispositivos.
 
-En PythonAnywhere el sitio se sirve bajo HTTPS, condición necesaria para registrar el service worker. La PWA está preparada para publicarse desde la raíz del dominio.
+## Multijugador entre dispositivos
 
-## Publicar en PythonAnywhere
+Quien crea la sala es el **anfitrión**: su navegador guarda la partida. Los demás se unen con el código de 4 letras; si están en otro dispositivo, antes se conectan con el botón **«Invitar a otro dispositivo»** (se intercambian dos códigos de texto, sin servidor). Funciona en la misma red wifi sin internet. El anfitrión debe mantener abierta su página mientras dure la partida. Detalles en `multijugador.md`.
 
-1. Sube o clona el repositorio privado en tu directorio de usuario.
-2. En una consola Bash, crea un entorno virtual con la misma versión de Python que usarás en la pestaña **Web**, e instala dependencias:
+## Datos y alcance
 
-	```bash
-	mkvirtualenv --python=/usr/bin/python3.13 reto-env
-	pip install -r ~/R.E.T.O/requirements.txt
-	```
-
-	Ajusta la ruta `~/R.E.T.O` si elegiste otro directorio.
-3. En **Web**, crea una aplicación con configuración manual, elige esa versión de Python y asigna `reto-env` en el campo **Virtualenv**.
-4. En el archivo WSGI de la pestaña **Web**, apunta al directorio del proyecto e importa el callable:
-
-	```python
-	import sys
-
-	project_home = "/home/USUARIO/R.E.T.O"
-	if project_home not in sys.path:
-		 sys.path.insert(0, project_home)
-
-	from wsgi import application
-	```
-
-	Sustituye `USUARIO` por tu nombre de cuenta y ajusta la ruta si es necesario; luego pulsa **Reload** en la pestaña **Web**.
-
-PythonAnywhere termina HTTPS delante de la aplicación. No ejecutes `python server.py` allí: ese arranque es solo para uso local y crea un certificado autofirmado. El entrypoint WSGI importa Flask sin iniciar un servidor de desarrollo.
-
-Antes de invitar usuarios, ten en cuenta que el progreso y las preferencias se guardan en el navegador. Las partidas activas de Memorama viven en memoria del proceso y pueden perderse si la aplicación se reinicia; los datos no son una cuenta en la nube ni una copia central.
-
-## Datos y alcance de red
-
-El navegador guarda la biblioteca, preferencias y progreso en IndexedDB; la configuración exporta e importa respaldos. Flask sirve los archivos de la aplicación y calcula algunas reglas de lectura, evaluaciones y juegos. Las partidas activas del Memorama viven en memoria del servidor y se pierden al detenerlo.
-
-El servidor escucha en todas las interfaces de red para permitir el acceso desde otros dispositivos de la misma LAN. No tiene autenticación ni está pensado para exponerse directamente a Internet.
-
-## Estructura
-
-- `categorias/`: páginas de los módulos.
-- `scripts/`: interfaz y lógica JavaScript del navegador.
-- `logica/`: reglas de dominio en Python.
-- `styles/`: estilos y fuentes.
-- `ejemplos/`: textos que el servidor ofrece para probar la biblioteca.
-- `server.py`: servidor local y API.
-- `servidor.cmd`: arranque para Windows.
-- `wsgi.py`: callable de entrada para alojamientos WSGI.
-- `manifest.webmanifest`, `sw.js` y `pwa/`: instalación y recursos de la PWA.
-
-La documentación de Lectura Veloz está en [lectura-veloz.md](lectura-veloz.md). Los prompts de ejemplo para generar contenido están en `ejemplos/`.
-
-## Para continuar el desarrollo
-
-Lee `CONTEXTO-PROYECTO.md`: qué hay hecho, cómo se trabaja aquí, las decisiones tomadas y lo que falta.
+El navegador guarda la biblioteca, preferencias y progreso en IndexedDB; la configuración exporta e importa respaldos. No hay cuentas ni base de datos central.

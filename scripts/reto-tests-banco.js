@@ -113,7 +113,10 @@
 
   function estados(testId) {
     return Datos().obtener(claveEstado(testId)).then(function (v) {
-      return v && typeof v === 'object' ? v : {};
+      var mapa = v && typeof v === 'object' ? v : {};
+      // Estados guardados por una versión de prueba (un número suelto en vez de un objeto): se descartan.
+      Object.keys(mapa).forEach(function (k) { if (!mapa[k] || typeof mapa[k] !== 'object') delete mapa[k]; });
+      return mapa;
     });
   }
 
@@ -142,13 +145,7 @@
 
   /* ----------------------------------------------------------- servidor */
 
-  function esGitHubPages() {
-    var h = window.location.hostname;
-    return h.includes('github.io') || h.includes('github.dev');
-  }
-
-  /* Un 404 o un 405 quieren decir lo mismo aquí: el servidor que está corriendo
-     es más viejo que esta pantalla y no conoce la ruta. */
+  /* Un 404 o un 405 no deberían pasar: las reglas viven en reto-api.js, en la misma página. */
   function pedir(ruta, cuerpo) {
     return fetch(API + ruta, {
       method: 'POST',
@@ -156,23 +153,11 @@
       body: JSON.stringify(cuerpo)
     }).then(function (r) {
       if (r.ok) return r.json();
-      if (r.status === 404 || r.status === 405) {
-        if (esGitHubPages()) {
-          throw new Error('Función no disponible en GitHub Pages (requiere servidor local).');
-        }
-        throw new Error('El servidor que está corriendo es más viejo que esta pantalla. ' +
-          'Ciérralo y abre servidor.cmd otra vez.');
-      }
       return r.json().catch(function () { return {}; }).then(function (d) {
-        throw new Error(d.error || ('El servidor no pudo con esto (error ' + r.status + ').'));
+        throw new Error(d.error || ('No se pudo preparar esto (error ' + r.status + ').'));
       });
     }).catch(function (e) {
-      if (e instanceof TypeError) {
-        if (esGitHubPages()) {
-          throw new Error('Función no disponible en GitHub Pages (requiere servidor local).');
-        }
-        throw new Error('No se pudo hablar con el servidor. ¿Está abierto?');
-      }
+      if (e instanceof TypeError) throw new Error('No se pudo preparar esto. Recarga la página.');
       throw e;
     });
   }
@@ -193,25 +178,6 @@
   /* Cómo va la persona en cada test: { idTest: { total, nuevas, por_repasar,
      dominadas, temas_debiles } }. Una sola llamada para todos. */
   function resumenes(tests) {
-    if (esGitHubPages()) {
-      return Promise.all(tests.map(function (t) { return estados(t.id); })).then(function (todos) {
-        var res = {};
-        tests.forEach(function (t, i) {
-          var mapa = todos[i] || {};
-          var jugables = t.preguntas.filter(jugable);
-          var total = jugables.length;
-          var dominadas = 0, nuevas = 0, por_repasar = 0;
-          jugables.forEach(function (p) {
-            var e = mapa[p.id] || 0;
-            if (e >= 3) dominadas++;
-            else if (e === 0) nuevas++;
-            else por_repasar++;
-          });
-          res[t.id] = { total: total, nuevas: nuevas, por_repasar: por_repasar, dominadas: dominadas, temas_debiles: [] };
-        });
-        return res;
-      });
-    }
     return Promise.all(tests.map(function (t) { return estados(t.id); })).then(function (todos) {
       var carga = tests.map(function (t, i) {
         var qs = t.preguntas.filter(jugable);
@@ -226,10 +192,6 @@
   function ronda(test, ids, cantidad, modo) {
     var qs = test.preguntas.filter(function (p) { return jugable(p) && (!ids || ids.indexOf(p.id) >= 0); });
     return estados(test.id).then(function (mapa) {
-      // En GitHub Pages no hay servidor Python: armar ronda client-side
-      if (typeof window !== 'undefined' && !window.location.hostname.includes('127.0.0.1') && !window.location.hostname.includes('localhost')) {
-        return rondaLocal(qs, mapa, cantidad, modo);
-      }
       return pedir('/ronda', {
         preguntas: qs.map(paraServidor),
         estados: mapa,
@@ -239,49 +201,10 @@
     });
   }
 
-  function rondaLocal(qs, mapa, cantidad, modo) {
-    // Lógica simple client-side: mezclar y devolver
-    var disponibles = qs.slice();
-    if (modo === 'repasar') {
-      disponibles.sort(function (a, b) {
-        var ea = mapa[a.id] || 0;
-        var eb = mapa[b.id] || 0;
-        return ea - eb; // las que menos saben primero
-      });
-    } else {
-      for (var i = disponibles.length - 1; i > 0; i--) {
-        var j = Math.floor(Math.random() * (i + 1));
-        var tmp = disponibles[i]; disponibles[i] = disponibles[j]; disponibles[j] = tmp;
-      }
-    }
-    var seleccionadas = disponibles.slice(0, cantidad);
-    var semilla = Date.now().toString(36) + Math.random().toString(36).slice(2);
-    return Promise.resolve({
-      preguntas: seleccionadas.map(function (p, i) { return { id: p.id, orden: i }; }),
-      resumen: {},
-      semilla: semilla
-    });
-  }
-
-  /* Registra una respuesta: pide el estado nuevo al servidor y lo guarda. */
+  /* Registra una respuesta: pide el estado nuevo a las reglas y lo guarda. */
   function registrarRespuesta(testId, qid, previo, acierto, seguridad) {
-    if (esGitHubPages()) {
-      return registrarRespuestaLocal(qid, previo, acierto, seguridad);
-    }
     return pedir('/registrar', { estado: previo || null, acierto: acierto, seguridad: seguridad || null })
       .then(function (d) { return guardarEstado(testId, qid, d.estado).then(function () { return d.estado; }); });
-  }
-
-  function registrarRespuestaLocal(qid, previo, acierto, seguridad) {
-    // Lógica simplificada de repaso (tipo Leitner): 
-    // estado 0=nueva, 1-2=aprendiendo, 3=dominada
-    var estado = previo || 0;
-    if (acierto) {
-      estado = Math.min(3, estado + 1);
-    } else {
-      estado = Math.max(0, estado - 1);
-    }
-    return Promise.resolve(estado);
   }
 
   window.RetoTestsBanco = {

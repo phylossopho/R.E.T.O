@@ -200,10 +200,10 @@
   function pantallaEntrada(mensaje) {
     vaciar(raiz);
     var caja = el('section', 'red-caja');
-    caja.appendChild(el('h2', '', 'Duelo por wifi'));
+    caja.appendChild(el('h2', '', 'Duelo entre dos jugadores'));
     caja.appendChild(el('p', 'ayuda',
       'Uno crea la sala y le dice el código al otro. Cada quien usa sus propios tests para armar su mazo. ' +
-      'Los dos dispositivos deben estar en la misma red wifi.'));
+      'Si juegan en dispositivos distintos, quien crea la sala pulsa «Invitar a otro dispositivo» y el otro pega ahí su código al unirse.'));
     if (mensaje) caja.appendChild(el('p', 'red-estado', mensaje));
     var c1 = el('div', 'ajustes-campo');
     var l1 = el('label', '', 'Tu nombre');
@@ -218,13 +218,7 @@
     crear.type = 'button';
     crear.addEventListener('click', function () {
       almacen('red_nombre', nombre.value.trim());
-      if (window.RetoDueloP2P && window.RetoDueloP2P.crearSala) {
-        (window.RetoDueloP2P.init ? window.RetoDueloP2P.init() : Promise.resolve())
-          .then(function () { return window.RetoDueloP2P.crearSala(); })
-          .then(entrar).catch(function (e) { falla(e.message); });
-      } else {
-        llamar('POST', '/crear', { nombre: nombre.value }).then(entrar).catch(function (e) { falla(e.message); });
-      }
+      llamar('POST', '/crear', { nombre: nombre.value }).then(entrar).catch(function (e) { falla(e.message); });
     });
     caja.appendChild(crear);
 
@@ -240,14 +234,8 @@
     unir.type = 'button';
     unir.addEventListener('click', function () {
       almacen('red_nombre', nombre.value.trim());
-      if (window.RetoDueloP2P && window.RetoDueloP2P.unirseSala) {
-        (window.RetoDueloP2P.init ? window.RetoDueloP2P.init() : Promise.resolve())
-          .then(function () { return window.RetoDueloP2P.unirseSala(codigo.value); })
-          .then(entrar).catch(function (e) { falla(e.message); });
-      } else {
-        llamar('POST', '/unirse', { codigo: codigo.value, nombre: nombre.value }).then(entrar)
-          .catch(function (e) { falla(e.message); });
-      }
+      llamar('POST', '/unirse', { codigo: codigo.value, nombre: nombre.value }).then(entrar)
+        .catch(function (e) { falla(e.message); });
     });
     caja.appendChild(unir);
     raiz.appendChild(caja);
@@ -259,10 +247,6 @@
     almacen('duelo_sesion', JSON.stringify(sesion), true);
     vista = null; firma = null;
     local.clase = null; local.mazo = null; local.elegidos = {}; local.consumido = false; local.inicioDuelo = null;
-    if (window.RetoDueloP2P && window.RetoDueloP2P.estado && window.RetoDueloP2P.estado.fase !== 'desconectado') {
-      // Modo P2P: delegar a reto-duelo-p2p.js
-      return;
-    }
     empezarSondeo();
     preguntar();
   }

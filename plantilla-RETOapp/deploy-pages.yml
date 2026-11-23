@@ -1,0 +1,69 @@
+name: Publicar en GitHub Pages
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # 1) Revisa y arma el sitio, y lo sube como paquete.
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Si hay un conflicto de Git a medias, un archivo roto o una referencia perdida, no se publica y dice cuál es.
+      - name: Revisar el sitio
+        run: node tests/sitio.test.js
+
+      # Un sitio estático no puede listar carpetas: se escriben los índices (ejemplos, fondos, sprites).
+      - name: Índices de archivos
+        run: node tools/generar-indices.js
+
+      - name: Preparar el sitio
+        run: |
+          set -e
+          mkdir _site
+          for d in categorias datos ejemplos imagenes pwa scripts sonidos styles; do
+            if [ -d "$d" ]; then cp -r "$d" _site/; else echo "Aviso: no existe la carpeta $d"; fi
+          done
+          cp ./*.html sw.js manifest.webmanifest _site/
+          # Para comprobar qué versión quedó publicada: https://USUARIO.github.io/RETOapp/version.txt
+          printf 'commit: %s\nmensaje: %s\nfecha: %s\n' "$GITHUB_SHA" "$(git log -1 --pretty=%s)" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > _site/version.txt
+          echo "== Contenido del sitio que se publica =="
+          du -sh _site
+          find _site -maxdepth 1 | sort
+          echo "Archivos en total: $(find _site -type f | wc -l)"
+          test -f _site/index.html
+
+      - name: Subir el paquete del sitio
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  # 2) Publica el paquete.
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publicar en GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
