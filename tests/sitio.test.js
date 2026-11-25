@@ -59,6 +59,26 @@ sitio.filter((f) => f.endsWith('.js')).forEach((f) => {
   PROHIBIDO_EN_JS.forEach((p) => { if (t.includes(p)) problemas.push(rel(f) + ' todavía usa "' + p + '" (código de la conversión anterior).'); });
 });
 
+// 6b) Todo lo que las pantallas piden a RetoRpg (RetoRpg.x, o R.x cuando R = window.RetoRpg) está exportado en reto-rpg.js.
+//     (Así no vuelve a pasar que un botón no haga nada porque llama a una función que no existe.)
+(function () {
+  const rpgJs = path.join(RAIZ, 'scripts', 'reto-rpg.js');
+  if (!fs.existsSync(rpgJs)) return;
+  const txt = fs.readFileSync(rpgJs, 'utf8'), ini = txt.indexOf('window.RetoRpg = {');
+  if (ini < 0) { problemas.push('scripts/reto-rpg.js ya no define window.RetoRpg = { ... }'); return; }
+  const exportadas = new Set(); let m;
+  const reClave = /(\w+)\s*:/g, bloque = txt.slice(ini, txt.indexOf('};', ini));
+  while ((m = reClave.exec(bloque))) exportadas.add(m[1]);
+  sitio.filter((f) => f.endsWith('.js') && rel(f) !== 'scripts/reto-rpg.js').forEach((f) => {
+    const t = fs.readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"`])\/\/[^\n]*/g, '$1');   // sin comentarios
+    if (t.indexOf('RetoRpg') < 0) return;
+    const usos = new Set(), r1 = /RetoRpg\.(\w+)(?!\w)(?!\s*=[^=])/g;
+    while ((m = r1.exec(t))) usos.add(m[1]);
+    if (/\bR\s*=\s*window\.RetoRpg/.test(t)) { const r2 = /\bR\.(\w+)(?!\w)(?!\s*=[^=])/g; while ((m = r2.exec(t))) usos.add(m[1]); }   // (R.x = ... es asignar, no usar)
+    usos.forEach((u) => { if (!exportadas.has(u)) problemas.push(rel(f) + ' usa RetoRpg.' + u + ' pero scripts/reto-rpg.js no lo exporta.'); });
+  });
+})();
+
 // 7) Lo imprescindible está
 ['index.html', 'sw.js', 'manifest.webmanifest', 'scripts/reto-api.js', 'scripts/reto-azar.js', 'scripts/reto-conexion.js', 'scripts/logica/_base.js',
  'scripts/logica/rpg.js', 'scripts/logica/pve.js', 'scripts/logica/sala.js', 'scripts/logica/ding.js', 'datos/powerups.json', 'datos/powerups_textos.json',

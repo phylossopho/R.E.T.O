@@ -142,10 +142,11 @@
     exportar.type = 'button';
     exportar.addEventListener('click', function () {
       if (!R || !R.crearTarjeta || !R.aTexto) { decir('RetoRpg no disponible'); return; }
-      var perfilCompleto = Object.assign({}, p, { config: cfg, tiempo_por_modulo: p.tiempo_por_modulo || {} });
-      // Preservar fecha de creación original
-      if (p.creado) perfilCompleto.creado = p.creado;
-      R.crearTarjeta(perfilCompleto, p.creado || new Date().toISOString().slice(0,10)).then(function (t) {
+      // El perfil de la tarjeta lleva lo que se ganó (puntos, inventario, equipo, aciertos) y los ajustes de hoy.
+      var fechaTarjeta = (p.creado || new Date().toISOString()).slice(0, 10);
+      R.perfil(p.nombre).then(function (base) {
+        return R.crearTarjeta(Object.assign({}, base, { config: cfg, tiempo_por_modulo: p.tiempo_por_modulo || base.tiempo_por_modulo || {} }), fechaTarjeta);
+      }).then(function (t) {
         var codigo = R.aTexto(t);
         // Mostrar modal con ambas opciones
         var modal = document.createElement('dialog');

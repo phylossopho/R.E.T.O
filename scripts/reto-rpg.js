@@ -307,8 +307,16 @@
     });
   }
 
-  function crearTarjeta(nombre) {
-    return perfil(nombre).then(function (p) { return post('/api/rpg/tarjeta', { perfil: p }); });
+  /* Crea la tarjeta de jugador (con su huella). `quien` puede ser el nombre (se arma el perfil con
+     el inventario, el equipo, los aciertos y el nivel guardados) o un perfil ya armado.
+     `fecha` (AAAA-MM-DD) es opcional: por omisión, hoy. */
+  function crearTarjeta(quien, fecha) {
+    var listo = (quien && typeof quien === 'object') ? Promise.resolve(quien) : perfil(quien);
+    return listo.then(function (p) {
+      var cuerpo = { perfil: p };
+      if (typeof fecha === 'string' && /^\d{4}-\d{2}-\d{2}/.test(fecha)) cuerpo.fecha = fecha.slice(0, 10);
+      return post('/api/rpg/tarjeta', cuerpo);
+    });
   }
 
   function aTexto(t) {
@@ -338,6 +346,6 @@
     aciertos: aciertos, sumarAciertos: sumarAciertos, equipo: equipo, guardarEquipo: guardarEquipo,
     entregados: entregados, entregadosHoy: entregadosHoy, registrarEntrega: registrarEntrega,
     premiarTest: premiarTest, mostrarPremiosDeTest: mostrarPremiosDeTest,
-    claseDeAvatar: claseDeAvatar, contar: contar, nivel: nivel
+    crearTarjeta: crearTarjeta, claseDeAvatar: claseDeAvatar, contar: contar, nivel: nivel
   };
 })(window);

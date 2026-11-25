@@ -130,7 +130,7 @@
           return entorno.leerJson('datos/incognito.json').then(function (j) { return ok({ imagen: j.imagen ? prefijar(j.imagen) : null }); }, function () { return ok({ imagen: null }); });
         return cargar('rpg').then(function (mm) {
           var rpg = mm.rpg;
-          if (metodo === 'POST' && ruta === '/api/rpg/tarjeta') return ok(rpg.crear_tarjeta(d.perfil, hoy()));
+          if (metodo === 'POST' && ruta === '/api/rpg/tarjeta') return ok(rpg.crear_tarjeta(d.perfil, (typeof d.fecha === 'string' && /^\d{4}-\d{2}-\d{2}/.test(d.fecha)) ? d.fecha.slice(0, 10) : hoy()));
           if (metodo === 'POST' && ruta === '/api/rpg/tarjeta/validar') return ok(rpg.validar_tarjeta(d.tarjeta));
           if (metodo === 'POST' && ruta === '/api/rpg/nivel') {
             if (!Array.isArray(d.sesiones) || d.sesiones.length > 2000) return malo('Faltan las sesiones.');

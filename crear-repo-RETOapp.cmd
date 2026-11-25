@@ -8,6 +8,8 @@ rem  Crea una carpeta NUEVA y limpia (RETOapp, al lado de esta)
 rem  con SOLO lo que la plataforma necesita para funcionar en
 rem  linea, la convierte en un repositorio de Git y la sube a
 rem  GitHub. No toca esta carpeta ni su repositorio.
+rem  Si la subida falla, reintentar-subida-RETOapp.cmd revisa la
+rem  causa y ayuda a resolverla.
 rem ============================================================
 
 set "ORIGEN=%~dp0"
@@ -76,7 +78,7 @@ if errorlevel 1 goto :error_revision
 popd
 goto :git
 :sin_node
-echo       (No encontre Node.js: me salto la revision. GitHub la hara al publicar.)
+echo       ^(No encontre Node.js: me salto la revision. GitHub la hara al publicar.^)
 
 :git
 echo.
@@ -114,7 +116,7 @@ if errorlevel 1 goto :manual
 
 rem --- Camino automatico: GitHub CLI ya instalado y con sesion ---
 for /f "delims=" %%u in ('gh api user -q .login') do set "USUARIO=%%u"
-echo       Creando %USUARIO%/%NOMBRE% (publico: GitHub Pages gratis lo necesita) ...
+echo       Creando %USUARIO%/%NOMBRE% ^(publico: GitHub Pages gratis lo necesita^) ...
 gh repo create %NOMBRE% --public --source=. --remote=origin --description "R.E.T.O. - plataforma de aprendizaje (sitio estatico)"
 if errorlevel 1 goto :error_gh
 gh api -X POST repos/%USUARIO%/%NOMBRE%/pages -f build_type=workflow >nul 2>nul
@@ -127,13 +129,13 @@ rem --- Camino manual: tu creas el repositorio vacio en la pagina de GitHub ---
 echo.
 echo  No encontre GitHub CLI con sesion iniciada, asi que hay que hacer 2 cosas en la pagina:
 echo.
-echo   1) Entra a  https://github.com/new
+echo   1^) Entra a  https://github.com/new
 echo      - Nombre: %NOMBRE%
 echo      - Publico  ^(GitHub Pages gratis lo necesita^)
 echo      - SIN README, SIN .gitignore, SIN licencia  ^(que quede vacio^)
 echo      - Pulsa "Create repository"
 echo.
-echo   2) En ese repositorio: Settings ^> Pages ^> Source: GitHub Actions
+echo   2^) En ese repositorio: Settings ^> Pages ^> Source: GitHub Actions
 echo.
 set /p "USUARIO= Tu usuario de GitHub (Enter = phylossopho): "
 if not defined USUARIO set "USUARIO=phylossopho"
@@ -188,11 +190,9 @@ echo     Borralo en GitHub o usa otro nombre, y vuelve a ejecutar este archivo.
 goto :fin
 :error_push
 echo.
-echo [!] No se pudo subir. Causas comunes:
-echo     - Se pidio iniciar sesion en GitHub y se cancelo: vuelve a intentarlo.
-echo     - El repositorio %NOMBRE% no existe todavia o no esta vacio.
-echo     - No hay internet.
-echo     Para reintentar solo la subida, abre una terminal en %DEST% y ejecuta: git push -u origin main
+echo [!] La subida fallo. Reviso la causa y te ayudo a resolverla ...
+call "%ORIGEN%\reintentar-subida-RETOapp.cmd" "%DEST%" nopausa
+goto :fin
 
 :fin
 echo.
