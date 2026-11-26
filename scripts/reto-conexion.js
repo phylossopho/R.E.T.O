@@ -34,7 +34,7 @@
   var NOMBRE_CANAL = 'reto-rpc-v1';
   var PREFIJO = 'RETO-LINK.';
   // URL del Worker de señalización (cámbiala al deployar el tuyo)
-  var SIGNALING_URL = 'https://reto-signaling.tu-subdominio.workers.dev';
+  var SIGNALING_URL = 'https://reto-signaling.reto-phylossopho.workers.dev';
   // Más servidores STUN públicos para mejor conectividad en redes locales (Ethernet + WiFi bridge)
   var ICE = [
     { urls: 'stun:stun.l.google.com:19302' },

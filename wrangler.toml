@@ -3,13 +3,8 @@ main = "signaling-worker.js"
 compatibility_date = "2024-11-26"
 
 # KV namespace for storing SDP offers/answers
-# EJECUTA: wrangler kv namespace create "SIGNALING"
-# Copia el ID que devuelve y pégalo abajo en id = "TU-ID-AQUI"
+# IDs reales de Cloudflare
 [[kv_namespaces]]
 binding = "SIGNALING"
-id = "TU-ID-AQUI"          # <-- PEGA AQUÍ EL ID DEL COMANDO ARRIBA
-preview_id = "TU-PREVIEW-ID"  # <-- OPCIONAL: para wrangler dev
-
-# Limits
-[limits]
-cpu_ms = 50
+id = "342709eac54c47899dba25133bed85c6"
+preview_id = "5eb76ad7eeb84f14b34fee763f29db62"
