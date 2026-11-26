@@ -3,10 +3,12 @@ main = "signaling-worker.js"
 compatibility_date = "2024-11-26"
 
 # KV namespace for storing SDP offers/answers
+# EJECUTA: wrangler kv namespace create "SIGNALING"
+# Copia el ID que devuelve y pégalo abajo en id = "TU-ID-AQUI"
 [[kv_namespaces]]
 binding = "SIGNALING"
-id = "your-kv-namespace-id"  # Run: wrangler kv:namespace create "SIGNALING"
-preview_id = "your-preview-kv-namespace-id"
+id = "TU-ID-AQUI"          # <-- PEGA AQUÍ EL ID DEL COMANDO ARRIBA
+preview_id = "TU-PREVIEW-ID"  # <-- OPCIONAL: para wrangler dev
 
 # Limits
 [limits]

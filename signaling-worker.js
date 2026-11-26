@@ -132,8 +132,3 @@ function json(data, status, cors) {
 
 // Export for Cloudflare Workers (ES module)
 export default handler;
-
-// Also support CommonJS for testing
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = handler;
-}
