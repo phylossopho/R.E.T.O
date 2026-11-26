@@ -33,7 +33,16 @@
   var TIEMPO_CANAL_MS = 700;
   var NOMBRE_CANAL = 'reto-rpc-v1';
   var PREFIJO = 'RETO-LINK.';
-  var ICE = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }];
+  // Más servidores STUN públicos para mejor conectividad en redes locales (Ethernet + WiFi bridge)
+  var ICE = [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun3.l.google.com:19302' },
+    { urls: 'stun:stun4.l.google.com:19302' },
+    { urls: 'stun:stun.cloudflare.com:3478' },
+    { urls: 'stun:stun.miwifi.com:3478' }
+  ];
 
   function idCorto() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); }
   function sinConexion(msg) { return { status: 503, body: { error: msg || 'No hay conexión con el dispositivo anfitrión.' } }; }
@@ -170,6 +179,34 @@
       pc.addEventListener('icegatheringstatechange', function () {
         if (pc.iceGatheringState === 'complete') { clearTimeout(fin); resolver(); }
       });
+    });
+  }
+
+  // Extraer IPs locales (host candidates) de un PeerConnection para diagnóstico de red
+  function obtenerIPsLocales(pc) {
+    return new Promise(function (resolver) {
+      var ips = new Set();
+      var handler = function (ev) {
+        if (ev.candidate && ev.candidate.candidate) {
+          var c = ev.candidate.candidate;
+          // Solo candidatos 'host' (IPs locales reales, no STUN/TURN)
+          if (c.indexOf(' typ host ') >= 0) {
+            var m = c.match(/ (\d+\.\d+\.\d+\.\d+) /);
+            if (m) ips.add(m[1]);
+          }
+        }
+      };
+      pc.addEventListener('icecandidate', handler);
+      // Esperar a que termine el gathering o timeout
+      var fin = setTimeout(function () {
+        pc.removeEventListener('icecandidate', handler);
+        resolver(Array.from(ips));
+      }, 3000);
+      if (pc.iceGatheringState === 'complete') {
+        clearTimeout(fin);
+        pc.removeEventListener('icecandidate', handler);
+        resolver(Array.from(ips));
+      }
     });
   }
 
@@ -336,5 +373,5 @@
     w.RetoConexion = { conexion: conexion, invitarDispositivo: ui.invitarDispositivo, asistenteUnirse: ui.asistenteUnirse };
   }
 
-  return { crearConexion: crearConexion, arrancar: arrancar, codificar: codificar, decodificar: decodificar, PREFIJO: PREFIJO };
+  return { crearConexion: crearConexion, arrancar: arrancar, codificar: codificar, decodificar: decodificar, PREFIJO: PREFIJO, obtenerIPsLocales: obtenerIPsLocales, ICE: ICE };
 });

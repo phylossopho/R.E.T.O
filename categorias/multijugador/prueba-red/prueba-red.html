@@ -54,13 +54,19 @@
 </header>
 <main class="red-pagina">
 <section class="red-caja" aria-labelledby="red-t1">
-<h2 id="red-t1">1. Conecta el otro dispositivo</h2>
+<h2 id="red-t1">1. Diagnóstico de red</h2>
 <p class="red-estado" id="red-aviso" role="status">Buscando direcciones…</p>
 <ul class="red-direcciones" id="red-direcciones"></ul>
 <p class="ayuda">Esta prueba usa la misma conexión directa que el duelo y Ding!: en una de las dos pantallas, abre «Invitar a otro dispositivo» (aparece al crear una sala en Duelo o Ding!) y el otro dispositivo pega su código al unirse. Funciona en la misma red wifi sin internet, y también con internet.</p>
+<div class="red-diagnostico" id="red-diagnostico" style="margin-top:1rem;padding:1rem;background:var(--surface);border:2px solid var(--borde);border-radius:var(--radius)">
+  <h3 style="margin:0 0 .5rem 0;font-size:1em">🔍 IPs locales detectadas (WebRTC ICE host candidates)</h3>
+  <p class="ayuda" style="margin:.5rem 0">Si tu PC está por Ethernet y el móvil por WiFi, ambos deben mostrar IPs en la <strong>misma subred</strong> (ej: 192.168.1.x).</p>
+  <button type="button" class="boton" id="red-btn-diagnostico" style="margin-bottom:.75rem">🔄 Recopilar IPs locales (3s)</button>
+  <ul class="red-direcciones" id="red-ips-locales" style="list-style:none;padding:0;margin:0"></ul>
+</div>
 </section>
 <section class="red-caja" aria-labelledby="red-t2">
-<h2 id="red-t2">2. Mándense un saludo</h2>
+<h2 id="red-t2">2. Conecta el otro dispositivo</h2>
 <div class="ajustes-campo">
 <label for="red-nombre">Tu nombre</label>
 <input id="red-nombre" class="editor-campo" type="text" maxlength="16" autocomplete="nickname">

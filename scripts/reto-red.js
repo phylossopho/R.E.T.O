@@ -20,6 +20,7 @@
   var local = false;
   var fallos = 0;
   var avisoEl, direccionesEl, mensajesEl, dispositivosEl, latenciaEl, nombreEl, textoEl, enviarEl;
+  var diagnosticoEl, ipsLocalesEl, diagnosticoBtn;
 
   function el(tag, clase, texto) {
     var e = document.createElement(tag);
@@ -45,6 +46,64 @@
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(texto).then(ok).catch(function () {});
     }
+  }
+
+  function extraerIPsDeCandidatos(candidatos) {
+    var ips = new Set();
+    (candidatos || []).forEach(function (c) {
+      if (c && c.candidate && c.candidate.indexOf(' typ host ') >= 0) {
+        var m = c.candidate.match(/ (\d+\.\d+\.\d+\.\d+) /);
+        if (m) ips.add(m[1]);
+      }
+    });
+    return Array.from(ips);
+  }
+
+  function pintarDiagnostico(ips) {
+    if (!ipsLocalesEl) return;
+    ipsLocalesEl.innerHTML = '';
+    if (!ips || !ips.length) {
+      ipsLocalesEl.appendChild(el('li', 'red-direccion', 'No se detectaron IPs locales (recopilando candidatos ICE…)'));
+      return;
+    }
+    ips.forEach(function (ip) {
+      var li = el('li', 'red-direccion');
+      var badge = el('span', 'red-ip-badge', 'host');
+      badge.style.cssText = 'background:#e8f5e9;color:#2e7d32;padding:2px 6px;border-radius:4px;font-size:0.75em;margin-right:8px;font-weight:600';
+      li.appendChild(badge);
+      li.appendChild(document.createTextNode('IP local: ' + ip));
+      ipsLocalesEl.appendChild(li);
+    });
+    // Detectar subred común (/24)
+    var subredes = {};
+    ips.forEach(function (ip) {
+      var partes = ip.split('.');
+      var base = partes[0] + '.' + partes[1] + '.' + partes[2] + '.0/24';
+      subredes[base] = (subredes[base] || 0) + 1;
+    });
+    Object.keys(subredes).forEach(function (sub) {
+      var li = el('li', 'red-direccion');
+      li.style.opacity = '0.7';
+      li.appendChild(document.createTextNode('Subred detectada: ' + sub + ' (' + subredes[sub] + ' IP' + (subredes[sub] > 1 ? 's' : '') + ')'));
+      ipsLocalesEl.appendChild(li);
+    });
+  }
+
+  async function recopilarIPsLocales() {
+    if (!ipsLocalesEl) return;
+    ipsLocalesEl.innerHTML = '<li class="red-direccion">Recopilando candidatos ICE (3s)…</li>';
+    try {
+      if (window.RetoConexion && window.RetoConexion.obtenerIPsLocales) {
+        var pc = new RTCPeerConnection({ iceServers: window.RetoConexion.ICE || [] });
+        var ips = await window.RetoConexion.obtenerIPsLocales(pc);
+        try { pc.close(); } catch (e) {}
+        pintarDiagnostico(ips);
+        return ips;
+      }
+    } catch (e) {
+      ipsLocalesEl.innerHTML = '<li class="red-direccion" style="color:#c62828">Error: ' + e.message + '</li>';
+    }
+    return [];
   }
 
   function pintarDirecciones(info) {
@@ -147,10 +206,14 @@
     nombreEl = document.getElementById('red-nombre');
     textoEl = document.getElementById('red-texto');
     enviarEl = document.getElementById('red-enviar');
+    diagnosticoEl = document.getElementById('red-diagnostico');
+    ipsLocalesEl = document.getElementById('red-ips-locales');
+    diagnosticoBtn = document.getElementById('red-btn-diagnostico');
     if (!avisoEl) return;
     nombreEl.value = ls('red_nombre') || '';
     enviarEl.addEventListener('click', enviar);
     textoEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); enviar(); } });
+    if (diagnosticoBtn) diagnosticoBtn.addEventListener('click', recopilarIPsLocales);
 
     fetch('/api/red/info').then(function (r) { return r.json(); }).then(function (info) {
       local = !!info.local;
