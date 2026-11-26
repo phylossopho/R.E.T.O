@@ -65,8 +65,32 @@
   <ul class="red-direcciones" id="red-ips-locales" style="list-style:none;padding:0;margin:0"></ul>
 </div>
 </section>
+<section class="red-caja" aria-labelledby="red-t1b">
+<h2 id="red-t1b">2. Conexión WebRTC directa (para que se vean entre dispositivos)</h2>
+<p class="ayuda">Si los dispositivos no se ven en la sección 3, usa esto para crear la conexión directa (WebRTC) sin ir al Duelo ni a Ding!.</p>
+<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem">
+  <button type="button" class="boton boton--principal" id="red-btn-invitar">📡 Invitar a otro dispositivo (crear oferta)</button>
+  <button type="button" class="boton" id="red-btn-unirse">🔗 Unirse a invitación (pegar oferta)</button>
+</div>
+<div id="red-invitar-seccion" style="display:none;margin-top:1rem;padding:1rem;background:var(--surface);border:2px solid var(--borde);border-radius:var(--radius)">
+  <h3 style="margin:0 0 .5rem 0">Invitación generada</h3>
+  <p class="ayuda" id="red-invitar-estado" role="status"></p>
+  <label for="red-invitar-oferta" style="display:block;margin-bottom:.25rem;font-weight:600">Copia este código y envíalo al otro dispositivo:</label>
+  <textarea id="red-invitar-oferta" class="editor-campo" rows="4" readonly style="font-family:monospace;font-size:.85em"></textarea>
+  <div style="margin-top:.5rem;display:flex;gap:.5rem;flex-wrap:wrap">
+    <button type="button" class="boton" id="red-invitar-btn-resp">✅ Ya se lo mandé, esperar su respuesta</button>
+    <button type="button" class="boton" id="red-invitar-btn-copiar" style="display:none">📋 Copiar mi respuesta</button>
+    <button type="button" class="boton" id="red-invitar-btn-cancelar" style="background:#fff;border-color:#c62828;color:#c62828">Cancelar</button>
+  </div>
+</div>
+<div id="red-unirse-seccion" style="display:none;margin-top:1rem;padding:1rem;background:var(--surface);border:2px solid var(--borde);border-radius:var(--radius)">
+  <h3 style="margin:0 0 .5rem 0">Unirse a invitación</h3>
+  <p class="ayuda" id="red-unirse-estado" role="status"></p>
+  <p class="ayuda">El otro dispositivo te habrá mandado un código largo que empieza por <code>RETO-LINK.</code>. Pégalo aquí al pulsar el botón.</p>
+</div>
+</section>
 <section class="red-caja" aria-labelledby="red-t2">
-<h2 id="red-t2">2. Conecta el otro dispositivo</h2>
+<h2 id="red-t2">3. Conecta el otro dispositivo (código de 4 letras)</h2>
 <div class="ajustes-campo">
 <label for="red-nombre">Tu nombre</label>
 <input id="red-nombre" class="editor-campo" type="text" maxlength="16" autocomplete="nickname">

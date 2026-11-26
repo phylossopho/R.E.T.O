@@ -59,12 +59,48 @@
     return Array.from(ips);
   }
 
-  function pintarDiagnostico(ips) {
+  function detectarTipoConexion() {
+    var ua = navigator.userAgent.toLowerCase();
+    var esMovil = /android|iphone|ipad|mobile/.test(ua);
+    var tipo = 'Desconocido';
+    if (navigator.connection) {
+      var eff = navigator.connection.effectiveType;
+      var rtt = navigator.connection.rtt;
+      if (eff) tipo = eff.charAt(0).toUpperCase() + eff.slice(1);
+      if (rtt) tipo += ' (' + rtt + 'ms)';
+    }
+    if (esMovil) tipo = 'Móvil · ' + tipo;
+    return tipo;
+  }
+
+  function obtenerInfoDispositivo() {
+    var ua = navigator.userAgent;
+    var nombre = 'Dispositivo';
+    if (/android/i.test(ua)) nombre = 'Android';
+    else if (/iphone|ipad/i.test(ua)) nombre = 'iOS';
+    else if (/windows/i.test(ua)) nombre = 'Windows';
+    else if (/macintosh/i.test(ua)) nombre = 'Mac';
+    else if (/linux/i.test(ua)) nombre = 'Linux';
+    return { nombre: nombre, ua: ua, tipoConexion: detectarTipoConexion() };
+  }
+
+  function pintarDiagnostico(ips, infoDispositivo) {
     if (!ipsLocalesEl) return;
     ipsLocalesEl.innerHTML = '';
     if (!ips || !ips.length) {
       ipsLocalesEl.appendChild(el('li', 'red-direccion', 'No se detectaron IPs locales (recopilando candidatos ICE…)'));
       return;
+    }
+    // Info del dispositivo actual
+    if (infoDispositivo) {
+      var liDev = el('li', 'red-direccion');
+      liDev.style.fontWeight = '600';
+      liDev.style.background = 'var(--accent-bg, #fff3e0)';
+      liDev.style.padding = '8px';
+      liDev.style.borderRadius = '6px';
+      liDev.style.marginBottom = '8px';
+      liDev.appendChild(document.createTextNode('📱 Este dispositivo: ' + infoDispositivo.nombre + ' · ' + infoDispositivo.tipoConexion));
+      ipsLocalesEl.appendChild(liDev);
     }
     ips.forEach(function (ip) {
       var li = el('li', 'red-direccion');
@@ -91,19 +127,84 @@
 
   async function recopilarIPsLocales() {
     if (!ipsLocalesEl) return;
+    var infoDisp = obtenerInfoDispositivo();
     ipsLocalesEl.innerHTML = '<li class="red-direccion">Recopilando candidatos ICE (3s)…</li>';
     try {
       if (window.RetoConexion && window.RetoConexion.obtenerIPsLocales) {
         var pc = new RTCPeerConnection({ iceServers: window.RetoConexion.ICE || [] });
         var ips = await window.RetoConexion.obtenerIPsLocales(pc);
         try { pc.close(); } catch (e) {}
-        pintarDiagnostico(ips);
+        pintarDiagnostico(ips, infoDisp);
         return ips;
       }
     } catch (e) {
       ipsLocalesEl.innerHTML = '<li class="red-direccion" style="color:#c62828">Error: ' + e.message + '</li>';
     }
     return [];
+  }
+
+  // Invitar a otro dispositivo desde la propia prueba de conexión
+  function invitarDesdePrueba() {
+    if (!window.RetoConexion || !window.RetoConexion.invitarDispositivo) {
+      alert('La conexión WebRTC no está disponible. Abre el Duelo o Ding! primero para activarla.');
+      return;
+    }
+    var estado = document.getElementById('red-invitar-estado');
+    var cajaOferta = document.getElementById('red-invitar-oferta');
+    var cajaResp = document.getElementById('red-invitar-respuesta');
+    var btnResp = document.getElementById('red-invitar-btn-resp');
+    var btnCopiar = document.getElementById('red-invitar-btn-copiar');
+    var btnCancelar = document.getElementById('red-invitar-btn-cancelar');
+    var seccion = document.getElementById('red-invitar-seccion');
+    if (seccion) seccion.style.display = 'block';
+    if (estado) estado.textContent = 'Generando invitación…';
+    if (cajaOferta) cajaOferta.value = '';
+    if (cajaResp) { cajaResp.value = ''; cajaResp.style.display = 'none'; }
+    if (btnResp) btnResp.style.display = 'inline-block';
+    if (btnCopiar) { btnCopiar.style.display = 'none'; btnCopiar.onclick = function () { copiar(cajaResp.value, btnCopiar); }; }
+    if (btnCancelar) btnCancelar.onclick = function () { if (seccion) seccion.style.display = 'none'; };
+    window.RetoConexion.invitarDispositivo().then(function (s) {
+      if (cajaOferta) cajaOferta.value = s.codigo;
+      if (estado) estado.textContent = 'Copia este código y pégalo en el otro dispositivo (en esta misma página, botón "Unirse a invitación")';
+      if (btnResp) btnResp.onclick = function () {
+        if (estado) estado.textContent = 'Preparando respuesta…';
+        var p;
+        try { p = window.RetoConexion.asistenteUnirse(); } catch (e) { if (estado) estado.textContent = e.message; return; }
+        // asistenteUnirse espera a que el usuario pegue la respuesta en el otro dispositivo
+        // Aquí solo mostramos que esperamos la conexión
+        if (estado) estado.textContent = 'Esperando que el otro dispositivo pegue tu invitación y genere su respuesta…';
+        s.abierto.then(function () {
+          if (estado) estado.textContent = '✔ Conectado. Ya pueden usar la prueba de conexión.';
+          if (seccion) setTimeout(function () { seccion.style.display = 'none'; }, 3000);
+        });
+      };
+    }, function (e) {
+      if (estado) estado.textContent = 'No se pudo: ' + e.message;
+    });
+  }
+
+  // Unirse a invitación desde la propia prueba de conexión
+  function unirseDesdePrueba() {
+    if (!window.RetoConexion || !window.RetoConexion.asistenteUnirse) {
+      alert('La conexión WebRTC no está disponible. Abre el Duelo o Ding! primero para activarla.');
+      return;
+    }
+    var codigo = prompt('Pega aquí el código de invitación (empieza por RETO-LINK.):');
+    if (!codigo) return;
+    var estado = document.getElementById('red-unirse-estado');
+    var seccion = document.getElementById('red-unirse-seccion');
+    if (seccion) seccion.style.display = 'block';
+    if (estado) estado.textContent = 'Conectando…';
+    window.RetoConexion.asistenteUnirse().then(function (ok) {
+      if (ok) {
+        if (estado) estado.textContent = '✔ Conectado. Ya pueden usar la prueba de conexión.';
+        if (seccion) setTimeout(function () { seccion.style.display = 'none'; }, 3000);
+      } else {
+        if (estado) estado.textContent = 'El usuario canceló o no se pudo conectar.';
+      }
+    }, function (e) {
+      if (estado) estado.textContent = 'Error: ' + e.message;
+    });
   }
 
   function pintarDirecciones(info) {
@@ -209,11 +310,17 @@
     diagnosticoEl = document.getElementById('red-diagnostico');
     ipsLocalesEl = document.getElementById('red-ips-locales');
     diagnosticoBtn = document.getElementById('red-btn-diagnostico');
+    var invitarBtn = document.getElementById('red-btn-invitar');
+    var unirseBtn = document.getElementById('red-btn-unirse');
     if (!avisoEl) return;
     nombreEl.value = ls('red_nombre') || '';
     enviarEl.addEventListener('click', enviar);
     textoEl.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); enviar(); } });
     if (diagnosticoBtn) diagnosticoBtn.addEventListener('click', recopilarIPsLocales);
+    if (invitarBtn) invitarBtn.addEventListener('click', invitarDesdePrueba);
+    if (unirseBtn) unirseBtn.addEventListener('click', unirseDesdePrueba);
+    // Auto-recopilar IPs al cargar
+    recopilarIPsLocales();
 
     fetch('/api/red/info').then(function (r) { return r.json(); }).then(function (info) {
       local = !!info.local;
