@@ -583,7 +583,8 @@
   }
 
   /* El HUD de un jugador: su nombre (con nivel), la barra y, DEBAJO, la vida en numeros grandes.
-     Del rival solo se ve su nombre: su clase y su avatar son secretos. */
+     En sala de espera: del rival solo se ve su nombre (clase y avatar secretos).
+     En combate: se muestra el avatar y clase de ambos. */
   function hud(nombre, j, ataca, clase) {
     var c = el('div', 'escena-hud ' + clase + (ataca ? ' escena-hud--ataca' : ''));
     var cab = el('p', 'escena-nombre');
@@ -660,7 +661,7 @@
       });
     }
 
-    // --- el escenario: tu HUD y tu personaje; del rival, solo su nombre y una silueta
+    // --- el escenario: tu HUD y tu personaje; del rival, su avatar y clase (ya no es secreto en combate)
     var pant = el('div', 'escena-pantalla');
     pant.setAttribute('data-lay', 'screen');
     var hudRival = hud(rivInfo.nombre, rivInfo, !soyAtacante, 'escena-hud--rival');
@@ -670,9 +671,13 @@
     sr.setAttribute('data-lay', 'sprite-oponente');
     sr.setAttribute('data-estados', 'rival');
     sr.setAttribute('data-estados-flotante', '');
-    var interrogacion = el('span', 'escena-incognita', '?');
-    interrogacion.setAttribute('aria-hidden', 'true');
-    sr.appendChild(interrogacion);
+    var imgRival = document.createElement('img');
+    imgRival.src = '../../../imagenes/' + rivInfo.clase + '.webp';
+    imgRival.alt = 'Rival: ' + NOMBRE_CLASE[rivInfo.clase];
+    imgRival.setAttribute('data-sprite', 'jugador');
+    imgRival.setAttribute('data-personaje', rivInfo.clase);
+    imgRival.setAttribute('data-legacy', imgRival.getAttribute('src'));
+    sr.appendChild(imgRival);
     pant.appendChild(sr);
     var sy = el('div', 'escena-sprite escena-sprite--yo');
     sy.setAttribute('data-lay', 'sprite-jugador');

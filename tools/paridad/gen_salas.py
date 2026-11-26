@@ -218,5 +218,5 @@ for n in range(14):
     llamar(rec, D, t + 4, "cerrar", cod, tp)
     out["ding"].append({"n": n, "ops": rec})
 
-json.dump(out, open(os.path.join(RAIZ, "tests", "fixtures", "salas.json"), "w"), ensure_ascii=False)
+json.dump(out, open(os.path.join(RAIZ, "tests", "fixtures", "salas.json"), "w", encoding="utf-8"), ensure_ascii=False)
 print("ok", sum(len(x["ops"]) for x in out["pve"]), sum(len(x["ops"]) for x in out["sala"]), sum(len(x["ops"]) for x in out["ding"]))

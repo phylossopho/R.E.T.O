@@ -255,8 +255,9 @@
         mazo: j.mazo ? j.mazo.length : 0, conectado: ahora - j.visto <= PRESENCIA_S, equipo: j.equipo.length, nivel: self._nivel(j),
         origen: j.origen, perfil: j.perfil !== null });
     });
+    var enCombate = s.fase === 'duelo';
     return { cambio: true, firma: f, codigo: s.codigo, yo: jid, fase: s.fase, config: s.config, jugadores: jugadores, aviso: s.aviso,
-      batalla: s.batalla ? rpg.estado_publico(s.batalla, jid, true) : null, resultado: s.resultado,
+      batalla: s.batalla ? rpg.estado_publico(s.batalla, jid, !enCombate) : null, resultado: s.resultado,
       restante: s.limite === null ? null : Math.max(0, B.pyRound(s.limite - ahora, 1)) };
   };
   P.cerrar = function (codigo, token) {
