@@ -6,8 +6,30 @@
   "scripts": {
     "start": "node tools/servir.js",
     "test": "node tests/run-all.js",
-    "indices": "node tools/generar-indices.js"
+    "indices": "node tools/generar-indices.js",
+    "mcp": "node mcp-reto-tools.js",
+    "mcp:inspect": "npx @modelcontextprotocol/inspector node mcp-reto-tools.js"
   },
-  "engines": { "node": ">=18" },
-  "license": "UNLICENSED"
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED",
+  "main": "mcp-reto-tools.js",
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/phylossopho/R.E.T.O.git"
+  },
+  "keywords": [],
+  "author": "",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/phylossopho/R.E.T.O/issues"
+  },
+  "homepage": "https://github.com/phylossopho/R.E.T.O#readme",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2"
+  }
 }
