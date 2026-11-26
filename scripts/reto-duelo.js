@@ -245,6 +245,7 @@
     falla('');
     sesion = { codigo: d.codigo, token: d.token };
     almacen('duelo_sesion', JSON.stringify(sesion), true);
+    try { sessionStorage.setItem('duelo_sala_codigo', d.codigo); } catch (e) {}
     vista = null; firma = null;
     local.clase = null; local.mazo = null; local.elegidos = {}; local.consumido = false; local.inicioDuelo = null;
     empezarSondeo();
@@ -254,6 +255,7 @@
   function salir() {
     sesion = null; vista = null; firma = null;
     almacen('duelo_sesion', null, true);
+    try { sessionStorage.removeItem('duelo_sala_codigo'); } catch (e) {}
     local.fondo = undefined;
     local.turnoSprites = undefined;
     local.pvPrevio = null;

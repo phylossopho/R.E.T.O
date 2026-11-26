@@ -205,7 +205,23 @@
         ajustes[clave] = (v === null || v === undefined) ? FABRICA[clave] : String(v);
       });
     });
-    return Promise.all(tareas);
+    return Promise.all(tareas).then(function () {
+      // Heredar valores compartidos desde la configuración global si existen
+      if (window.RetoConfigGlobal) {
+        var g = window.RetoConfigGlobal.obtener();
+        var ov = window.RetoConfigGlobal.obtenerOverride('tests') || {};
+        if (g.fuenteSistema) ajustes.fuente = g.fuenteSistema;
+        var tamMap = { pequeno: '1', mediano: '2', grande: '3', xl: '4' };
+        if (g.tamanoBase && tamMap[g.tamanoBase]) ajustes.letra = tamMap[g.tamanoBase];
+        if (g.espaciadoLetras) ajustes.espaciado = g.espaciadoLetras;
+        if (g.anchoLinea) ajustes.columna = g.anchoLinea;
+        if (g.animaciones === 'off') ajustes.movimiento = 'off';
+        if (g.sonidoActivado !== undefined) ajustes.sonido = g.sonidoActivado ? 'on' : 'off';
+        if (g.sonidoVolumen !== undefined) ajustes.volumen = String(g.sonidoVolumen);
+        if (g.sonidoTipo) ajustes.sonidoAcierto = g.sonidoTipo;
+        Object.keys(ov).forEach(function (k) { ajustes[k] = String(ov[k]); });
+      }
+    });
   }
 
   function aplicar() {

@@ -131,6 +131,7 @@
   function salir(mensaje) {
     if (sondeo) window.clearInterval(sondeo);
     sondeo = null; sesion = null; vista = null; firma = null; guardarSesion();
+    try { sessionStorage.removeItem('ding_sala_codigo'); } catch (e) {}
     local.registrado = false; local.inicio = null; local.clave = null;
     document.body.classList.remove('ding-en-juego');
     pantallaEntrada(mensaje);
@@ -201,6 +202,7 @@
 
   function entrar() {
     guardarSesion();
+    try { sessionStorage.setItem('ding_sala_codigo', sesion.codigo); } catch (e) {}
     local.inicio = Date.now(); local.registrado = false;
     raiz.setAttribute('data-rol', sesion.rol);
     empezarSondeo();

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="papel">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configuración - R.E.T.O.</title>
+<link rel="preload" href="styles/fuentes/nunito.css" as="style">
+<link rel="stylesheet" href="styles/fuentes/nunito.css">
+<link rel="stylesheet" href="styles/styles.css?v=c104-config">
+<link rel="stylesheet" href="styles/config.css?v=c01">
+<script src="scripts/reto-panel-prefs.js?v=c03-config"></script>
+<script src="scripts/reto-config-global.js?v=c01"></script>
+<script>
+(function () {
+  var t = localStorage.getItem('tema') || 'papel';
+  document.documentElement.setAttribute('data-theme', t);
+  var a = localStorage.getItem('animaciones');
+  if (a === 'off' || a === 'on') {
+    document.documentElement.setAttribute('data-anim', a);
+  }
+  try {
+    var forzar = /[?&]anim=1/.test(location.search);
+    if (sessionStorage.getItem('reto_anim_tarjetas') && !forzar) {
+      document.documentElement.setAttribute('data-anim-tarjetas', 'off');
+    } else {
+      sessionStorage.setItem('reto_anim_tarjetas', '1');
+    }
+  } catch (e) {}
+})();
+</script>
+</head>
+<body>
+<header>
+<h1>Configuración</h1>
+</header>
+<main id="config-main">
+<section class="config-buscador">
+<label for="config-buscar" class="oculto-a-la-vista">Buscar ajustes</label>
+<input type="search" id="config-buscar" placeholder="Buscar: fuente, tamaño, sonido, animación, color..." aria-label="Buscar ajustes">
+</section>
+
+<section class="config-perfil-rapido" aria-label="Perfil de accesibilidad">
+<h2>Perfil rápido</h2>
+<p class="config-ayuda">Un clic aplica varios ajustes a la vez. Son puntos de partida, no diagnósticos.</p>
+<div class="config-perfiles-grid" id="config-perfiles-grid"></div>
+</section>
+
+<section class="config-seccion" data-seccion="tema" id="sec-tema">
+<h2>🎨 Tema y colores</h2>
+<div class="config-grid">
+<fieldset class="config-grupo">
+<legend>Tema base</legend>
+<div class="config-opciones" role="radiogroup" aria-label="Tema base">
+<label><input type="radio" name="tema" value="claro" data-key="tema"> ☀️ Claro</label>
+<label><input type="radio" name="tema" value="oscuro" data-key="tema"> 🌙 Oscuro</label>
+<label><input type="radio" name="tema" value="sistema" data-key="tema" checked> 💻 Sistema</label>
+</div>
+</fieldset>
+
+<fieldset class="config-grupo">
+<legend>Estilo de fondo</legend>
+<div class="config-opciones" role="radiogroup" aria-label="Estilo de fondo">
+<label><input type="radio" name="fondoEstilo" value="liso" data-key="fondoEstilo" checked> Liso</label>
+<label><input type="radio" name="fondoEstilo" value="puntos" data-key="fondoEstilo"> Puntos</label>
+<label><input type="radio" name="fondoEstilo" value="diagonales" data-key="fondoEstilo"> Diagonales</label>
+</div>
+</fieldset>
+
+<fieldset class="config-grupo">
+<legend>Color principal</legend>
+<div class="config-color-fila">
+<input type="color" id="colorPrimario" data-key="colorPrimario" aria-label="Color principal">
+<label for="colorPrimario">Principal (botones, enlaces)</label>
+</div>
+</fieldset>
+
+<fieldset class="config-grupo">
+<legend>Color de acento</legend>
+<div class="config-color-fila">
+<input type="color" id="colorAcento" data-key="colorAcento" aria-label="Color de acento">
+<label for="colorAcento">Acento (progreso, highlights)</label>
+</div>
+</fieldset>
+</div>
+</section>
+
+<section class="config-seccion" data-seccion="texto" id="sec-texto">
+<h2>🔤 Texto y tipografía</h2>
+<div class="config-grid">
+<fieldset class="config-grupo">
+<legend>Fuente del sistema</legend>
+<div class="config-fuente-fila">
+<select id="fuenteSistema" data-key="fuenteSistema" aria-label="Fuente del sistema"></select>
+<button type="button" class="boton" id="btnInstalarFuente" aria-label="Instalar una fuente propia">Instalar fuente…</button>
+</div>
+<input type="file" id="archivoFuente" accept=".woff2,.woff,.ttf,.otf" hidden aria-label="Archivo de fuente a instalar">
+<p class="config-ayuda">Las fuentes de dislexia (OpenDyslexic, Atkinson) y de lectura (Lexend) vienen incluidas. Puedes instalar tus propias .woff2/.ttf.</p>
+</fieldset>
+
+<fieldset class="config-grupo">
+<legend>Tamaño base</legend>
+<div class="config-opciones" role="radiogroup" aria-label="Tamaño base">
+<label><input type="radio" name="tamanoBase" value="pequeno" data-key="tamanoBase"> Pequeño</label>
+<label><input type="radio" name="tamanoBase" value="mediano" data-key="tamanoBase" checked> Mediano</label>
+<label><input type="radio" name="tamanoBase" value="grande" data-key="tamanoBase"> Grande</label>
+<label><input type="radio" name="tamanoBase" value="xl" data-key="tamanoBase"> Muy grande (XL)</label>
+</div>
+</fieldset>
+
+<fieldset class="config-grupo">
+<legend>Interlineado</legend>
+<div class="config-opciones" role="radiogroup" aria-label="Interlineado">
+<label><input type="radio" name="interlineadoBase" value="normal" data-key="interlineadoBase" checked> Normal</label>
+<label><input type="radio" name="interlineadoBase" value="amplio" data-key="interlineadoBase"> Amplio</label>
+</div>
+</fieldset>
+
+<fieldset class="config-grupo">
+<legend>Ancho de línea</legend>
+<div class="config-opciones" role="radiogroup" aria-label="Ancho de línea">
+<label><input type="radio" name="anchoLinea" value="estrecha" data-key="anchoLinea"> Estrecha (~55 car.)</label>
+<label><input type="radio" name="anchoLinea" value="normal" data-key="anchoLinea" checked> Normal (~75 car.)</label>
+<label><input type="radio" name="anchoLinea" value="completa" data-key="anchoLinea"> Completa (todo el ancho)</label>
+</div>
+</fieldset>
+
+<fieldset class="config-grupo">
+<legend>Espaciado entre letras</legend>
+<div class="config-opciones" role="radiogroup" aria-label="Espaciado entre letras">
+<label><input type="radio" name="espaciadoLetras" value="normal" data-key="espaciadoLetras" checked> Normal</label>
+<label><input type="radio" name="espaciadoLetras" value="amplio" data-key="espaciadoLetras"> Amplio</label>
+</div>
+</fieldset>
+</div>
+</section>
+
+<section class="config-seccion" data-seccion="animaciones" id="sec-animaciones">
+<h2>✨ Animaciones</h2>
+<p class="config-ayuda">Si tu sistema pide "reducir movimiento", la web lo obedece automáticamente.</p>
+<div class="config-opciones" role="radiogroup" aria-label="Nivel de animaciones">
+<label><input type="radio" name="animaciones" value="off" data-key="animaciones"> 🚫 Apagadas</label>
+<label><input type="radio" name="animaciones" value="reducido" data-key="animaciones"> 🐢 Reducidas</label>
+<label><input type="radio" name="animaciones" value="estandar" data-key="animaciones" checked> ✨ Estándar</label>
+<label><input type="radio" name="animaciones" value="expresivo" data-key="animaciones"> 🎭 Expresivas</label>
+</div>
+</section>
+
+<section class="config-seccion" data-seccion="sonido" id="sec-sonido">
+<h2>🔊 Sonido</h2>
+<div class="config-grid">
+<fieldset class="config-grupo">
+<legend>Volumen general</legend>
+<div class="config-volumen">
+<input type="range" id="sonidoVolumen" min="0" max="100" step="5" data-key="sonidoVolumen" aria-label="Volumen">
+<output id="sonidoVolumenValor" for="sonidoVolumen">50%</output>
+</div>
+<label><input type="checkbox" id="sonidoActivado" data-key="sonidoActivado" checked> Activar sonidos</label>
+</fieldset>
+
+<fieldset class="config-grupo">
+<legend>Tipo de aviso</legend>
+<div class="config-opciones" role="radiogroup" aria-label="Tipo de sonido">
+<label><input type="radio" name="sonidoTipo" value="ding" data-key="sonidoTipo"> Ding</label>
+<label><input type="radio" name="sonidoTipo" value="charm" data-key="sonidoTipo"> Charm</label>
+<label><input type="radio" name="sonidoTipo" value="soft" data-key="sonidoTipo" checked> Suave</label>
+<label><input type="radio" name="sonidoTipo" value="ninguno" data-key="sonidoTipo"> Ninguno</label>
+</div>
+<div class="config-probar">
+<button type="button" class="boton" data-probar-sonido="ding">Probar Ding</button>
+<button type="button" class="boton" data-probar-sonido="charm">Probar Charm</button>
+<button type="button" class="boton" data-probar-sonido="soft">Probar Suave</button>
+</div>
+</fieldset>
+
+<fieldset class="config-grupo">
+<legend>Voz (lectura en voz alta)</legend>
+<select id="vozPreferida" data-key="vozPreferida" aria-label="Voz preferida">
+<option value="">Voz del sistema</option>
+</select>
+<button type="button" class="boton" id="probarVoz">Probar voz</button>
+</fieldset>
+</div>
+</section>
+
+<section class="config-seccion" data-seccion="perfiles" id="sec-perfiles">
+<h2>♿ Perfiles de accesibilidad</h2>
+<p class="config-ayuda">Aplican varios ajustes a la vez. Son puntos de partida, no diagnósticos; después cambias lo que quieras.</p>
+<div class="config-perfiles-grid" id="config-perfiles-detalle"></div>
+</section>
+
+<section class="config-seccion" data-seccion="modulos" id="sec-modulos">
+<h2>🎮 Ajustes por módulo</h2>
+<p class="config-ayuda">Overrides puntuales. Lo que no toques aquí hereda de lo global de arriba.</p>
+<div class="config-modulos-tabs" role="tablist" aria-label="Módulos">
+<button role="tab" aria-selected="true" data-modulo="lectura" id="tab-lectura">📚 Lectura</button>
+<button role="tab" aria-selected="false" data-modulo="tests" id="tab-tests">🧪 Tests</button>
+<button role="tab" aria-selected="false" data-modulo="minijuegos" id="tab-minijuegos">🎮 Mini-juegos</button>
+<button role="tab" aria-selected="false" data-modulo="vision" id="tab-vision">👁️ Visión</button>
+<button role="tab" aria-selected="false" data-modulo="rpg" id="tab-rpg">⚔️ RPG</button>
+<button role="tab" aria-selected="false" data-modulo="duelo" id="tab-duelo">🤺 Duelo</button>
+<button role="tab" aria-selected="false" data-modulo="panel" id="tab-panel">📱 Panel</button>
+</div>
+<div class="config-modulos-paneles" id="config-modulos-paneles">
+<div role="tabpanel" id="panel-lectura" aria-labelledby="tab-lectura" hidden></div>
+<div role="tabpanel" id="panel-tests" aria-labelledby="tab-tests" hidden></div>
+<div role="tabpanel" id="panel-minijuegos" aria-labelledby="tab-minijuegos" hidden></div>
+<div role="tabpanel" id="panel-vision" aria-labelledby="tab-vision" hidden></div>
+<div role="tabpanel" id="panel-rpg" aria-labelledby="tab-rpg" hidden></div>
+<div role="tabpanel" id="panel-duelo" aria-labelledby="tab-duelo" hidden></div>
+<div role="tabpanel" id="panel-panel" aria-labelledby="tab-panel" hidden></div>
+</div>
+</section>
+
+<section class="config-seccion" data-seccion="datos" id="sec-datos">
+<h2>💾 Datos y respaldo</h2>
+<div class="config-grid">
+<fieldset class="config-grupo">
+<legend>Tu tarjeta (perfil completo)</legend>
+<div class="config-acciones">
+<button type="button" class="boton boton--principal" id="exp-copiar">📋 Copiar código v2</button>
+<button type="button" class="boton" id="exp-descargar">💾 Descargar .json</button>
+<button type="button" class="boton" id="exp-importar">📥 Importar tarjeta</button>
+</div>
+</fieldset>
+
+<fieldset class="config-grupo">
+<legend>Restablecer</legend>
+<div class="config-acciones">
+<button type="button" class="boton" id="btn-restablecer-configs">🔧 Restablecer solo configs</button>
+<button type="button" class="boton" id="btn-restablecer-todo">🗑️ Borrar TODO (datos + configs)</button>
+</div>
+<p class="config-ayuda">"Restablecer configs" vuelve tema, fuente, animaciones, sonidos y layouts a fábrica. NO borra power-ups, nivel ni progreso.</p>
+</fieldset>
+</div>
+</section>
+</main>
+
+<div class="config-preview" id="config-preview" aria-live="polite" aria-label="Vista previa en vivo">
+<h3>Vista previa</h3>
+<div class="config-preview-contenido" id="config-preview-contenido">
+<div class="preview-tarjeta">
+<h4>Botón principal</h4>
+<button class="boton boton--principal">Botón principal</button>
+<button class="boton">Botón secundario</button>
+</div>
+<div class="preview-tarjeta">
+<h4>Tarjeta de ejemplo</h4>
+<div class="tarjeta tarjeta-nav" style="pointer-events:none;">
+<span class="tarjeta-icono">🎨</span>
+<h5 class="tarjeta-titulo">Título de tarjeta</h5>
+<p class="tarjeta-texto">Texto de ejemplo para ver fuente, tamaño, interlineado y colores.</p>
+</div>
+</div>
+<div class="preview-tarjeta">
+<h4>Input y select</h4>
+<input type="text" class="editor-campo" placeholder="Campo de texto" value="Texto de prueba">
+<select class="editor-campo"><option>Opción 1</option><option>Opción 2</option></select>
+</div>
+<div class="preview-tarjeta">
+<h4>Progreso</h4>
+<div class="duelo-barra" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"><span class="duelo-barra-relleno" style="width:60%"></span></div>
+</div>
+<div class="preview-tarjeta">
+<h4>Colores</h4>
+<div style="display:flex;gap:8px;flex-wrap:wrap;">
+<div style="width:40px;height:40px;border-radius:var(--radius);background:var(--color-primario);" title="Primario"></div>
+<div style="width:40px;height:40px;border-radius:var(--radius);background:var(--color-acento);" title="Acento"></div>
+<div style="width:40px;height:40px;border-radius:var(--radius);background:var(--surface);border:2px solid var(--borde-fuerte);" title="Surface"></div>
+<div style="width:40px;height:40px;border-radius:var(--radius);background:var(--bg);" title="Background"></div>
+</div>
+</div>
+</div>
+</div>
+
+<footer hidden>
+<p>R.E.T.O.</p>
+</footer>
+<div class="panel-flotante" data-panel>
+<a class="panel-boton" href="index.html" aria-label="Volver a la portada" title="Volver a la portada">
+<span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8592;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg></span>
+</a>
+<a class="panel-boton" href="index.html" aria-label="Ir a la portada" title="Ir a la portada">
+<span class="panel-boton-icono"><span class="reserva" aria-hidden="true">&#8962;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 3l9 8"/><path d="M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/><path d="M10 21v-6h4v6"/></svg></span>
+</a>
+</div>
+<script src="scripts/reto-panel.js?v=c05-config"></script>
+<script src="scripts/reto-config-global.js?v=c01"></script>
+<script src="scripts/reto-fuentes.js?v=c02"></script>
+<script src="scripts/reto-sonido.js?v=c02"></script>
+<script src="scripts/reto-config-ui.js?v=c01"></script>
+<script src="scripts/reto-debug.js?v=c26-config"></script>
+</body>
+</html>

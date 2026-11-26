@@ -33,6 +33,8 @@
   var TIEMPO_CANAL_MS = 700;
   var NOMBRE_CANAL = 'reto-rpc-v1';
   var PREFIJO = 'RETO-LINK.';
+  // URL del Worker de señalización (cámbiala al deployar el tuyo)
+  var SIGNALING_URL = 'https://reto-signaling.tu-subdominio.workers.dev';
   // Más servidores STUN públicos para mejor conectividad en redes locales (Ethernet + WiFi bridge)
   var ICE = [
     { urls: 'stun:stun.l.google.com:19302' },
@@ -210,6 +212,77 @@
     });
   }
 
+  // ===== Signaling Worker client (auto SDP exchange via 4-letter code) =====
+  function signalingFetch(path, options) {
+    var url = SIGNALING_URL + path;
+    var opts = Object.assign({ headers: { 'Content-Type': 'application/json' } }, options);
+    return fetch(url, opts).then(function (r) {
+      if (!r.ok) return r.json().then(function (e) { throw new Error(e.error || 'signaling ' + r.status); });
+      return r.json();
+    });
+  }
+
+  // Host: create offer, send to worker, wait for answer
+  function invitarViaWorker(conexion, codigo) {
+    var pc = new RTCPeerConnection({ iceServers: ICE }), idEnlace = 'rtc-' + idCorto();
+    var dc = pc.createDataChannel('reto', { ordered: true });
+    var abierto = new Promise(function (resolver) { enlazarCanal(conexion, dc, 'anfitrion', idEnlace, resolver); });
+    return pc.createOffer().then(function (o) { return pc.setLocalDescription(o); })
+      .then(function () { return esperarIce(pc); })
+      .then(function () {
+        return signalingFetch('/offer/' + codigo, { method: 'POST', body: JSON.stringify({ sdp: pc.localDescription.sdp }) });
+      })
+      .then(function () {
+        return esperarRespuesta(codigo, pc);
+      })
+      .then(function () {
+        return {
+          codigo: null,
+          aceptar: function () { return Promise.resolve(); },
+          abierto: abierto,
+          cancelar: function () { try { pc.close(); } catch (e) {} }
+        };
+      });
+  }
+
+  // Guest: get offer from worker, create answer, send to worker
+  function responderViaWorker(conexion, codigo) {
+    var pc = new RTCPeerConnection({ iceServers: ICE }), idEnlace = 'rtc-' + idCorto();
+    var abierto = new Promise(function (resolver) {
+      pc.ondatachannel = function (ev) { enlazarCanal(conexion, ev.channel, 'cliente', idEnlace, resolver); };
+    });
+    return signalingFetch('/offer/' + codigo)
+      .then(function (data) { return pc.setRemoteDescription({ type: 'offer', sdp: data.sdp }); })
+      .then(function () { return pc.createAnswer(); })
+      .then(function (a) { return pc.setLocalDescription(a); })
+      .then(function () { return esperarIce(pc); })
+      .then(function () {
+        return signalingFetch('/answer/' + codigo, { method: 'POST', body: JSON.stringify({ sdp: pc.localDescription.sdp }) });
+      })
+      .then(function () {
+        return { codigo: null, abierto: abierto, cancelar: function () { try { pc.close(); } catch (e) {} } };
+      });
+  }
+
+  function esperarRespuesta(codigo, pc) {
+    return new Promise(function (resolver, rechazar) {
+      var intentos = 0;
+      function probar() {
+        signalingFetch('/answer/' + codigo)
+          .then(function (data) {
+            return pc.setRemoteDescription({ type: 'answer', sdp: data.sdp }).then(resolver);
+          })
+          .catch(function () {
+            intentos++;
+            if (intentos >= 60) { rechazar(new Error('Timeout esperando respuesta')); return; }
+            setTimeout(probar, 1000);
+          });
+      }
+      probar();
+    });
+  }
+
+
   function enlazarCanal(conexion, dc, rol, idEnlace, alAbrir) {
     var enlace = {
       rol: rol, enviar: function (msg) { if (dc.readyState === 'open') dc.send(JSON.stringify(msg)); },
@@ -290,28 +363,59 @@
 
     /* --- anfitrión --- */
     function invitarDispositivo() {
-      var estado = el('p', { texto: 'Preparando la invitación…', role: 'status', style: 'font-weight:700' });
-      var cajaOferta = el('textarea', { readonly: 'readonly', style: AREA, 'aria-label': 'Código de invitación' });
-      var cajaResp = el('textarea', { style: AREA, 'aria-label': 'Código de respuesta', placeholder: 'Pega aquí la respuesta' });
-      var btnCopiar = el('button', { type: 'button', texto: 'Copiar invitación', style: BOTON });
-      var btnConectar = el('button', { type: 'button', texto: 'Conectar', style: BOTON });
-      var btnCerrar = el('button', { type: 'button', texto: 'Cerrar', style: BOTON2 });
-      var sesion = null;
-      var tarjeta = abrir('Invitar a otro dispositivo', [
-        el('p', { texto: '1. Copia esta invitación y mándasela al otro dispositivo (WhatsApp, mensaje, lo que prefieras).' }), cajaOferta, btnCopiar,
-        el('p', { texto: '2. Cuando te devuelva su respuesta, pégala aquí y pulsa «Conectar».' }), cajaResp, btnConectar, estado, btnCerrar
-      ], function () { if (sesion) sesion.cancelar(); });
-      btnCerrar.onclick = cerrar;
-      btnCopiar.onclick = function () { copiar(cajaOferta.value, btnCopiar); };
-      invitar(conexion).then(function (s) {
-        sesion = s; cajaOferta.value = s.codigo; estado.textContent = 'Invitación lista.';
-        btnConectar.onclick = function () {
-          try { var p = s.aceptar(cajaResp.value); p.then(function () { estado.textContent = 'Conectando…'; }, function (e) { estado.textContent = 'No se pudo: ' + e.message; }); }
-          catch (e) { estado.textContent = e.message; }
-        };
-        s.abierto.then(function () { estado.textContent = '✔ ¡Conectado! Ya puedes cerrar esta ventana. Para invitar a otro, ábrela de nuevo.'; });
-      }).catch(function (e) { estado.textContent = 'No se pudo crear la invitación: ' + e.message; });
-      return tarjeta;
+      return new Promise(function (resolver) {
+        var hecho = false;
+        function fin(v) { if (hecho) return; hecho = true; cerrar(); resolver(v); }
+        var estado = el('p', { texto: 'Preparando la invitación…', role: 'status', style: 'font-weight:700' });
+        var tarjeta = abrir('Invitar a otro dispositivo', [estado]);
+        
+        // Check for 4-letter room code (from duelo/ding)
+        var codigoSala = null;
+        try { codigoSala = sessionStorage.getItem('duelo_sala_codigo') || sessionStorage.getItem('ding_sala_codigo'); } catch (e) {}
+        
+        if (codigoSala && /^[A-Z0-9]{4}$/.test(codigoSala)) {
+          // Automatic via signaling worker
+          estado.textContent = 'Creando invitación automática (código: ' + codigoSala + ')…';
+          var p = invitarViaWorker(conexion, codigoSala);
+          p.then(function (s) {
+            estado.textContent = 'Esperando que el otro dispositivo se una…';
+            s.abierto.then(function () { 
+              estado.textContent = '✔ ¡Conectado automáticamente!'; 
+              setTimeout(function () { fin(true); }, 500); 
+            });
+          }).catch(function (e) { 
+            estado.textContent = 'Fallo automático: ' + e.message + '. Intenta manual.'; 
+            mostrarManual();
+          });
+        } else {
+          mostrarManual();
+        }
+        
+        function mostrarManual() {
+          var cajaOferta = el('textarea', { readonly: 'readonly', style: AREA, 'aria-label': 'Código de invitación' });
+          var cajaResp = el('textarea', { style: AREA, 'aria-label': 'Código de respuesta', placeholder: 'Pega aquí la respuesta' });
+          var btnCopiar = el('button', { type: 'button', texto: 'Copiar invitación', style: BOTON });
+          var btnConectar = el('button', { type: 'button', texto: 'Conectar', style: BOTON });
+          var btnCerrar = el('button', { type: 'button', texto: 'Cerrar', style: BOTON2 });
+          var sesion = null;
+          var tarjeta2 = abrir('Invitar a otro dispositivo (manual)', [
+            el('p', { texto: '1. Copia esta invitación y mándasela al otro dispositivo (WhatsApp, mensaje, lo que prefieras).' }), cajaOferta, btnCopiar,
+            el('p', { texto: '2. Cuando te devuelva su respuesta, pégala aquí y pulsa «Conectar».' }), cajaResp, btnConectar, estado, btnCerrar
+          ], function () { if (sesion) sesion.cancelar(); });
+          btnCerrar.onclick = cerrar;
+          btnCopiar.onclick = function () { copiar(cajaOferta.value, btnCopiar); };
+          invitar(conexion).then(function (s) {
+            sesion = s; cajaOferta.value = s.codigo; estado.textContent = 'Invitación lista.';
+            btnConectar.onclick = function () {
+              try { var p = s.aceptar(cajaResp.value); p.then(function () { estado.textContent = 'Conectando…'; }, function (e) { estado.textContent = 'No se pudo: ' + e.message; }); }
+              catch (e) { estado.textContent = e.message; }
+            };
+            s.abierto.then(function () { estado.textContent = '✔ ¡Conectado! Ya puedes cerrar esta ventana. Para invitar a otro, ábrela de nuevo.'; });
+          }).catch(function (e) { estado.textContent = 'No se pudo crear la invitación: ' + e.message; });
+        }
+        
+        tarjeta.querySelector('button').onclick = fin;
+      });
     }
 
     /* --- invitado --- */
@@ -320,27 +424,51 @@
         var hecho = false;
         function fin(v) { if (hecho) return; hecho = true; cerrar(); resolver(v); }
         var estado = el('p', { texto: '', role: 'status', style: 'font-weight:700' });
-        var cajaOferta = el('textarea', { style: AREA, 'aria-label': 'Código de invitación', placeholder: 'Pega aquí la invitación del anfitrión' });
-        var cajaResp = el('textarea', { readonly: 'readonly', style: AREA + ';display:none', 'aria-label': 'Tu código de respuesta' });
-        var btnResp = el('button', { type: 'button', texto: 'Crear mi respuesta', style: BOTON });
-        var btnCopiar = el('button', { type: 'button', texto: 'Copiar mi respuesta', style: BOTON + ';display:none' });
-        var btnCancelar = el('button', { type: 'button', texto: 'Cancelar', style: BOTON2 });
-        abrir('Conectar con la sala de otro dispositivo', [
-          el('p', { texto: 'Esa sala no está en este dispositivo. Pídele al anfitrión su invitación (en su pantalla, botón «Invitar a otro dispositivo») y pégala aquí.' }),
-          cajaOferta, btnResp, cajaResp, btnCopiar, estado, btnCancelar
-        ], function () { fin(false); });
-        btnCancelar.onclick = function () { fin(false); };
-        btnCopiar.onclick = function () { copiar(cajaResp.value, btnCopiar); };
-        btnResp.onclick = function () {
-          estado.textContent = 'Preparando tu respuesta…';
-          var p;
-          try { p = responder(conexion, cajaOferta.value); } catch (e) { estado.textContent = e.message; return; }
+        
+        // Check for 4-letter room code (from duelo/ding)
+        var codigoSala = null;
+        try { codigoSala = sessionStorage.getItem('duelo_sala_codigo') || sessionStorage.getItem('ding_sala_codigo'); } catch (e) {}
+        
+        if (codigoSala && /^[A-Z0-9]{4}$/.test(codigoSala)) {
+          // Automatic via signaling worker
+          estado.textContent = 'Uniéndose automáticamente (código: ' + codigoSala + ')…';
+          var p = responderViaWorker(conexion, codigoSala);
           p.then(function (s) {
-            cajaResp.value = s.codigo; cajaResp.style.display = 'block'; btnCopiar.style.display = 'inline-block'; btnResp.style.display = 'none';
-            estado.textContent = 'Mándale este código al anfitrión. Cuando él lo pegue, aquí se conecta solo.';
-            s.abierto.then(function () { estado.textContent = '✔ Conectado.'; setTimeout(function () { fin(true); }, 400); });
-          }, function (e) { estado.textContent = 'No se pudo: ' + e.message; });
-        };
+            estado.textContent = '✔ ¡Conectado automáticamente!';
+            setTimeout(function () { fin(true); }, 400);
+          }).catch(function (e) { 
+            estado.textContent = 'Fallo automático: ' + e.message + '. Intenta manual.'; 
+            mostrarManual();
+          });
+        } else {
+          mostrarManual();
+        }
+        
+        function mostrarManual() {
+          var cajaOferta = el('textarea', { style: AREA, 'aria-label': 'Código de invitación', placeholder: 'Pega aquí la invitación del anfitrión' });
+          var cajaResp = el('textarea', { readonly: 'readonly', style: AREA + ';display:none', 'aria-label': 'Tu código de respuesta' });
+          var btnResp = el('button', { type: 'button', texto: 'Crear mi respuesta', style: BOTON });
+          var btnCopiar = el('button', { type: 'button', texto: 'Copiar mi respuesta', style: BOTON + ';display:none' });
+          var btnCancelar = el('button', { type: 'button', texto: 'Cancelar', style: BOTON2 });
+          abrir('Conectar con la sala de otro dispositivo', [
+            el('p', { texto: 'Esa sala no está en este dispositivo. Pídele al anfitrión su invitación (en su pantalla, botón «Invitar a otro dispositivo») y pégala aquí.' }),
+            cajaOferta, btnResp, cajaResp, btnCopiar, estado, btnCancelar
+          ], function () { fin(false); });
+          btnCancelar.onclick = function () { fin(false); };
+          btnCopiar.onclick = function () { copiar(cajaResp.value, btnCopiar); };
+          btnResp.onclick = function () {
+            estado.textContent = 'Preparando tu respuesta…';
+            var p;
+            try { p = responder(conexion, cajaOferta.value); } catch (e) { estado.textContent = e.message; return; }
+            p.then(function (s) {
+              cajaResp.value = s.codigo; cajaResp.style.display = 'block'; btnCopiar.style.display = 'inline-block'; btnResp.style.display = 'none';
+              estado.textContent = 'Mándale este código al anfitrión. Cuando él lo pegue, aquí se conecta solo.';
+              s.abierto.then(function () { estado.textContent = '✔ Conectado.'; setTimeout(function () { fin(true); }, 400); });
+            }, function (e) { estado.textContent = 'No se pudo: ' + e.message; });
+          };
+        }
+        
+        mostrarManual();
       });
     }
 
@@ -373,5 +501,5 @@
     w.RetoConexion = { conexion: conexion, invitarDispositivo: ui.invitarDispositivo, asistenteUnirse: ui.asistenteUnirse };
   }
 
-  return { crearConexion: crearConexion, arrancar: arrancar, codificar: codificar, decodificar: decodificar, PREFIJO: PREFIJO, obtenerIPsLocales: obtenerIPsLocales, ICE: ICE };
+  return { crearConexion: crearConexion, arrancar: arrancar, codificar: codificar, decodificar: decodificar, PREFIJO: PREFIJO, obtenerIPsLocales: obtenerIPsLocales, ICE: ICE, invitarViaWorker: invitarViaWorker, responderViaWorker: responderViaWorker, SIGNALING_URL: SIGNALING_URL };
 });

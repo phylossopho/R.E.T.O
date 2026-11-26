@@ -1,0 +1,13 @@
+name = "reto-signaling"
+main = "signaling-worker.js"
+compatibility_date = "2024-11-26"
+
+# KV namespace for storing SDP offers/answers
+[[kv_namespaces]]
+binding = "SIGNALING"
+id = "your-kv-namespace-id"  # Run: wrangler kv:namespace create "SIGNALING"
+preview_id = "your-preview-kv-namespace-id"
+
+# Limits
+[limits]
+cpu_ms = 50
