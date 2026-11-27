@@ -250,6 +250,20 @@
     local.clase = null; local.mazo = null; local.elegidos = {}; local.consumido = false; local.inicioDuelo = null;
     empezarSondeo();
     preguntar();
+    // Auto-conexión WebRTC vía signaling worker (guest side)
+    if (window.RetoConexion && window.RetoConexion.responderViaWorker && window.RetoConexion.conexion) {
+      // Solo si no somos el anfitrión (vista.jugadores.length > 1 significa ya hay rival)
+      if (window.RetoConexion.conexion.anfitriones && window.RetoConexion.conexion.anfitriones() === 0) {
+        window.RetoConexion.responderViaWorker(window.RetoConexion.conexion, d.codigo)
+          .then(function (s) {
+            return s.abierto;
+          })
+          .then(function () {
+            console.log('[Duelo] Conexión WebRTC automática establecida para', d.codigo);
+          })
+          .catch(function (e) { console.warn('[Duelo] Auto-conexión falló:', e.message); });
+      }
+    }
   }
 
   function salir() {
