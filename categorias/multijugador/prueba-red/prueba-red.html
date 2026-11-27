@@ -73,8 +73,17 @@
 </div>
 </section>
 <section class="red-caja" aria-labelledby="red-t1b">
-<h2 id="red-t1b">2. Conexión WebRTC directa (para que se vean entre dispositivos)</h2>
-<p class="ayuda">Si los dispositivos no se ven en la sección 3, usa esto para crear la conexión directa (WebRTC) sin ir al Duelo ni a Ding!.</p>
+<h2 id="red-t1b">2. Conexión automática con código de 4 letras (sin copiar/pegar largo)</h2>
+<p class="ayuda">Si ya tienes el código de 4 letras (ej: <code>ZCZN</code>) de quien creó la sala, ingrésalo aquí. Usa el <strong>signaling worker</strong> para intercambiar la oferta/respuesta WebRTC automáticamente.</p>
+<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center">
+  <input type="text" id="red-codigo-4" class="editor-campo" maxlength="4" placeholder="Código 4 letras" style="text-transform:uppercase;width:100px;font-size:1.2em;letter-spacing:.2em">
+  <button type="button" class="boton boton--principal" id="red-btn-auto-conectar">🚀 Conectar automáticamente</button>
+</div>
+<p class="ayuda" id="red-auto-estado" role="status"></p>
+</section>
+<section class="red-caja" aria-labelledby="red-t1c">
+<h2 id="red-t1c">3. Conexión WebRTC manual (código largo <code>RETO-LINK.</code>)</h2>
+<p class="ayuda">Si lo anterior falla, usa esto para crear la conexión directa (WebRTC) sin ir al Duelo ni a Ding!.</p>
 <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem">
   <button type="button" class="boton boton--principal" id="red-btn-invitar">📡 Invitar a otro dispositivo (crear oferta)</button>
   <button type="button" class="boton" id="red-btn-unirse">🔗 Unirse a invitación (pegar oferta)</button>

@@ -319,8 +319,33 @@
     if (diagnosticoBtn) diagnosticoBtn.addEventListener('click', recopilarIPsLocales);
     if (invitarBtn) invitarBtn.addEventListener('click', invitarDesdePrueba);
     if (unirseBtn) unirseBtn.addEventListener('click', unirseDesdePrueba);
+    var autoBtn = document.getElementById('red-btn-auto-conectar');
+    var codigoInput = document.getElementById('red-codigo-4');
+    var autoEstado = document.getElementById('red-auto-estado');
+    if (autoBtn && codigoInput && autoEstado) {
+      autoBtn.addEventListener('click', conectarAuto);
+      codigoInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); conectarAuto(); } });
+    }
     // Auto-recopilar IPs al cargar
     recopilarIPsLocales();
+
+  function conectarAuto() {
+    var codigo = codigoInput.value.trim().toUpperCase();
+    if (!/^[A-Z0-9]{4}$/.test(codigo)) { autoEstado.textContent = 'Código inválido: 4 letras/números.'; return; }
+    autoEstado.textContent = 'Conectando automáticamente (código: ' + codigo + ')…';
+    autoBtn.disabled = true;
+    if (!window.RetoConexion || !window.RetoConexion.responderViaWorker) { autoEstado.textContent = 'Worker no disponible. Recarga.'; autoBtn.disabled = false; return; }
+    try { sessionStorage.setItem('duelo_sala_codigo', codigo); sessionStorage.setItem('ding_sala_codigo', codigo); } catch (e) {}
+    var conexion = window.RetoConexion.conexion;
+    var p = window.RetoConexion.responderViaWorker(conexion, codigo);
+    p.then(function (s) {
+      autoEstado.textContent = '✔ ¡Conectado automáticamente!';
+      autoBtn.disabled = false;
+    }).catch(function (e) {
+      autoEstado.textContent = 'Fallo: ' + e.message + '. Intenta manual (sección 3).';
+      autoBtn.disabled = false;
+    });
+  }
 
     fetch('/api/red/info').then(function (r) { return r.json(); }).then(function (info) {
       local = !!info.local;
