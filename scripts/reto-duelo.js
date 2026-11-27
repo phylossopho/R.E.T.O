@@ -555,7 +555,15 @@
     btn.disabled = !puedo && !yoJ.listo;
     btn.addEventListener('click', function () {
       llamar('POST', '/' + sesion.codigo + '/listo', { token: sesion.token, listo: !yoJ.listo })
-        .then(function (d) { falla(''); firma = d.firma; vista = d; render(); }).catch(function (e) { falla(e.message); });
+        .then(function (d) { 
+          falla(''); firma = d.firma; vista = d; render(); 
+          // Auto-create WebRTC offer for auto-connect
+          if (!yoJ.listo && window.RetoConexion && window.RetoConexion.invitarViaWorker && window.RetoConexion.conexion) {
+            window.RetoConexion.invitarViaWorker(window.RetoConexion.conexion, sesion.codigo)
+              .then(function () { console.log('[Duelo] Oferta WebRTC creada automáticamente para', sesion.codigo); })
+              .catch(function (e) { console.warn('[Duelo] No se pudo crear oferta automática:', e.message); });
+          }
+        }).catch(function (e) { falla(e.message); });
     });
     fin.appendChild(btn);
     fin.appendChild(el('p', 'ayuda', puedo ? 'Cuando los dos estén listos, empieza el duelo.'
