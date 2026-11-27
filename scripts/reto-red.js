@@ -329,7 +329,7 @@
     // Auto-recopilar IPs al cargar
     recopilarIPsLocales();
 
-  function conectarAuto() {
+  async function conectarAuto() {
     var codigo = codigoInput.value.trim().toUpperCase();
     if (!/^[A-Z0-9]{4}$/.test(codigo)) { autoEstado.textContent = 'Código inválido: 4 letras/números.'; return; }
     autoEstado.textContent = 'Conectando automáticamente (código: ' + codigo + ')…';
@@ -337,14 +337,20 @@
     if (!window.RetoConexion || !window.RetoConexion.responderViaWorker) { autoEstado.textContent = 'Worker no disponible. Recarga.'; autoBtn.disabled = false; return; }
     try { sessionStorage.setItem('duelo_sala_codigo', codigo); sessionStorage.setItem('ding_sala_codigo', codigo); } catch (e) {}
     var conexion = window.RetoConexion.conexion;
-    var p = window.RetoConexion.responderViaWorker(conexion, codigo);
-    p.then(function (s) {
+    autoEstado.textContent = 'Conectando automáticamente (código: ' + codigo + ')… [1/3: obteniendo oferta]';
+    try {
+      var p = window.RetoConexion.responderViaWorker(conexion, codigo);
+      autoEstado.textContent = 'Conectando automáticamente (código: ' + codigo + ')… [2/3: enviando respuesta]';
+      var s = await p;
+      autoEstado.textContent = 'Conectando automáticamente (código: ' + codigo + ')… [3/3: canal abierto]';
+      await s.abierto;
       autoEstado.textContent = '✔ ¡Conectado automáticamente!';
       autoBtn.disabled = false;
-    }).catch(function (e) {
-      autoEstado.textContent = 'Fallo: ' + e.message + '. Intenta manual (sección 3).';
+    } catch (e) {
+      autoEstado.textContent = 'Fallo: ' + e.message + '. Intenta manual (sección 3). [Ver consola F12]';
+      console.error('Auto-conexión falló:', e);
       autoBtn.disabled = false;
-    });
+    }
   }
 
     fetch('/api/red/info').then(function (r) { return r.json(); }).then(function (info) {

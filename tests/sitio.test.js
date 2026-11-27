@@ -8,7 +8,7 @@ const RAIZ = path.join(__dirname, '..');
 const problemas = [];
 let revisados = 0;
 
-const OMITIR = new Set(['.git', '.github', 'node_modules', '_legacy_python', 'plantilla-RETOapp', 'tests', 'tools', 'imagenes', 'sonidos', 'signaling-worker.js', 'wrangler.toml']);
+const OMITIR = new Set(['.git', '.github', 'node_modules', '_legacy_python', 'plantilla-RETOapp', 'tests', 'tools', 'imagenes', 'sonidos', 'signaling-worker.js', 'wrangler.toml', '.wrangler']);
 function recorrer(dir, salida) {
   fs.readdirSync(dir, { withFileTypes: true }).forEach((e) => {
     if (OMITIR.has(e.name)) return;

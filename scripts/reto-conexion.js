@@ -217,8 +217,11 @@
     var url = SIGNALING_URL + path;
     var opts = Object.assign({ headers: { 'Content-Type': 'application/json' } }, options);
     return fetch(url, opts).then(function (r) {
-      if (!r.ok) return r.json().then(function (e) { throw new Error(e.error || 'signaling ' + r.status); });
+      if (!r.ok) return r.json().then(function (e) { throw new Error('signaling ' + r.status + ': ' + (e.error || r.statusText)); });
       return r.json();
+    }).catch(function (e) {
+      console.error('[signalingFetch] Error calling', url, ':', e);
+      throw e;
     });
   }
 
@@ -242,6 +245,10 @@
           abierto: abierto,
           cancelar: function () { try { pc.close(); } catch (e) {} }
         };
+      })
+      .catch(function (e) {
+        console.error('[invitarViaWorker] Error:', e);
+        throw new Error('Fallo en worker: ' + e.message);
       });
   }
 
@@ -252,7 +259,10 @@
       pc.ondatachannel = function (ev) { enlazarCanal(conexion, ev.channel, 'cliente', idEnlace, resolver); };
     });
     return signalingFetch('/offer/' + codigo)
-      .then(function (data) { return pc.setRemoteDescription({ type: 'offer', sdp: data.sdp }); })
+      .then(function (data) { 
+        console.log('[responderViaWorker] Got offer for', codigo);
+        return pc.setRemoteDescription({ type: 'offer', sdp: data.sdp }); 
+      })
       .then(function () { return pc.createAnswer(); })
       .then(function (a) { return pc.setLocalDescription(a); })
       .then(function () { return esperarIce(pc); })
@@ -261,6 +271,10 @@
       })
       .then(function () {
         return { codigo: null, abierto: abierto, cancelar: function () { try { pc.close(); } catch (e) {} } };
+      })
+      .catch(function (e) {
+        console.error('[responderViaWorker] Error:', e);
+        throw new Error('Fallo en worker: ' + e.message);
       });
   }
 
@@ -272,9 +286,10 @@
           .then(function (data) {
             return pc.setRemoteDescription({ type: 'answer', sdp: data.sdp }).then(resolver);
           })
-          .catch(function () {
+          .catch(function (e) {
             intentos++;
-            if (intentos >= 60) { rechazar(new Error('Timeout esperando respuesta')); return; }
+            console.log('[esperarRespuesta] Intento', intentos, 'para', codigo, ':', e.message);
+            if (intentos >= 60) { rechazar(new Error('Timeout esperando respuesta (60s)')); return; }
             setTimeout(probar, 1000);
           });
       }
