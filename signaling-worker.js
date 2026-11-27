@@ -1,13 +1,11 @@
-// Cloudflare Worker - Signaling relay for WebRTC (P2P via 4-letter room code)
-// Deploy: wrangler deploy signaling-worker.js
-// Gratis: 100k req/día en plan Cloudflare Workers
-
+// Cloudflare Worker - Signaling relay (minimal working version)
 const handler = {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
+    const parts = path.split('/').filter(p => p);
+    const codigo = parts[parts.length - 1]?.toUpperCase() || '';
 
-    // CORS headers
     const cors = {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -18,10 +16,7 @@ const handler = {
       return new Response(null, { headers: cors });
     }
 
-    // REST endpoints for SDP offer/answer
-    if (path.startsWith('/offer/')) {
-      const codigo = path.split('/').pop()?.toUpperCase() || '';
-      
+    if (parts[0] === 'offer') {
       if (request.method === 'GET') {
         try {
           const data = await env.SIGNALING.get(`offer:${codigo}`);
@@ -34,14 +29,8 @@ const handler = {
       if (request.method === 'POST') {
         try {
           const body = await request.json();
-          if (!body || !body.sdp) {
-            return json({ error: 'sdp required' }, 400, cors);
-          }
-          const codigo = path.split('/').pop()?.toUpperCase() || '';
-          await env.SIGNALING.put(`offer:${codigo}`, JSON.stringify({
-            sdp: body.sdp,
-            timestamp: Date.now()
-          }), { expirationTtl: 600 });
+          if (!body || !body.sdp) return json({ error: 'sdp required' }, 400, cors);
+          await env.SIGNALING.put(`offer:${codigo}`, JSON.stringify({ sdp: body.sdp, timestamp: Date.now() }), { expirationTtl: 600 });
           return json({ ok: true }, 200, cors);
         } catch (e) {
           return json({ error: e.message }, 500, cors);
@@ -49,9 +38,7 @@ const handler = {
       }
     }
 
-    if (path.startsWith('/answer/')) {
-      const codigo = path.split('/').pop()?.toUpperCase() || '';
-      
+    if (parts[0] === 'answer') {
       if (request.method === 'GET') {
         try {
           const data = await env.SIGNALING.get(`answer:${codigo}`);
@@ -64,14 +51,8 @@ const handler = {
       if (request.method === 'POST') {
         try {
           const body = await request.json();
-          if (!body || !body.sdp) {
-            return json({ error: 'sdp required' }, 400, cors);
-          }
-          const codigo = path.split('/').pop()?.toUpperCase() || '';
-          await env.SIGNALING.put(`answer:${codigo}`, JSON.stringify({
-            sdp: body.sdp,
-            timestamp: Date.now()
-          }), { expirationTtl: 600 });
+          if (!body || !body.sdp) return json({ error: 'sdp required' }, 400, cors);
+          await env.SIGNALING.put(`answer:${codigo}`, JSON.stringify({ sdp: body.sdp, timestamp: Date.now() }), { expirationTtl: 600 });
           return json({ ok: true }, 200, cors);
         } catch (e) {
           return json({ error: e.message }, 500, cors);
@@ -79,11 +60,7 @@ const handler = {
       }
     }
 
-    if (path === '/health') {
-      return new Response('OK', { headers: cors });
-    }
-
-    // Test KV namespace
+    if (path === '/health') return new Response('OK', { headers: cors });
     if (path === '/test-kv') {
       try {
         await env.SIGNALING.put('test:key', 'test-value', { expirationTtl: 60 });
@@ -94,19 +71,14 @@ const handler = {
       }
     }
 
-    return new Response('Not found: ' + path, { status: 404, headers: cors });
+    return new Response('Not found', { status: 404, headers: cors });
   }
 };
 
 function json(data, status, cors) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { ...cors, 'Content-Type': 'application/json' }
-  });
+  return new Response(JSON.stringify(data), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 }
 
 export default handler;
 
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = handler;
-}
+if (typeof module !== 'undefined' && module.exports) module.exports = handler;
