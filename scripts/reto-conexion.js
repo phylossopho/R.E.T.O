@@ -258,7 +258,7 @@
     var abierto = new Promise(function (resolver) {
       pc.ondatachannel = function (ev) { enlazarCanal(conexion, ev.channel, 'cliente', idEnlace, resolver); };
     });
-    return signalingFetch('/offer/' + codigo)
+    return esperarOferta(codigo)
       .then(function (data) { 
         console.log('[responderViaWorker] Got offer for', codigo);
         return pc.setRemoteDescription({ type: 'offer', sdp: data.sdp }); 
@@ -276,6 +276,26 @@
         console.error('[responderViaWorker] Error:', e);
         throw new Error('Fallo en worker: ' + e.message);
       });
+  }
+
+  // Poll for offer to exist (host creates it when they click "Estoy listo")
+  function esperarOferta(codigo) {
+    return new Promise(function (resolver, rechazar) {
+      var intentos = 0;
+      function probar() {
+        signalingFetch('/offer/' + codigo)
+          .then(function (data) {
+            resolver(data);
+          })
+          .catch(function (e) {
+            intentos++;
+            console.log('[esperarOferta] Intento', intentos, 'para', codigo, ':', e.message);
+            if (intentos >= 120) { rechazar(new Error('Timeout esperando oferta (120s)')); return; }
+            setTimeout(probar, 1000);
+          });
+      }
+      probar();
+    });
   }
 
   function esperarRespuesta(codigo, pc) {
