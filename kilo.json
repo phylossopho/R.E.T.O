@@ -23,6 +23,12 @@
       "command": ["node", "C:\\Users\\Jorge\\Downloads\\R_E_T_O_gemini_estatico-js\\R.E.T.O_gemini\\mcp-reto-tools.js"],
       "enabled": true,
       "timeout": 60000
+    },
+    "cloudflare": {
+      "type": "remote",
+      "url": "https://mcp.cloudflare.com/mcp",
+      "enabled": true,
+      "oauth": {}
     }
   }
 }
