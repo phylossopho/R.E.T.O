@@ -250,19 +250,30 @@
     local.clase = null; local.mazo = null; local.elegidos = {}; local.consumido = false; local.inicioDuelo = null;
     empezarSondeo();
     preguntar();
-    // Auto-conexión WebRTC vía signaling worker (guest side)
-    if (window.RetoConexion && window.RetoConexion.responderViaWorker && window.RetoConexion.conexion) {
-      // Solo si no somos el anfitrión (vista.jugadores.length > 1 significa ya hay rival)
-      if (window.RetoConexion.conexion.anfitriones && window.RetoConexion.conexion.anfitriones() === 0) {
-        window.RetoConexion.responderViaWorker(window.RetoConexion.conexion, d.codigo)
-          .then(function (s) {
-            return s.abierto;
-          })
-          .then(function () {
-            console.log('[Duelo] Conexión WebRTC automática establecida para', d.codigo);
-          })
-          .catch(function (e) { console.warn('[Duelo] Auto-conexión falló:', e.message); });
-      }
+    // Auto-conexión WebRTC vía signaling worker
+    if (window.RetoConexion && window.RetoConexion.conexion) {
+      var esAnfitrion = (vista && vista.yo === 'j1') || !vista; // si no hay vista aún, asumimos que somos el que crea
+      // Esperar a tener la vista para saber si somos anfitrión (j1)
+      var comprobarRol = function () {
+        if (!vista) return;
+        var soyAnfitrion = vista.yo === 'j1';
+        if (soyAnfitrion && window.RetoConexion.invitarViaWorker) {
+          // Anfitrión: crear oferta WebRTC INMEDIATAMENTE al entrar a la sala
+          window.RetoConexion.invitarViaWorker(window.RetoConexion.conexion, sesion.codigo)
+            .then(function () { console.log('[Duelo] Oferta WebRTC creada automáticamente al crear sala para', sesion.codigo); })
+            .catch(function (e) { console.warn('[Duelo] No se pudo crear oferta automática:', e.message); });
+        } else if (!soyAnfitrion && window.RetoConexion.responderViaWorker) {
+          // Invitado: conectar automáticamente
+          window.RetoConexion.responderViaWorker(window.RetoConexion.conexion, sesion.codigo)
+            .then(function (s) { return s.abierto; })
+            .then(function () { console.log('[Duelo] Conexión WebRTC automática establecida para', sesion.codigo); })
+            .catch(function (e) { console.warn('[Duelo] Auto-conexión falló:', e.message); });
+        }
+      };
+      // Si ya tenemos vista, comprobar ahora; si no, el sondeo la traerá y render() llamará a esto
+      if (vista) comprobarRol();
+      // Guardamos la función para que render() la llame cuando llegue la vista
+      window._dueloComprobarRolWebRTC = comprobarRol;
     }
   }
 
@@ -309,6 +320,11 @@
 
   function render() {
     if (!vista) return;
+    // Comprobar rol WebRTC al recibir la vista (solo la primera vez)
+    if (window._dueloComprobarRolWebRTC) {
+      window._dueloComprobarRolWebRTC();
+      window._dueloComprobarRolWebRTC = null;
+    }
     if (vista.fase === 'espera') pantallaPreparacion();
     else if (vista.fase === 'duelo') pantallaDuelo();
     else pantallaFin();
@@ -571,12 +587,6 @@
       llamar('POST', '/' + sesion.codigo + '/listo', { token: sesion.token, listo: !yoJ.listo })
         .then(function (d) { 
           falla(''); firma = d.firma; vista = d; render(); 
-          // Auto-create WebRTC offer for auto-connect
-          if (!yoJ.listo && window.RetoConexion && window.RetoConexion.invitarViaWorker && window.RetoConexion.conexion) {
-            window.RetoConexion.invitarViaWorker(window.RetoConexion.conexion, sesion.codigo)
-              .then(function () { console.log('[Duelo] Oferta WebRTC creada automáticamente para', sesion.codigo); })
-              .catch(function (e) { console.warn('[Duelo] No se pudo crear oferta automática:', e.message); });
-          }
         }).catch(function (e) { falla(e.message); });
     });
     fin.appendChild(btn);
@@ -979,6 +989,26 @@
         empezarSondeo();
         preguntar();
         window.setTimeout(function () { if (!vista) salir(); }, 4000);
+        // Configurar comprobación WebRTC al restaurar sesión (por si el invitado aún no se conectó)
+        if (window.RetoConexion && window.RetoConexion.conexion) {
+          window._dueloComprobarRolWebRTC = function () {
+            if (!vista) return;
+            var soyAnfitrion = vista.yo === 'j1';
+            if (soyAnfitrion && window.RetoConexion.invitarViaWorker) {
+              // Anfitrión: la oferta ya debería estar en el worker, pero nos aseguramos
+              window.RetoConexion.invitarViaWorker(window.RetoConexion.conexion, sesion.codigo)
+                .then(function () { console.log('[Duelo] Oferta WebRTC verificada al restaurar sesión para', sesion.codigo); })
+                .catch(function (e) { console.warn('[Duelo] No se pudo verificar oferta:', e.message); });
+            } else if (!soyAnfitrion && window.RetoConexion.responderViaWorker) {
+              // Invitado: conectar automáticamente
+              window.RetoConexion.responderViaWorker(window.RetoConexion.conexion, sesion.codigo)
+                .then(function (s) { return s.abierto; })
+                .then(function () { console.log('[Duelo] Conexión WebRTC automática restaurada para', sesion.codigo); })
+                .catch(function (e) { console.warn('[Duelo] Auto-conexión restaurada falló:', e.message); });
+            }
+            window._dueloComprobarRolWebRTC = null;
+          };
+        }
       } else {
         pantallaEntrada();
       }

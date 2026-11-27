@@ -8,42 +8,57 @@
 <link rel="stylesheet" href="styles/fuentes/nunito.css">
 <link rel="stylesheet" href="styles/styles.css?v=c103-ding3">
 <script>
-// El tema y el interruptor de animaciones se aplican aqui, en el head, y no al
-// final del body: si se hiciera despues, el navegador pintaria primero el
-// estado por defecto y luego lo cambiaria, y se veria un destello en cada carga.
-(function () {
-  var t = localStorage.getItem('tema');
-  if (t) { document.documentElement.setAttribute('data-theme', t); }
-  // Las animaciones tienen tres estados, y el atributo es el que manda:
-  //   "on"   la persona las prendio, y gana su eleccion sobre el sistema
-  //   "off"  las apago, y se quedan apagadas siempre
-  //   nada   todavia no ha decidido, y decide el sistema operativo
-  // Por eso el "on" se escribe explicitamente: sin el, las reglas del sistema
-  // lo volvian a apagar y el interruptor no servia para nada.
-  var a = localStorage.getItem('animaciones');
-  if (a === 'off' || a === 'on') { document.documentElement.setAttribute('data-anim', a); }
+  // El tema y el interruptor de animaciones se aplican aqui, en el head, y no al
+  // final del body: si se hiciera despues, el navegador pintaria primero el
+  // estado por defecto y luego lo cambiaria, y se veria un destello en cada carga.
+  (function () {
+    var t = localStorage.getItem('tema');
+    if (t) { document.documentElement.setAttribute('data-theme', t); }
+    // Las animaciones tienen tres estados, y el atributo es el que manda:
+    //   "on"   la persona las prendio, y gana su eleccion sobre el sistema
+    //   "off"  las apago, y se quedan apagadas siempre
+    //   nada   todavia no ha decidido, y decide el sistema operativo
+    // Por eso el "on" se escribe explicitamente: sin el, las reglas del sistema
+    // lo volvian a apagar y el interruptor no servia para nada.
+    var a = localStorage.getItem('animaciones');
+    if (a === 'off' || a === 'on') { document.documentElement.setAttribute('data-anim', a); }
 
-  // Las tarjetas se animan solo la primera vez de cada sesion. CSS no tiene
-  // memoria, asi que el aviso se deja aqui, en el head, antes de pintar: si se
-  // hiciera al final del body, las tarjetas alcanzarian a animarse y despues se
-  // congelarian, que se ve como un salto.
-  //
-  // Con try/catch porque en algunos modos de privacidad el almacenamiento
-  // lanza al escribir. Si eso pasa, el atributo no se pone, la animacion se
-  // repite y no se rompe nada: es como estaba antes.
-  try {
-    // ?anim=1 fuerza la entrada de las tarjetas aunque esta sesion ya las haya
-    // visto. Sin esto no habria forma de comprobar que la animacion funciona:
-    // solo se veria una vez al abrir el navegador, y no se sabria si a la
-    // segunda ya no aparece por decision o porque dejo de funcionar.
-    var forzar = /[?&]anim=1/.test(location.search);
-    if (sessionStorage.getItem('reto_anim_tarjetas') && !forzar) {
-      document.documentElement.setAttribute('data-anim-tarjetas', 'off');
-    } else {
-      sessionStorage.setItem('reto_anim_tarjetas', '1');
-    }
-  } catch (e) {}
-})();
+    // Las tarjetas se animan solo la primera vez de cada sesion. CSS no tiene
+    // memoria, asi que el aviso se deja aqui, en el head, antes de pintar: si se
+    // hiciera al final del body, las tarjetas alcanzarian a animarse y despues se
+    // congelarian, y se ve como un salto.
+    //
+    // Con try/catch porque en algunos modos de privacidad el almacenamiento
+    // lanza al escribir. Si eso pasa, el atributo no se pone, la animacion se
+    // repite y no se rompe nada: es como estaba antes.
+    try {
+      // ?anim=1 fuerza la entrada de las tarjetas aunque esta sesion ya las haya
+      // visto. Sin esto no habria forma de comprobar que la animacion funciona:
+      // solo se veria una vez al abrir el navegador, y no se sabria si a la
+      // segunda ya no aparece por decision o porque dejo de funcionar.
+      var forzar = /[?&]anim=1/.test(location.search);
+      if (sessionStorage.getItem('reto_anim_tarjetas') && !forzar) {
+        document.documentElement.setAttribute('data-anim-tarjetas', 'off');
+      } else {
+        sessionStorage.setItem('reto_anim_tarjetas', '1');
+      }
+    } catch (e) {}
+  })();
+
+  // Detección de entorno: localhost (HTTP) vs GitHub Pages (HTTPS github.io)
+  // En GitHub Pages no funciona WebRTC ICE host candidates → ocultar multijugador
+  (function () {
+    var hostname = location.hostname;
+    var isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || /^192\.168\./.test(hostname) || /^10\./.test(hostname) || /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname);
+    var isGitHubPages = location.protocol === 'https:' && (hostname.endsWith('.github.io') || hostname.endsWith('.github.dev'));
+    var esEntornoLocal = isLocalhost && location.protocol === 'http:';
+    var esGitHubPages = isGitHubPages && !esEntornoLocal;
+    // Exponer globalmente para que otros scripts lo usen
+    window.RetoEntorno = { esLocal: esEntornoLocal, esGitHubPages: esGitHubPages, hostname: hostname };
+    // Clase en <html> para CSS condicional
+    if (esGitHubPages) document.documentElement.classList.add('entorno-github-pages');
+    if (esEntornoLocal) document.documentElement.classList.add('entorno-local');
+  })();
 </script>
 <script src="scripts/reto-panel-prefs.js?v=c02-fuente-ui"></script>
 <script src="scripts/reto-api.js?v=estatico-1"></script>
@@ -68,7 +83,7 @@
 <p class="tarjeta-texto">Ejercicios para descansar y entrenar la vista</p>
 </a>
 </li>
-<li>
+<li class="tarjeta-multijugador" data-entorno="local">
         <a class="tarjeta tarjeta-nav" href="categorias/multijugador/multijugador.html">
         <span class="tarjeta-icono"><span class="reserva" aria-hidden="true">&#129309;</span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15 14.5c3 0 6 1.5 6 5"/></svg></span>
         <h2 class="tarjeta-titulo">Multijugador</h2>
@@ -111,6 +126,10 @@
 </a>
 </li>
 </ul>
+<p class="aviso-github-pages ayuda" style="text-align:center;margin:1rem 0;padding:1rem;background:var(--surface);border:1px solid var(--borde);border-radius:var(--radius)">
+  🌐 <strong>Versión GitHub Pages</strong>: El multijugador local (Duelo/Ding) requiere red LAN y no funciona aquí por seguridad del navegador (WebRTC ICE bloqueado en HTTPS público).
+  <br>Para jugar en red local, ejecuta <code>node tools/servir.js</code> en tu PC y accede desde el móvil a <code>http://TU-IP:8000</code>.
+</p>
 </main>
 <footer hidden>
 <p>R.E.T.O.</p>

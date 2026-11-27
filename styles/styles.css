@@ -10204,3 +10204,14 @@ html[data-anim-panel="giro"]:not([data-anim="off"]) .panel-flotante:hover {
   border-radius: 4px;
   border: 1px solid #33ff33;
 }
+
+/* =============================================================================
+   ENTORNO: Ocultar multijugador en GitHub Pages
+   -----------------------------------------------------------------------------
+   En GitHub Pages (HTTPS público) no funciona WebRTC ICE host candidates
+   por política de privacidad del navegador → semáforo de subred imposible.
+   Se oculta la tarjeta y se muestra aviso informativo.
+   ========================================================================== */
+.entorno-github-pages .tarjeta-multijugador { display: none !important; }
+.entorno-github-pages .aviso-github-pages { display: block; }
+.aviso-github-pages { display: none; }

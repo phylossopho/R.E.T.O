@@ -60,77 +60,77 @@
 <h1>Prueba de conexión</h1>
 </header>
 <main class="red-pagina">
-<section class="red-caja" aria-labelledby="red-t1">
-<h2 id="red-t1">1. Diagnóstico de red</h2>
-<p class="red-estado" id="red-aviso" role="status">Buscando direcciones…</p>
-<ul class="red-direcciones" id="red-direcciones"></ul>
-<p class="ayuda">Esta prueba usa la misma conexión directa que el duelo y Ding!: en una de las dos pantallas, abre «Invitar a otro dispositivo» (aparece al crear una sala en Duelo o Ding!) y el otro dispositivo pega su código al unirse. Funciona en la misma red wifi sin internet, y también con internet.</p>
-<div class="red-diagnostico" id="red-diagnostico" style="margin-top:1rem;padding:1rem;background:var(--surface);border:2px solid var(--borde);border-radius:var(--radius)">
-  <h3 style="margin:0 0 .5rem 0;font-size:1em">🔍 IPs locales detectadas (WebRTC ICE host candidates)</h3>
-  <p class="ayuda" style="margin:.5rem 0">Si tu PC está por Ethernet y el móvil por WiFi, ambos deben mostrar IPs en la <strong>misma subred</strong> (ej: 192.168.1.x).</p>
-  <button type="button" class="boton" id="red-btn-diagnostico" style="margin-bottom:.75rem">🔄 Recopilar IPs locales (3s)</button>
-  <ul class="red-direcciones" id="red-ips-locales" style="list-style:none;padding:0;margin:0"></ul>
-</div>
-</section>
-<section class="red-caja" aria-labelledby="red-t1b">
-<h2 id="red-t1b">2. Conexión automática con código de 4 letras (sin copiar/pegar largo)</h2>
-<p class="ayuda">Si ya tienes el código de 4 letras (ej: <code>ZCZN</code>) de quien creó la sala, ingrésalo aquí. Usa el <strong>signaling worker</strong> para intercambiar la oferta/respuesta WebRTC automáticamente.</p>
-<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center">
-  <input type="text" id="red-codigo-4" class="editor-campo" maxlength="4" placeholder="Código 4 letras" style="text-transform:uppercase;width:100px;font-size:1.2em;letter-spacing:.2em">
-  <button type="button" class="boton boton--principal" id="red-btn-auto-conectar">🚀 Conectar automáticamente</button>
-</div>
-<p class="ayuda" id="red-auto-estado" role="status"></p>
-</section>
-<section class="red-caja" aria-labelledby="red-t1c">
-<h2 id="red-t1c">3. Conexión WebRTC manual (código largo <code>RETO-LINK.</code>)</h2>
-<p class="ayuda">Si lo anterior falla, usa esto para crear la conexión directa (WebRTC) sin ir al Duelo ni a Ding!.</p>
-<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem">
-  <button type="button" class="boton boton--principal" id="red-btn-invitar">📡 Invitar a otro dispositivo (crear oferta)</button>
-  <button type="button" class="boton" id="red-btn-unirse">🔗 Unirse a invitación (pegar oferta)</button>
-</div>
-<div id="red-invitar-seccion" style="display:none;margin-top:1rem;padding:1rem;background:var(--surface);border:2px solid var(--borde);border-radius:var(--radius)">
-  <h3 style="margin:0 0 .5rem 0">Invitación generada</h3>
-  <p class="ayuda" id="red-invitar-estado" role="status"></p>
-  <label for="red-invitar-oferta" style="display:block;margin-bottom:.25rem;font-weight:600">Copia este código y envíalo al otro dispositivo:</label>
-  <textarea id="red-invitar-oferta" class="editor-campo" rows="4" readonly style="font-family:monospace;font-size:.85em"></textarea>
-  <div style="margin-top:.5rem;display:flex;gap:.5rem;flex-wrap:wrap">
-    <button type="button" class="boton" id="red-invitar-btn-resp">✅ Ya se lo mandé, esperar su respuesta</button>
-    <button type="button" class="boton" id="red-invitar-btn-copiar" style="display:none">📋 Copiar mi respuesta</button>
-    <button type="button" class="boton" id="red-invitar-btn-cancelar" style="background:#fff;border-color:#c62828;color:#c62828">Cancelar</button>
+<!-- ===== SEMÁFORO DE RED LOCAL (vista principal simplificada) ===== -->
+<section class="red-caja red-semaforo" aria-labelledby="red-semaforo-titulo">
+<h2 id="red-semaforo-titulo">📶 Estado de red local</h2>
+<p class="ayuda" style="margin-bottom:1rem">Ambos dispositivos deben abrir esta página. El semáforo se pone en verde cuando detectan la misma subred.</p>
+
+<div class="semaforo-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin-bottom:1rem">
+  <!-- ESTE DISPOSITIVO -->
+  <div class="semaforo-tarjeta" id="semaforo-este" style="padding:1rem;background:var(--surface);border:2px solid var(--borde);border-radius:var(--radius);position:relative">
+    <div class="semaforo-badge" style="position:absolute;top:-10px;left:1rem;background:var(--bg);padding:0 .5rem;font-size:.8em;font-weight:700;color:var(--muted)">ESTE DISPOSITIVO</div>
+    <h3 style="margin:0 0 .75rem 0;font-size:1em">📱 <span id="semaforo-este-nombre">Detectando…</span></h3>
+    <div class="semaforo-fila" style="display:flex;align-items:center;gap:.5rem;margin:.5rem 0">
+      <span class="semaforo-led" id="semaforo-este-led" style="width:12px;height:12px;border-radius:50%;background:#ccc"></span>
+      <span id="semaforo-este-tipo" style="font-size:.9em;color:var(--muted)">—</span>
+    </div>
+    <div class="semaforo-fila" style="font-family:monospace;font-size:.85rem;color:var(--texto)">
+      IP: <strong id="semaforo-este-ip">—</strong>
+    </div>
+    <div class="semaforo-fila" style="font-family:monospace;font-size:.85rem;color:var(--muted)">
+      Subred: <strong id="semaforo-este-subred">—</strong>
+    </div>
+  </div>
+
+  <!-- OTRO DISPOSITIVO -->
+  <div class="semaforo-tarjeta" id="semaforo-otro" style="padding:1rem;background:var(--surface);border:2px solid var(--borde);border-radius:var(--radius);position:relative;opacity:.6">
+    <div class="semaforo-badge" style="position:absolute;top:-10px;left:1rem;background:var(--bg);padding:0 .5rem;font-size:.8em;font-weight:700;color:var(--muted)">OTRO DISPOSITIVO</div>
+    <h3 style="margin:0 0 .75rem 0;font-size:1em">📱 <span id="semaforo-otro-nombre">Esperando…</span></h3>
+    <div class="semaforo-fila" style="display:flex;align-items:center;gap:.5rem;margin:.5rem 0">
+      <span class="semaforo-led" id="semaforo-otro-led" style="width:12px;height:12px;border-radius:50%;background:#ccc"></span>
+      <span id="semaforo-otro-tipo" style="font-size:.9em;color:var(--muted)">—</span>
+    </div>
+    <div class="semaforo-fila" style="font-family:monospace;font-size:.85rem;color:var(--texto)">
+      IP: <strong id="semaforo-otro-ip">—</strong>
+    </div>
+    <div class="semaforo-fila" style="font-family:monospace;font-size:.85rem;color:var(--muted)">
+      Subred: <strong id="semaforo-otro-subred">—</strong>
+    </div>
   </div>
 </div>
-<div id="red-unirse-seccion" style="display:none;margin-top:1rem;padding:1rem;background:var(--surface);border:2px solid var(--borde);border-radius:var(--radius)">
-  <h3 style="margin:0 0 .5rem 0">Unirse a invitación</h3>
-  <p class="ayuda" id="red-unirse-estado" role="status"></p>
-  <p class="ayuda">El otro dispositivo te habrá mandado un código largo que empieza por <code>RETO-LINK.</code>. Pégalo aquí al pulsar el botón.</p>
+
+<!-- RESULTADO SEMÁFORO -->
+<div class="semaforo-resultado" id="semaforo-resultado" style="padding:1.5rem;text-align:center;border-radius:var(--radius);background:var(--surface);border:2px solid var(--borde);display:none">
+  <div id="semaforo-estado-texto" style="font-size:1.2em;font-weight:700;margin-bottom:.5rem">—</div>
+  <p class="ayuda" id="semaforo-estado-detalle" style="margin:0">—</p>
 </div>
+
+<!-- ACCIONES PRINCIPALES (solo se habilitan en verde) -->
+<div class="semaforo-acciones" id="semaforo-acciones" style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin-top:1.5rem;display:none">
+  <a id="semaforo-btn-duelo" href="../duelo/duelo.html" class="boton boton--principal" style="display:inline-flex;align-items:center;gap:.5rem;padding:1rem 2rem;font-size:1.1em;text-decoration:none" aria-disabled="true" tabindex="-1">
+    ⚔️ Ir a Duelo P2P
+  </a>
+  <a id="semaforo-btn-ding" href="../ding/ding.html" class="boton" style="display:inline-flex;align-items:center;gap:.5rem;padding:1rem 2rem;font-size:1.1em;text-decoration:none" aria-disabled="true" tabindex="-1">
+    🔔 Ir a Ding!
+  </a>
+</div>
+
+<p class="ayuda" id="semaforo-ayuda" style="margin-top:1rem;text-align:center;display:none">Abre esta misma página en el otro dispositivo. Se detectarán solos.</p>
 </section>
-<section class="red-caja" aria-labelledby="red-t2">
-<h2 id="red-t2">3. Conecta el otro dispositivo (código de 4 letras)</h2>
-<div class="ajustes-campo">
-<label for="red-nombre">Tu nombre</label>
-<input id="red-nombre" class="editor-campo" type="text" maxlength="16" autocomplete="nickname">
+
+<!-- ===== DIAGNÓSTICO AVANZADO (colapsado) ===== -->
+<details class="red-caja" style="margin-top:1rem">
+<summary style="cursor:pointer;font-weight:600">🔧 Diagnóstico avanzado (IPs, signaling, WebRTC manual)</summary>
+<div id="red-avanzado" style="margin-top:1rem">
 </div>
-<div class="ajustes-campo">
-<label for="red-texto">Mensaje</label>
-<input id="red-texto" class="editor-campo" type="text" maxlength="120" autocomplete="off">
-</div>
-<button type="button" class="boton boton--principal" id="red-enviar">Enviar</button>
-<p class="ayuda" id="red-latencia" role="status"></p>
-<ul class="red-mensajes" id="red-mensajes" aria-live="polite" aria-label="Mensajes recibidos"></ul>
-<p class="ayuda" id="red-dispositivos"></p>
-</section>
-<section class="red-caja" aria-labelledby="red-t3">
-<h2 id="red-t3">¿No se ven?</h2>
-<details>
-<summary>Cosas que revisar</summary>
-<ul>
-<li>El dispositivo anfitrión (el que creó la sala) tiene su página abierta y no se durmió.</li>
-<li>Copiaron el código <strong>completo</strong>, sin cortarlo.</li>
-<li>Si la red de tu escuela o casa bloquea la comunicación entre dispositivos («aislamiento de clientes» o «AP isolation»), usa el punto de acceso del celular del anfitrión o datos móviles.</li>
-</ul>
 </details>
-</section>
+
+<!-- ===== CHAT DE PRUEBA (colapsado) ===== -->
+<details class="red-caja" style="margin-top:1rem">
+<summary style="cursor:pointer;font-weight:600">💬 Chat de prueba (para verificar latencia)</summary>
+<div id="red-chat" style="margin-top:1rem">
+</div>
+</details>
 </main>
 <div class="panel-flotante" data-panel>
   <a class="panel-boton" href="../../../index.html"
