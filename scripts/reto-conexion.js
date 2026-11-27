@@ -513,7 +513,19 @@
       if (typeof RTCPeerConnection === 'undefined') return Promise.resolve(false);
       return ui.asistenteUnirse();
     };
-    w.RetoConexion = { conexion: conexion, invitarDispositivo: ui.invitarDispositivo, asistenteUnirse: ui.asistenteUnirse };
+    w.RetoConexion = { 
+      conexion: conexion, 
+      invitarDispositivo: ui.invitarDispositivo, 
+      asistenteUnirse: ui.asistenteUnirse,
+      // Worker signaling functions (auto-conexión vía código 4 letras)
+      invitarViaWorker: invitarViaWorker,
+      responderViaWorker: responderViaWorker,
+      signalingFetch: signalingFetch,
+      esperarRespuesta: esperarRespuesta,
+      SIGNALING_URL: SIGNALING_URL,
+      ICE: ICE,
+      obtenerIPsLocales: obtenerIPsLocales
+    };
   }
 
   return { crearConexion: crearConexion, arrancar: arrancar, codificar: codificar, decodificar: decodificar, PREFIJO: PREFIJO, obtenerIPsLocales: obtenerIPsLocales, ICE: ICE, invitarViaWorker: invitarViaWorker, responderViaWorker: responderViaWorker, SIGNALING_URL: SIGNALING_URL };
